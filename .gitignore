@@ -9,6 +9,8 @@ dist/
 .env
 .env.*
 !.env.example
+token
+*.token
 
 # VRM skins stay local (copy into runtime path per README)
 *.vrm
