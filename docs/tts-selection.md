@@ -22,7 +22,7 @@
 | **本机 HTTP 服务（推荐兜底）** | TTS → **`openaiCompatible`**，URL 填 `http://127.0.0.1:<端口>/v1/audio/speech` | ✅ |
 | 仅试听 | TTS → `webSpeech` | ❌ |
 
-默认引擎为 `openai`（见 `useSettings.ts`），需自行配置 API Key。
+默认引擎为 **`openaiCompatible`**（Edge-TTS 本地网关，见 §5.1）；需自行启动网关服务。云端引擎需 API Key。
 
 ---
 

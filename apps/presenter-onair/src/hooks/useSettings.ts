@@ -9,6 +9,9 @@ import {
 import { DEFAULT_SCREEN_VISION_PROMPT, DEFAULT_SYSTEM_PROMPT } from '../constants/prompts';
 import {
   DEFAULT_AIVIS_SPEECH_API_URL,
+  DEFAULT_EDGE_TTS_API_URL,
+  DEFAULT_EDGE_TTS_MODEL,
+  DEFAULT_EDGE_TTS_VOICE,
   DEFAULT_VOICEVOX_API_URL,
   DEFAULT_VOICEPEAK_API_URL,
   resolveAivisSpeechApiUrl,
@@ -41,11 +44,10 @@ const STORAGE_KEY = 'react-vrm-app-settings';
 const DEFAULT_AIVIS_CLOUD_MODEL_UUID = '22e8ed77-94fe-4ef2-871f-a86f94e9a579';
 const DEFAULT_GEMINI_TTS_MODEL = 'gemini-3.1-flash-tts-preview';
 const DEFAULT_GEMINI_TTS_LANGUAGE_CODE = 'zh-CN';
-const DEFAULT_OPENAI_COMPATIBLE_MODEL = 'local-model';
+const DEFAULT_OPENAI_COMPATIBLE_MODEL = DEFAULT_EDGE_TTS_MODEL;
 const DEFAULT_OPENAI_COMPATIBLE_ENDPOINT =
   'http://localhost:11434/v1/chat/completions';
-const DEFAULT_OPENAI_COMPATIBLE_TTS_ENDPOINT =
-  'http://localhost:8880/v1/audio/speech';
+const DEFAULT_OPENAI_COMPATIBLE_TTS_ENDPOINT = DEFAULT_EDGE_TTS_API_URL;
 const DEFAULT_UNREAL_SPEECH_TTS_ENDPOINT =
   'https://api.v8.unrealspeech.com/stream';
 const DEFAULT_ELEVENLABS_TTS_ENDPOINT =
@@ -164,11 +166,11 @@ function getDefaultSettings(): AppSettings {
       },
     },
     tts: {
-      engine: 'openai' as TTSEngineOption,
-      speaker: 'alloy',
+      engine: 'openaiCompatible' as TTSEngineOption,
+      speaker: DEFAULT_EDGE_TTS_VOICE,
       openAiCompatibleApiKey: '',
-      openAiCompatibleApiUrl: DEFAULT_OPENAI_COMPATIBLE_TTS_ENDPOINT,
-      openAiCompatibleModel: DEFAULT_OPENAI_COMPATIBLE_MODEL,
+      openAiCompatibleApiUrl: DEFAULT_EDGE_TTS_API_URL,
+      openAiCompatibleModel: DEFAULT_EDGE_TTS_MODEL,
       openAiCompatibleSpeed: '',
       geminiTtsModel: DEFAULT_GEMINI_TTS_MODEL,
       geminiTtsLanguageCode: DEFAULT_GEMINI_TTS_LANGUAGE_CODE,
@@ -524,7 +526,7 @@ export function useSettings() {
     const defaultSpeaker: Record<string, string> = {
       openai: 'alloy',
       geminiTts: 'Zephyr',
-      openaiCompatible: '',
+      openaiCompatible: DEFAULT_EDGE_TTS_VOICE,
       voicepeak: 'f1',
       voicevox: '',
       aivisSpeech: '',

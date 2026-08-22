@@ -24,6 +24,9 @@ import type {
 } from '../lib/vrmReactions';
 import {
   DEFAULT_AIVIS_SPEECH_API_URL,
+  DEFAULT_EDGE_TTS_API_URL,
+  DEFAULT_EDGE_TTS_MODEL,
+  DEFAULT_EDGE_TTS_VOICE,
   DEFAULT_VOICEVOX_API_URL,
   resolveAivisSpeechApiUrl,
   resolveVoicevoxApiUrl,
@@ -65,7 +68,7 @@ const PROVIDERS: {
 const TTS_ENGINES: { value: TTSEngineOption; label: string }[] = [
   { value: 'openai', label: 'OpenAI TTS' },
   { value: 'geminiTts', label: 'Gemini TTS' },
-  { value: 'openaiCompatible', label: 'OpenAI-Compatible TTS' },
+  { value: 'openaiCompatible', label: 'OpenAI 兼容（Edge-TTS）' },
   { value: 'voicevox', label: 'VOICEVOX' },
   { value: 'voicepeak', label: 'VOICEPEAK' },
   { value: 'aivisSpeech', label: 'AivisSpeech' },
@@ -2107,7 +2110,7 @@ export function SettingsPanel({
                     onChange={(e) =>
                       updateOpenAiCompatibleApiKey(e.target.value)
                     }
-                    placeholder="留空则不发送 Authorization 头"
+                    placeholder="留空则不发送 Authorization 头（Edge-TTS 本地网关通常可留空）"
                     disabled={disabled}
                   />
                 </div>
@@ -2118,11 +2121,14 @@ export function SettingsPanel({
                   <input
                     id="tts-openai-compatible-url"
                     type="text"
-                    value={settings.tts.openAiCompatibleApiUrl || ''}
+                    value={
+                      settings.tts.openAiCompatibleApiUrl ||
+                      DEFAULT_EDGE_TTS_API_URL
+                    }
                     onChange={(e) =>
                       updateOpenAiCompatibleApiUrl(e.target.value)
                     }
-                    placeholder="http://localhost:8880/v1/audio/speech"
+                    placeholder={DEFAULT_EDGE_TTS_API_URL}
                     disabled={disabled}
                   />
                 </div>
@@ -2131,26 +2137,31 @@ export function SettingsPanel({
                   <input
                     id="tts-openai-compatible-model"
                     type="text"
-                    value={settings.tts.openAiCompatibleModel || ''}
+                    value={settings.tts.openAiCompatibleModel || DEFAULT_EDGE_TTS_MODEL}
                     onChange={(e) =>
                       updateOpenAiCompatibleModel(e.target.value)
                     }
-                    placeholder="local-model"
+                    placeholder={DEFAULT_EDGE_TTS_MODEL}
                     disabled={disabled}
                   />
                 </div>
                 <div className="settings-field">
                   <label htmlFor="tts-openai-compatible-speaker">
-                    Voice (optional)
+                    发音人（Voice）
                   </label>
                   <input
                     id="tts-openai-compatible-speaker"
                     type="text"
                     value={settings.tts.speaker}
                     onChange={(e) => updateTTSSpeaker(e.target.value)}
-                    placeholder="留空则不发送 voice 字段"
+                    placeholder={DEFAULT_EDGE_TTS_VOICE}
                     disabled={disabled}
                   />
+                  <p className="settings-field-hint">
+                    Edge-TTS 示例：{DEFAULT_EDGE_TTS_VOICE}（晓晓）、
+                    zh-CN-YunxiNeural（云希）。需先在本机启动 openai-edge-tts
+                    等服务，见 docs/tts-selection.md。
+                  </p>
                 </div>
                 <div className="settings-field">
                   <label htmlFor="tts-openai-compatible-speed">

@@ -15,6 +15,12 @@ export const DEFAULT_VOICEVOX_API_URL = 'http://localhost:50021';
 export const DEFAULT_AIVIS_SPEECH_API_URL = 'http://localhost:10101';
 export const DEFAULT_VOICEPEAK_API_URL = 'http://localhost:20202';
 
+/** Edge-TTS + openai-edge-tts 等本地 OpenAI 兼容网关（见 docs/tts-selection.md） */
+export const DEFAULT_EDGE_TTS_API_URL =
+  'http://127.0.0.1:5050/v1/audio/speech';
+export const DEFAULT_EDGE_TTS_MODEL = 'tts-1';
+export const DEFAULT_EDGE_TTS_VOICE = 'zh-CN-XiaoxiaoNeural';
+
 export function resolveVoicevoxApiUrl(url?: string): string {
   return url?.trim() || DEFAULT_VOICEVOX_API_URL;
 }
@@ -281,7 +287,6 @@ export function getDirectorSpeechConfigError(
   const needsApiKey = [
     'openai',
     'geminiTts',
-    'openaiCompatible',
     'aivisCloud',
     'minimax',
     'xai',
@@ -292,6 +297,12 @@ export function getDirectorSpeechConfigError(
   ].includes(engine);
   if (needsApiKey && !apiKey.trim()) {
     return `请在设置中配置 ${engine} 的 API Key`;
+  }
+  if (
+    engine === 'openaiCompatible' &&
+    !settings.tts.openAiCompatibleApiUrl?.trim()
+  ) {
+    return `请配置 OpenAI-Compatible TTS 地址（Edge-TTS 默认 ${DEFAULT_EDGE_TTS_API_URL}）`;
   }
   if (engine === 'voicevox' && !resolveVoicevoxApiUrl(settings.tts.voicevoxApiUrl)) {
     return '请配置 VOICEVOX 地址（如 http://127.0.0.1:50021）';

@@ -20,6 +20,14 @@
 
 ---
 
+### 2026-08-22 · 默认 TTS：OpenAI 兼容 + Edge-TTS 网关
+
+- **做了什么**：
+  - 默认引擎改为 `openaiCompatible`（`127.0.0.1:5050`，发音人 `zh-CN-XiaoxiaoNeural`）
+  - 本地网关不再强制 API Key；更新 Settings 文案与 phase0 / `.env.example`
+- **验证**：先启动 openai-edge-tts → `npm run dev` → Director 试播 + 口型
+- **相关文件**：`voiceOptions.ts`、`useSettings.ts`、`SettingsPanel.tsx`
+
 ### 2026-08-22 · 文档：TTS 选型与低配置本机方案
 
 - **做了什么**：

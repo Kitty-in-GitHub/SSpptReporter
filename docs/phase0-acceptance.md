@@ -35,8 +35,8 @@ npm run test
 | # | 项 | 操作 | 通过标准 |
 |---|-----|------|----------|
 | 1 | VRM 加载 | 打开页面 | 可见 StarString 半身角色，可旋转视角 |
-| 2 | TTS（本机） | Settings → `voicevox` 或 `aivisSpeech`，配本地 URL + Speaker | Director 按钮有声音 |
-| 3 | TTS（云端） | Settings → `geminiTts` / `openai` 等，配 API Key + 中文 speaker | Director 按钮有声音 |
+| 2 | TTS（本机 Edge-TTS） | 启动 [openai-edge-tts](https://github.com/travisvn/openai-edge-tts)；Settings 默认 `openaiCompatible` | Director 按钮有中文声音 |
+| 3 | TTS（备选） | `voicevox` / `aivisSpeech` 或云端 `geminiTts` / `openai` | Director 按钮有声音 |
 | 4 | 口型 | 使用非 `webSpeech` 引擎播放 sample | 说话时嘴部 Expression（Aa）肉眼可辨 |
 | 5 | Director 表情 | 点「播放 sample-action.json」 | `friendly` → happy 类表情，播完复位 |
 | 6 | Schema 校验 | 点「测试非法 JSON」 | 面板显示错误，不播放 |
@@ -48,9 +48,10 @@ npm run test
 
 | 场景 | Settings 引擎 | 口型 |
 |------|---------------|------|
-| 本机离线测口型 | VOICEVOX `http://127.0.0.1:50021` | 有 |
-| 中文答辩试听 | Gemini TTS / OpenAI / OpenAI-Compatible | 有 |
-| 仅测文案、不测口型 | Web Speech | **无**（Director 面板会提示） |
+| **默认：本机中文 + 口型** | `openaiCompatible` → Edge-TTS `@127.0.0.1:5050` | 有 |
+| 本机离线（偏日） | VOICEVOX `http://127.0.0.1:50021` | 有 |
+| 云端答辩 | Gemini TTS / OpenAI | 有 |
+| 仅测文案、不测口型 | Web Speech | **无** |
 
 ---
 
