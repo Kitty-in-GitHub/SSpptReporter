@@ -2526,7 +2526,7 @@ export function SettingsPanel({
               <label>アバター（VRM）</label>
               <div className="settings-file-actions">
                 <span className="settings-file-status">
-                  /avatar/miko.vrm を使用
+                  /avatar/StarString1.0.vrm を使用
                 </span>
               </div>
             </div>

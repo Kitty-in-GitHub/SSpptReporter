@@ -27,10 +27,15 @@ npm run dev
 
 ### 自定义皮套（VRM 不进 Git）
 
-`.vrm` 已被 `.gitignore` 排除。换机后：
+`.vrm` 已被 `.gitignore` 排除。当前运行时模型：**StarString1.0.vrm**。
 
-1. 把本机/网盘上的模型拷到 `assets/avatars/`（可选备份）
-2. 再覆盖 `apps/presenter-onair/public/avatar/miko.vrm`（或按 OnAir 设置改路径）
+| 位置 | 用途 |
+|------|------|
+| `assets/avatars/StarString1.0.vrm` | 主模型归档 |
+| `assets/avatars/miko.vrm` | OnAir 默认模型备份 |
+| `apps/presenter-onair/public/avatar/StarString1.0.vrm` | 浏览器加载路径 |
+
+换机：复制 `StarString1.0.vrm` 到 `public/avatar/`。要换回默认示例，改 `AvatarPanel.tsx` 中的 `VRM_FILE_URL` 并恢复 `miko.vrm`。
 
 ### 知识库
 

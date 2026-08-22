@@ -36,7 +36,7 @@ import type { YouTubeChatMessage } from './services/youtube/youtubeService';
 import './styles/app.css';
 
 const DEFAULT_SETTINGS_DIALOG_OFFSET: DialogDragPoint = { x: 0, y: 0 };
-const VRM_EFFECT_ANCHOR_PROFILE_ID = 'avatar/miko.vrm';
+const VRM_EFFECT_ANCHOR_PROFILE_ID = 'avatar/StarString1.0.vrm';
 
 interface SettingsDialogDragState {
   pointerId: number;

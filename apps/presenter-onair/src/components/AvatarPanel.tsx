@@ -70,7 +70,7 @@ interface AvatarBackgroundProps {
   onEffectAnchorReset: () => void;
 }
 
-const VRM_FILE_URL = `${import.meta.env.BASE_URL}avatar/miko.vrm`;
+const VRM_FILE_URL = `${import.meta.env.BASE_URL}avatar/StarString1.0.vrm`;
 const VRMA_FILE_URL = `${import.meta.env.BASE_URL}avatar/idle_loop.vrma`;
 const MAX_MOUTH_LEVEL = 4;
 const DEFAULT_VISIBLE_HEIGHT_RATIO = 0.39;

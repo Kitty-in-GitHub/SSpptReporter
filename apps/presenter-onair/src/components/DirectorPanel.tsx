@@ -150,8 +150,8 @@ export function DirectorPanel({
         播放 sample-action.json
       </button>
       <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-        自定义 VRM：替换 <code>public/avatar/miko.vrm</code>，或放到{' '}
-        <code>assets/avatars/</code> 后复制过来。
+        当前 VRM：<code>public/avatar/StarString1.0.vrm</code>；默认模型备份在{' '}
+        <code>assets/avatars/miko.vrm</code>。
       </div>
     </div>
   );
