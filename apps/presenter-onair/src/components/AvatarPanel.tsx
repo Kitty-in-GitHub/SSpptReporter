@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ACESFilmicToneMapping,
   AmbientLight,
   AnimationClip,
   AnimationMixer,
@@ -74,6 +75,9 @@ interface AvatarBackgroundProps {
   onEffectAnchorReset: () => void;
 }
 
+const VRM_AMBIENT_LIGHT_INTENSITY = 0.38;
+const VRM_DIRECTIONAL_LIGHT_INTENSITY = 0.7;
+const VRM_TONE_MAPPING_EXPOSURE = 0.86;
 const VRM_FILE_URL = `${import.meta.env.BASE_URL}avatar/StarString1.0.vrm`;
 const VRMA_FILE_URL = `${import.meta.env.BASE_URL}avatar/idle_loop.vrma`;
 const MAX_MOUTH_LEVEL = 4;
@@ -629,8 +633,14 @@ export function AvatarBackground({
     const camera = new PerspectiveCamera(30, 1, 0.1, 30);
     camera.position.set(0, 1.35, 2.2);
 
-    const ambientLight = new AmbientLight(0xffffff, 1.0);
-    const directionalLight = new DirectionalLight(0xffffff, 0.9);
+    const ambientLight = new AmbientLight(
+      0xffffff,
+      VRM_AMBIENT_LIGHT_INTENSITY,
+    );
+    const directionalLight = new DirectionalLight(
+      0xffffff,
+      VRM_DIRECTIONAL_LIGHT_INTENSITY,
+    );
     directionalLight.position.set(1.0, 1.8, 1.2);
     scene.add(ambientLight);
     scene.add(directionalLight);
@@ -664,6 +674,8 @@ export function AvatarBackground({
     } else if ('outputEncoding' in rendererColorSpace) {
       rendererColorSpace.outputEncoding = 3001;
     }
+    renderer.toneMapping = ACESFilmicToneMapping;
+    renderer.toneMappingExposure = VRM_TONE_MAPPING_EXPOSURE;
     renderer.setClearColor(0x000000, 0);
     renderer.setClearAlpha(0);
     renderer.autoClear = false;
