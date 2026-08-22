@@ -20,6 +20,28 @@
 
 ---
 
+### 2026-08-22 · Phase 0 收尾：Director TTS + 口型管线
+
+- **设备/环境**：Windows 10，`conda activate ssreporter`
+- **做了什么**：
+  - 抽取 `lib/voiceOptions.ts`；新增 `useDirectorSpeech`（OnAir `VoiceEngineAdapter`）
+  - `DirectorPanel` 改走 Settings TTS → `useAudioLipsync.play`（支持 VOICEVOX / 云端 TTS）
+  - 增加「测试非法 JSON」按钮；`packages/director` Vitest 6 项
+  - 文档：`phase0-acceptance.md`、`.env.example`；更新 AGENTS / phase0-scaffold
+- **未做 / 阻塞**：
+  - 口型需本机配 TTS 后人工验收（无 VOICEVOX/API Key 的 CI 环境无法自动测）
+  - Director 队列、知识库内容仍属 Phase 1
+- **下一台机器应优先**：
+  1. 按 `docs/phase0-acceptance.md` 验收口型
+  2. 通过后进入 Phase 1 知识库或 Director 队列
+- **相关文件**：
+  - `apps/presenter-onair/src/hooks/useDirectorSpeech.ts`
+  - `apps/presenter-onair/src/lib/voiceOptions.ts`
+  - `packages/director/src/validate.test.ts`
+- **验证方式**：`npm run typecheck && npm run test`；`npm run dev` → Director 按钮
+
+---
+
 ### 2026-08-22 · 切换主模型为 StarString1.0.vrm
 
 - **设备/环境**：Windows 10，`conda activate ssreporter`

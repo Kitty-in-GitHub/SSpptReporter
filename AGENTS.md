@@ -15,12 +15,11 @@
 
 | 项 | 状态 |
 |----|------|
-| Phase 0 身体骨架 | 基本完成 |
+| Phase 0 | **代码完成，待本机口型验收**（见 `docs/phase0-acceptance.md`） |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
-| Director 包 | `packages/director`（类型 + Ajv 校验 + emotion 映射） |
-| Director UI | `DirectorPanel` 播放 fixture，未接真 LLM 队列 |
-| TTS / 口型 | OnAir Settings 可配；Phase0 按钮用 Web Speech |
-| 知识库 `content/` | 目录已建，内容待填 |
+| Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试） |
+| Director UI | `DirectorPanel` → Settings TTS → `useAudioLipsync` 口型 |
+| 知识库 `content/` | 目录已建，内容待填（Phase 1） |
 | PPT 双栏 | 未做（Phase 1） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 
@@ -68,6 +67,8 @@ npm run dev
 |------|------|
 | 加载 VRM | `apps/presenter-onair/src/components/AvatarPanel.tsx` → `VRM_FILE_URL` |
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |
+| Director TTS | `apps/presenter-onair/src/hooks/useDirectorSpeech.ts` |
+| TTS 配置构建 | `apps/presenter-onair/src/lib/voiceOptions.ts` |
 | 样例指令 | `apps/presenter-onair/src/fixtures/sample-action.json` |
 | emotion 映射 | `packages/director/src/index.ts` → `emotionToVrmExpression` |
 | 校验 | `packages/director/src/validate.ts` |
@@ -75,10 +76,10 @@ npm run dev
 
 ## 建议的下一步（优先级）
 
-1. **收尾 Phase 0**：Settings 配 TTS（VOICEVOX 等），确认 StarString 口型可见。
-2. **Director 队列**：LLM/脚本 → `validateDirectorAction` → 顺序播放（替代仅 fixture 按钮）。
-3. **知识库**：`content/persona/`、`content/decks/<场次>/`、`content/faq/` 写 MD + 按页索引。
-4. **Phase 1 呈现**：Web 左栏 PPT/PDF + 右栏 VRM；消费 `slide_action`。
+1. **本机验收 Phase 0**：按 `docs/phase0-acceptance.md` 测 VOICEVOX + 云端 TTS 口型
+2. **Director 队列**：LLM/脚本 → `validateDirectorAction` → 顺序播放
+3. **知识库**：`content/persona/`、`content/decks/<场次>/`、`content/faq/`
+4. **Phase 1 呈现**：Web 左栏 PPT/PDF + 右栏 VRM
 
 每完成一项，**在 `docs/dev-log.md` 顶部追加一条日志**（见该文件模板）。
 
@@ -97,4 +98,4 @@ npm run dev
 | `docs/decisions.md` | 架构决策记录（ADR） |
 | `docs/virtual-host-presenter-path.md` | 总技术路径 |
 | `docs/director-json-schema.md` | Director 协议说明 |
-| `docs/phase0-scaffold.md` | Phase0 验收清单 |
+| `docs/phase0-acceptance.md` | Phase 0 手动验收步骤 |

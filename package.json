@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "npm run dev -w @ssreporter/presenter-onair",
     "build": "npm run build -w @ssreporter/presenter-onair",
-    "typecheck": "npm run typecheck -w @ssreporter/director && npm run typecheck -w @ssreporter/presenter-onair"
+    "typecheck": "npm run typecheck -w @ssreporter/director && npm run typecheck -w @ssreporter/presenter-onair",
+    "test": "npm run test -w @ssreporter/director && npm run test -w @ssreporter/presenter-onair"
   },
   "workspaces": [
     "apps/*",

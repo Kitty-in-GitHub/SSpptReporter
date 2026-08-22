@@ -21,9 +21,9 @@ npm run dev
 
 > Windows 上若 `conda run -n ssreporter -- npm …` 因编码报错，请先 `conda activate ssreporter` 再直接跑 `npm`。
 
-浏览器打开终端提示的本地地址。左下角 **Director · Phase 0** 可播放 `sample-action.json`（表情 + 浏览器朗读）。
+浏览器打开终端提示的本地地址。左下角 **Director · Phase 0** 可播放 `sample-action.json`（表情 + Settings 配置的 TTS；非 webSpeech 引擎支持口型）。
 
-完整对话 / TTS 口型：打开右上 Settings，配置 LLM 与 TTS（推荐 VOICEVOX 等非 Web Speech 引擎以启用口型）。
+验收步骤：[`docs/phase0-acceptance.md`](./docs/phase0-acceptance.md)
 
 ### 自定义皮套（VRM 不进 Git）
 
@@ -49,6 +49,7 @@ npm run dev
 | [`docs/dev-log.md`](./docs/dev-log.md) | **开发日志**（每完成一项在顶部追加） |
 | [`docs/cross-device-dev.md`](./docs/cross-device-dev.md) | 换机搭建、同步、排错 |
 | [`docs/decisions.md`](./docs/decisions.md) | 架构决策（ADR，避免重复争论） |
+| [`docs/phase0-acceptance.md`](./docs/phase0-acceptance.md) | Phase 0 手动验收 |
 
 私仓：`https://github.com/Kitty-in-GitHub/SSpptReporter.git`
 
@@ -58,5 +59,6 @@ npm run dev
 - 底座选型：`docs/virtual-host-base-choice.md`
 - Director 协议：`docs/director-json-schema.md` / `schemas/director-action.schema.json`
 - Phase 0 清单：`docs/phase0-scaffold.md`
+- Phase 0 验收：`docs/phase0-acceptance.md`
 
 当前身体底座：`apps/presenter-onair`（AITuber OnAir VRM 模板）。

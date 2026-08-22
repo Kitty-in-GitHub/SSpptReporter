@@ -29,7 +29,7 @@ SSreporter/
 │   └── presenter-onair/         # Phase0 主战场（OnAir VRM）
 │       ├── src/components/DirectorPanel.tsx
 │       ├── src/fixtures/sample-action.json
-│       └── public/avatar/miko.vrm
+│       └── public/avatar/StarString1.0.vrm
 └── packages/
     └── director/                # 类型 + Ajv 校验 + emotion 映射
 ```
@@ -38,14 +38,16 @@ SSreporter/
 
 ## 2. Phase 0 验收清单
 
-| # | 项 | 完成标准 |
-|---|----|----------|
-| 1 | VRoid 导出 VRM 1.0 | 半身、含口型相关 Expression（Aa/Ih/Ou 等或等价） |
-| 2 | `presenter-web` 能加载该 VRM | 浏览器可见角色，可旋转/固定 bust 机位 |
-| 3 | 播放 `sample-tts.wav` 或浏览器 TTS | 有声音 |
-| 4 | 口型跟随音频 | 肉眼可辨张嘴 |
-| 5 | 读入一条 `DirectorAction` fixture | `emotion` 能改表情（哪怕只改 happy） |
-| 6 | Schema 校验 | 非法 JSON 被 `packages/director` 拒绝 |
+详细步骤见 [`phase0-acceptance.md`](./phase0-acceptance.md)。
+
+| # | 项 | 状态 |
+|---|----|------|
+| 1 | StarString VRM 1.0 | 已加载 |
+| 2 | `presenter-onair` 可见角色 | 已满足 |
+| 3 | Settings TTS 发声 | 已实现（Director 走 OnAir TTS） |
+| 4 | 口型跟随音频 | **待本机验收**（非 webSpeech 引擎） |
+| 5 | DirectorAction fixture 表情 | 已满足 |
+| 6 | Schema 校验 | 已满足（`validate.test.ts` + UI 按钮） |
 
 **非目标（Phase 0 不做）**：PPT 翻页、ASR、真 LLM、手势库、打断队列。
 

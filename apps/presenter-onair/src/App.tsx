@@ -9,6 +9,7 @@ import { ChatPanel } from './components/ChatPanel';
 import { DirectorPanel } from './components/DirectorPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { useAudioLipsync } from './hooks/useAudioLipsync';
+import { useDirectorSpeech } from './hooks/useDirectorSpeech';
 import { useAituberCore } from './hooks/useAituberCore';
 import { useLiveCommentIntelligence } from './hooks/useLiveCommentIntelligence';
 import { useScreenVisionController } from './hooks/useScreenVisionController';
@@ -160,6 +161,13 @@ export default function App() {
     },
     [play],
   );
+
+  const { speak: speakDirector, supportsLipSync, engine: directorTtsEngine } =
+    useDirectorSpeech({
+      settings: settingsHook.settings,
+      getApiKeyForProvider: settingsHook.getApiKeyForProvider,
+      onPlay: handleAudioPlay,
+    });
 
   const handleSpeechStart = useCallback(
     (screenplay: ScreenplayLike) => {
@@ -400,6 +408,9 @@ export default function App() {
 
       <DirectorPanel
         disabled={isProcessing || isSpeaking}
+        supportsLipSync={supportsLipSync}
+        ttsEngine={directorTtsEngine}
+        onSpeak={speakDirector}
         onApplyEmotion={emitAvatarReaction}
         onResetEmotion={() =>
           emitAvatarReaction({ type: 'reset', fadeMs: 280 })

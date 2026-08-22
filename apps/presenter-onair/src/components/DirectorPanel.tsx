@@ -11,9 +11,13 @@ import {
   type VrmAvatarReactionDraft,
   type VrmEmotionEffect,
 } from '../lib/vrmReactions';
+import type { TTSEngineOption } from '../types/settings';
 
 interface DirectorPanelProps {
   disabled?: boolean;
+  supportsLipSync: boolean;
+  ttsEngine: TTSEngineOption;
+  onSpeak: (text: string) => Promise<void>;
   onApplyEmotion: (draft: VrmAvatarReactionDraft) => void;
   onResetEmotion: () => void;
 }
@@ -28,25 +32,12 @@ const VRM_EMOTION_SET = new Set<string>([
   'neutral',
 ]);
 
-function speakUtterance(text: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!text.trim()) {
-      resolve();
-      return;
-    }
-    if (!('speechSynthesis' in window)) {
-      reject(new Error('Web Speech API 不可用'));
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'zh-CN';
-    utter.onend = () => resolve();
-    utter.onerror = () => reject(new Error('语音合成失败'));
-    window.speechSynthesis.speak(utter);
-  });
-}
+const INVALID_FIXTURE = {
+  schema_version: '9.9',
+  mode: 'present',
+  utterance: '这条应被拒绝',
+  emotion: 'not-a-real-emotion',
+};
 
 function toReactionDraft(action: DirectorAction): VrmAvatarReactionDraft | null {
   const mapped = emotionToVrmExpression[action.emotion ?? 'neutral'] ?? 'neutral';
@@ -68,8 +59,21 @@ function toReactionDraft(action: DirectorAction): VrmAvatarReactionDraft | null 
   return null;
 }
 
+function completionMessage(supportsLipSync: boolean, ttsEngine: TTSEngineOption) {
+  if (ttsEngine === 'webSpeech') {
+    return '播放完成（Web Speech 无口型；换 VOICEVOX / 云端 TTS 可测口型）';
+  }
+  if (supportsLipSync) {
+    return '播放完成（TTS + 口型）';
+  }
+  return '播放完成';
+}
+
 export function DirectorPanel({
   disabled = false,
+  supportsLipSync,
+  ttsEngine,
+  onSpeak,
   onApplyEmotion,
   onResetEmotion,
 }: DirectorPanelProps) {
@@ -95,14 +99,31 @@ export function DirectorPanel({
 
     setStatus(`播放中：${action.action_id ?? 'fixture'} / ${action.mode}`);
     try {
-      await speakUtterance(action.utterance);
-      setStatus('播放完成（Phase0：Web Speech；口型需在 Settings 配置 TTS）');
+      await onSpeak(action.utterance);
+      setStatus(completionMessage(supportsLipSync, ttsEngine));
     } catch (err) {
       setStatus(err instanceof Error ? err.message : '播放失败');
     } finally {
       onResetEmotion();
     }
-  }, [onApplyEmotion, onResetEmotion]);
+  }, [
+    onApplyEmotion,
+    onResetEmotion,
+    onSpeak,
+    supportsLipSync,
+    ttsEngine,
+  ]);
+
+  const runInvalidFixture = useCallback(() => {
+    const result = validateDirectorAction(INVALID_FIXTURE);
+    if (result.ok) {
+      setLastErrors(['意外：非法 fixture 通过了校验']);
+      setStatus('校验异常');
+      return;
+    }
+    setLastErrors(result.errors);
+    setStatus('非法 JSON 已被 schema 拒绝（符合 Phase 0 #6）');
+  }, []);
 
   return (
     <div
@@ -133,25 +154,45 @@ export function DirectorPanel({
           {lastErrors.join('; ')}
         </div>
       )}
-      <button
-        type="button"
-        disabled={disabled || !validation.ok}
-        onClick={() => void runFixture()}
-        style={{
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          border: 0,
-          borderRadius: 8,
-          padding: '8px 12px',
-          background: '#3b82f6',
-          color: '#fff',
-          fontWeight: 600,
-        }}
-      >
-        播放 sample-action.json
-      </button>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          disabled={disabled || !validation.ok}
+          onClick={() => void runFixture()}
+          style={{
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            border: 0,
+            borderRadius: 8,
+            padding: '8px 12px',
+            background: '#3b82f6',
+            color: '#fff',
+            fontWeight: 600,
+          }}
+        >
+          播放 sample-action.json
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={runInvalidFixture}
+          style={{
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            border: '1px solid #64748b',
+            borderRadius: 8,
+            padding: '8px 12px',
+            background: 'transparent',
+            color: '#e8eef8',
+          }}
+        >
+          测试非法 JSON
+        </button>
+      </div>
       <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-        当前 VRM：<code>public/avatar/StarString1.0.vrm</code>；默认模型备份在{' '}
-        <code>assets/avatars/miko.vrm</code>。
+        TTS：Settings → <code>{ttsEngine}</code>
+        {supportsLipSync ? '（支持口型）' : '（当前引擎无口型）'}
+      </div>
+      <div style={{ marginTop: 4, opacity: 0.7, fontSize: 12 }}>
+        VRM：<code>public/avatar/StarString1.0.vrm</code>
       </div>
     </div>
   );
