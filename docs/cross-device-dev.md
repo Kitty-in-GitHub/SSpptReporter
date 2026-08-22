@@ -15,11 +15,15 @@ AI 快速入口：根目录 [`AGENTS.md`](../AGENTS.md)
 git clone https://github.com/Kitty-in-GitHub/SSpptReporter.git
 cd SSpptReporter
 conda env create -f environment.yml   # 已有则：conda activate ssreporter
+# 旧环境只有 Node 时，补装 Python + edge-tts：
+# conda env update -f environment.yml --prune
 conda activate ssreporter
 npm install
+npm run setup:tts   # 若 environment.yml 已含 pip 依赖可跳过
 ```
 
 - Node 版本：conda 环境内 **Node 22**（见 `environment.yml`）
+- Python：**3.11** + `edge-tts`（`environment.yml` 的 pip 段；或 `npm run setup:tts`）
 - 勿用 base Miniconda 自带的 npm（曾出现损坏）
 
 ### 1.2 本地独有文件（不进 Git）
@@ -36,8 +40,10 @@ npm install
 
 ```bash
 conda activate ssreporter
+npm run setup:tts   # 首次或 pip 依赖缺失时
 npm run dev
-# → http://localhost:5173
+# → http://localhost:5173 + http://127.0.0.1:5050（TTS）
+# 仅页面：npm run dev:web
 ```
 
 ### 1.3 GitHub 认证（推送私仓）

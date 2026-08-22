@@ -20,6 +20,15 @@
 
 ---
 
+### 2026-08-22 · Phase A：本机 TTS 网关一键启动
+
+- **做了什么**：
+  - 新增 `apps/tts-gateway`（Edge-TTS + FastAPI，`127.0.0.1:5050`）
+  - 根 `npm run dev` 并行启动页面与网关；`dev:web` / `setup:tts`
+  - `environment.yml` 增加 Python 3.11 + pip 依赖；更新 AGENTS / README / 验收文档
+- **验证**：`conda activate ssreporter` → `npm run setup:tts` → `npm run dev` → Director 试播
+- **相关文件**：`apps/tts-gateway/`、根 `package.json`、`environment.yml`
+
 ### 2026-08-22 · 默认 TTS：OpenAI 兼容 + Edge-TTS 网关
 
 - **做了什么**：

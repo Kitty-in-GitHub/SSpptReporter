@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "description": "Virtual presenter: VRM body + Director + knowledge brain",
   "scripts": {
-    "dev": "npm run dev -w @ssreporter/presenter-onair",
+    "dev": "concurrently -k -n web,tts \"npm run dev:web\" \"npm run dev:tts\"",
+    "dev:web": "npm run dev -w @ssreporter/presenter-onair",
+    "dev:tts": "npm run start -w @ssreporter/tts-gateway",
+    "setup:tts": "npm run setup -w @ssreporter/tts-gateway",
     "build": "npm run build -w @ssreporter/presenter-onair",
     "typecheck": "npm run typecheck -w @ssreporter/director && npm run typecheck -w @ssreporter/presenter-onair",
     "test": "npm run test -w @ssreporter/director && npm run test -w @ssreporter/presenter-onair"
@@ -15,5 +18,8 @@
   ],
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }

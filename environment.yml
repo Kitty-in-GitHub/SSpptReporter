@@ -5,3 +5,7 @@ channels:
   - defaults
 dependencies:
   - nodejs=22
+  - python=3.11
+  - pip
+  - pip:
+    - -r apps/tts-gateway/requirements.txt

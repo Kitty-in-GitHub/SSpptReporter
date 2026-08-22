@@ -16,12 +16,15 @@ conda activate ssreporter
 conda activate ssreporter
 cd d:\project\SSreporter
 npm install
-npm run dev
+npm run setup:tts   # 首次：安装 Edge-TTS Python 依赖（environment.yml 已含则可跳过）
+npm run dev         # 页面 + 本机 TTS 网关（:5050）一并启动
 ```
+
+仅启动页面、不启 TTS：`npm run dev:web`
 
 > Windows 上若 `conda run -n ssreporter -- npm …` 因编码报错，请先 `conda activate ssreporter` 再直接跑 `npm`。
 
-浏览器打开终端提示的本地地址。左下角 **Director · Phase 0** 可播放 `sample-action.json`（表情 + Settings 配置的 TTS；非 webSpeech 引擎支持口型）。
+浏览器打开终端提示的本地地址。默认 TTS 为 **OpenAI 兼容 → 本机 Edge-TTS 网关**（`npm run dev` 自动拉起 `:5050`）。左下角 **Director · Phase 0** 可播放 `sample-action.json`（表情 + 口型）。
 
 验收步骤：[`docs/phase0-acceptance.md`](./docs/phase0-acceptance.md)
 

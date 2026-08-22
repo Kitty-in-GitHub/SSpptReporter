@@ -8,7 +8,7 @@
 
 ## 1. 本项目里 TTS 怎么工作
 
-- **没有内置语音模型**：仓库只包含调用逻辑（OnAir `VoiceEngineAdapter`），引擎与模型需本机安装或走云端 API。
+- **本机 TTS 网关**：`apps/tts-gateway`（Edge-TTS，CPU）；`npm run dev` 与页面一并启动，见 §1.2。
 - **合成时机**：点击播放 / 对话时**实时合成**，音频在内存中播放并驱动口型；**不会**把整段语音预先下载进仓库。
 - **口型**：除 `webSpeech`、`none` 外，能返回音频缓冲的引擎均支持口型（见 `supportsDirectorLipSync`）。
 
@@ -22,7 +22,19 @@
 | **本机 HTTP 服务（推荐兜底）** | TTS → **`openaiCompatible`**，URL 填 `http://127.0.0.1:<端口>/v1/audio/speech` | ✅ |
 | 仅试听 | TTS → `webSpeech` | ❌ |
 
-默认引擎为 **`openaiCompatible`**（Edge-TTS 本地网关，见 §5.1）；需自行启动网关服务。云端引擎需 API Key。
+默认引擎为 **`openaiCompatible`**，指向仓库内 **`apps/tts-gateway`**（`npm run dev` 自动监听 `127.0.0.1:5050`）。云端引擎需 API Key。
+
+### 1.2 一键启动（Phase A）
+
+```bash
+conda activate ssreporter
+npm install
+npm run setup:tts   # 首次或 environment.yml 未重装时
+npm run dev         # 页面 + TTS 网关
+```
+
+- 仅页面：`npm run dev:web`
+- 网关说明：[`apps/tts-gateway/README.md`](../apps/tts-gateway/README.md)
 
 ---
 
@@ -33,7 +45,7 @@
 | 优先级 | 方案 | 类型 | 中文 | 口型 | 算力 | 备注 |
 |--------|------|------|------|------|------|------|
 | **① 正式答辩主用** | Gemini TTS / OpenAI TTS | 云端 API | ★★★★★ | ✅ | 几乎无 | 项目已内置；需 Key + 网络 |
-| **② 本机兜底** | Edge-TTS + OpenAI 兼容网关 | 本机进程 + 在线引擎 | ★★★★ | ✅ | **CPU** | 免费、中文音色多；需联网 |
+| **② 本机兜底** | **仓库内 tts-gateway**（Edge-TTS） | 本机进程 + 在线引擎 | ★★★★ | ✅ | **CPU** | `npm run dev` 自动启动；免费、需联网 |
 | **③ 口型验收** | VOICEVOX / AivisSpeech | 桌面软件 | 弱（偏日） | ✅ | CPU | Phase 0 已支持 |
 | **④ 完全离线** | Piper Plus / sherpa-onnx | 本机 ONNX | ★★★ | ✅* | CPU | *Piper 内置；sherpa 需自建 HTTP |
 | **⑤ 不推荐核显主用** | CosyVoice / GPT-SoVITS / Fish Speech | 大模型 | 好 | ✅ | 需独显 | 见 §4 升级路径 |
@@ -83,27 +95,22 @@ Layer 3  离线彩排（断网）
 
 ## 5. 本机方案（开源链接 + 接入说明）
 
-### 5.1 Edge-TTS 网关（核显本机首选）
+### 5.1 仓库内 Edge-TTS 网关（默认）
 
-本机跑轻量 Python 服务，转发微软 Edge 免费 TTS；**不吃 GPU**，支持 OpenAI 兼容 `/v1/audio/speech`。
+路径：**`apps/tts-gateway`** — `npm run dev` 自动启动，OpenAI 兼容 `POST /v1/audio/speech`。
 
-| 项目 | 说明 |
-|------|------|
-| [travisvn/openai-edge-tts](https://github.com/travisvn/openai-edge-tts) | 推荐；文档全 |
-| [samni728/Local-TTS-Service](https://github.com/samni728/Local-TTS-Service) | 带 WebUI、长文、中文 README |
-| [OOMrConrado/EdgeVoice](https://github.com/OOMrConrado/EdgeVoice) | Docker 一键 |
-| [aigem/edgeTTS-openai-api](https://github.com/aigem/edgeTTS-openai-api) | 轻量 |
-| [rany2/edge-tts](https://github.com/rany2/edge-tts) | 底层 Python 库 |
+| 项 | 值 |
+|----|-----|
+| 地址 | `http://127.0.0.1:5050/v1/audio/speech` |
+| 依赖 | Python 3.11 + `edge-tts`（见 `environment.yml` 或 `npm run setup:tts`） |
+| API Key | 不需要 |
+| 底层库 | [rany2/edge-tts](https://github.com/rany2/edge-tts) |
 
-**SSreporter 配置示例**：
+Settings 默认已是 `openaiCompatible`，一般无需修改。
 
-1. 启动服务（以 openai-edge-tts 为例，端口以实际为准）
-2. Settings → TTS → 引擎：**OpenAI-Compatible TTS**
-3. Endpoint URL：`http://127.0.0.1:5050/v1/audio/speech`
-4. Model：按服务文档（如 `tts-1`）
-5. Voice：`zh-CN-XiaoxiaoNeural`（晓晓）、`zh-CN-YunxiNeural`（云希）等
+**可选**：自行部署的社区网关（需另开进程）— [travisvn/openai-edge-tts](https://github.com/travisvn/openai-edge-tts)、[samni728/Local-TTS-Service](https://github.com/samni728/Local-TTS-Service)
 
-**注意**：需联网；非微软官方商用 API；**不能克隆真人**，仅预置音色 + 语速。
+**注意**：需联网；非微软官方商用 API；不能克隆真人。
 
 ---
 
@@ -196,8 +203,8 @@ Settings → `webSpeech`：浏览器自带，**不支持口型**。仅用于快�
 ## 8. 低配置机推荐执行顺序
 
 1. **现在（核显）**  
-   - 主音色：Settings → `geminiTts` 或 `openai`，配置 API Key  
-   - 兜底：安装 [openai-edge-tts](https://github.com/travisvn/openai-edge-tts)，Settings → `openaiCompatible`
+   - `npm run dev` → 导演台试播 + 口型（默认网关）  
+   - 正式答辩可改 Settings → `geminiTts` / `openai`
 
 2. **Phase 0 口型验收**（见 [`phase0-acceptance.md`](./phase0-acceptance.md)）  
    - 本机：`aivisSpeech` 或 `voicevox`  

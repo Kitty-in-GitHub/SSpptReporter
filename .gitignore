@@ -23,3 +23,8 @@ apps/presenter-web/public/avatars/*.vrm
 *.wav
 *.mp3
 *.mp4
+
+# Python (tts-gateway)
+__pycache__/
+*.py[cod]
+apps/tts-gateway/.venv/

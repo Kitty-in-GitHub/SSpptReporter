@@ -29,6 +29,7 @@
 SSreporter/
 ├── AGENTS.md                 ← 本文件（AI 入口）
 ├── apps/presenter-onair/     ← 主应用（AITuber OnAir VRM 模板 + 我们的补丁）
+├── apps/tts-gateway/         ← 本机 Edge-TTS 网关（npm run dev 一并启动）
 ├── packages/director/        ← DirectorAction 类型与校验
 ├── content/                  ← 知识库（进 Git）
 ├── assets/avatars/           ← VRM 本地归档（不进 Git）
@@ -53,12 +54,15 @@ SSreporter/
 git clone https://github.com/Kitty-in-GitHub/SSpptReporter.git
 cd SSpptReporter   # 或本地目录名 SSreporter
 conda env create -f environment.yml   # 或 conda activate ssreporter
+# 旧环境仅 Node 时：conda env update -f environment.yml --prune
 conda activate ssreporter
 npm install
+npm run setup:tts   # 首次或 environment.yml 未含 pip 时
 # 复制 VRM（仓库里没有）：
 #   assets/avatars/StarString1.0.vrm → apps/presenter-onair/public/avatar/StarString1.0.vrm
-npm run dev
+npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 # http://localhost:5173 — 左下角 Director · Phase 0 测 fixture
+# 仅页面、不要 TTS：npm run dev:web
 ```
 
 ## 关键代码入口
@@ -69,6 +73,7 @@ npm run dev
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |
 | Director TTS | `apps/presenter-onair/src/hooks/useDirectorSpeech.ts` |
 | TTS 配置构建 | `apps/presenter-onair/src/lib/voiceOptions.ts` |
+| 本机 TTS 网关 | `apps/tts-gateway/server.py` |
 | 样例指令 | `apps/presenter-onair/src/fixtures/sample-action.json` |
 | emotion 映射 | `packages/director/src/index.ts` → `emotionToVrmExpression` |
 | 校验 | `packages/director/src/validate.ts` |

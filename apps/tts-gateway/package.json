@@ -1,0 +1,10 @@
+{
+  "name": "@ssreporter/tts-gateway",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local Edge-TTS OpenAI-compatible gateway for SSreporter",
+  "scripts": {
+    "start": "node scripts/start.mjs",
+    "setup": "node scripts/setup.mjs"
+  }
+}
