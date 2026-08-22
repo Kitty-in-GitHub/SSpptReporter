@@ -20,6 +20,14 @@
 
 ---
 
+### 2026-08-22 · 文档：TTS 选型与低配置本机方案
+
+- **做了什么**：
+  - 新增 `docs/tts-selection.md`（云端 API、Edge-TTS 兜底、Piper/sherpa 离线、独显升级路径、不进 Git 清单）
+  - 更新 `AGENTS.md`、`README.md`、`cross-device-dev.md` 文档索引
+- **下一台机器应优先**：按 `tts-selection.md` 配置 Gemini/Edge-TTS；Phase 0 口型验收
+- **相关文件**：`docs/tts-selection.md`
+
 ### 2026-08-22 · Phase 0 收尾：Director TTS + 口型管线
 
 - **设备/环境**：Windows 10，`conda activate ssreporter`

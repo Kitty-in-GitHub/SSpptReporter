@@ -50,6 +50,7 @@ npm run dev
 | [`docs/cross-device-dev.md`](./docs/cross-device-dev.md) | 换机搭建、同步、排错 |
 | [`docs/decisions.md`](./docs/decisions.md) | 架构决策（ADR，避免重复争论） |
 | [`docs/phase0-acceptance.md`](./docs/phase0-acceptance.md) | Phase 0 手动验收 |
+| [`docs/tts-selection.md`](./docs/tts-selection.md) | TTS 选型（云端 / 本机 / 低配置） |
 
 私仓：`https://github.com/Kitty-in-GitHub/SSpptReporter.git`
 
@@ -60,5 +61,6 @@ npm run dev
 - Director 协议：`docs/director-json-schema.md` / `schemas/director-action.schema.json`
 - Phase 0 清单：`docs/phase0-scaffold.md`
 - Phase 0 验收：`docs/phase0-acceptance.md`
+- TTS 选型：`docs/tts-selection.md`
 
 当前身体底座：`apps/presenter-onair`（AITuber OnAir VRM 模板）。

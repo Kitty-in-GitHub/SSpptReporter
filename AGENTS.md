@@ -99,3 +99,4 @@ npm run dev
 | `docs/virtual-host-presenter-path.md` | 总技术路径 |
 | `docs/director-json-schema.md` | Director 协议说明 |
 | `docs/phase0-acceptance.md` | Phase 0 手动验收步骤 |
+| `docs/tts-selection.md` | TTS 选型（云端 / 本机 / 核显兜底） |

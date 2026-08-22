@@ -29,7 +29,7 @@ npm install
 | `assets/avatars/StarString1.0.vrm` | 主皮套归档 | 网盘 / U 盘 / 另一台机器拷贝 |
 | `apps/presenter-onair/public/avatar/StarString1.0.vrm` | 浏览器运行时加载 | 从 `assets/avatars/` 复制 |
 | `assets/avatars/miko.vrm` | OnAir 默认示例备份 | 可选；另一台若从未有过可从 OnAir 模板重新拿 |
-| `.env` | LLM / TTS API Key | 本机新建，参考 `.env.example`（若有） |
+| `.env` | LLM / TTS API Key | 本机新建，参考 `.env.example`（若有）；TTS 选型见 [`docs/tts-selection.md`](./tts-selection.md) |
 | `token` | GitHub PAT（若用） | 本机临时文件，**勿提交** |
 
 复制 VRM 后启动：
@@ -156,3 +156,4 @@ Web Speech（Director Phase0 按钮）通常**无 viseme**。在 Settings 配置
 - 架构决策：[`decisions.md`](./decisions.md)
 - Director 协议：[`director-json-schema.md`](./director-json-schema.md)
 - Phase0 验收：[`phase0-scaffold.md`](./phase0-scaffold.md)
+- TTS 选型：[`tts-selection.md`](./tts-selection.md)
