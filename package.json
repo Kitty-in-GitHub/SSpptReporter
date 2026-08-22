@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "description": "Virtual presenter: VRM body + Director + knowledge brain",
   "scripts": {
+    "dev:stop": "node scripts/dev-stop.mjs",
+    "predev": "node scripts/dev-stop.mjs",
     "dev": "concurrently -k -n web,tts \"npm run dev:web\" \"npm run dev:tts\"",
     "dev:web": "npm run dev -w @ssreporter/presenter-onair",
     "dev:tts": "npm run start -w @ssreporter/tts-gateway",

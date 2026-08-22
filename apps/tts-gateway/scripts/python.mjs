@@ -25,7 +25,16 @@ export function resolvePython() {
 export function pythonCanImport(python, moduleName) {
   const result = spawnSync(python, ['-c', `import ${moduleName}`], {
     stdio: 'ignore',
-    shell: process.platform === 'win32',
+    shell: false,
+  });
+  return result.status === 0;
+}
+
+export function pythonCanImportAll(python, moduleNames) {
+  const script = moduleNames.map((name) => `import ${name}`).join('; ');
+  const result = spawnSync(python, ['-c', script], {
+    stdio: 'ignore',
+    shell: false,
   });
   return result.status === 0;
 }

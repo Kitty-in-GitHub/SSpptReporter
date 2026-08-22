@@ -13,7 +13,7 @@ console.log('[tts-gateway] Installing requirements…');
 const result = spawnSync(
   python,
   ['-m', 'pip', 'install', '-r', requirements],
-  { stdio: 'inherit', shell: process.platform === 'win32' },
+  { stdio: 'inherit', shell: false },
 );
 
 if (result.status !== 0) {

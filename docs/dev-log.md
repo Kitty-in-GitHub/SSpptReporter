@@ -20,7 +20,14 @@
 
 ---
 
-### 2026-08-22 · Phase A：本机 TTS 网关一键启动
+### 2026-08-22 · 修复 dev 启动：清端口 + Windows Python 检测
+
+- **做了什么**：
+  - `scripts/dev-stop.mjs`：`npm run dev` 前自动释放 5173/5174/5050（含 IPv6）
+  - 修复 `start.mjs` Windows 误报「Python deps missing」（`shell: false`）
+  - TTS 绑定前检测端口，冲突时提示 `npm run dev:stop`
+- **验证**：`npm run dev` → Vite + `Uvicorn running on :5050`，无 10048
+- **相关文件**：`scripts/dev-stop.mjs`、`apps/tts-gateway/scripts/start.mjs`、根 `package.json`
 
 - **做了什么**：
   - 新增 `apps/tts-gateway`（Edge-TTS + FastAPI，`127.0.0.1:5050`）
