@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getDefaultXaiReasoningEffort,
   getVoiceEngineVoiceList,
@@ -13,11 +13,14 @@ import { ScreenVisionPanel } from './ScreenVisionPanel';
 import { StreamSettings } from './StreamSettings';
 import { useGeminiNanoStatus } from '../hooks/useGeminiNanoStatus';
 import { DEFAULT_SYSTEM_PROMPT } from '../constants/prompts';
+import {
+  UI_EFFECT_OPTIONS,
+  UI_EMOTION_WITH_KEY,
+} from '../constants/uiZh';
 import type { useScreenVisionController } from '../hooks/useScreenVisionController';
 import type {
   VrmEmotionEffect,
   VrmReactionControlMode,
-  VrmReactionEmotion,
 } from '../lib/vrmReactions';
 import type { ChatProviderOption, TTSEngineOption } from '../types/settings';
 import type { useSettings } from '../hooks/useSettings';
@@ -69,34 +72,12 @@ const TTS_ENGINES: { value: TTSEngineOption; label: string }[] = [
   { value: 'gradium', label: 'Gradium' },
   { value: 'piperPlus', label: 'Piper Plus' },
   { value: 'webSpeech', label: 'Web Speech API' },
-  { value: 'none', label: 'None' },
+  { value: 'none', label: '无' },
 ];
 
-const VRM_REACTION_EMOTION_OPTIONS: ReadonlyArray<{
-  value: VrmReactionEmotion;
-  label: string;
-}> = [
-  { value: 'happy', label: '喜び（happy）' },
-  { value: 'surprised', label: '驚き（surprised）' },
-  { value: 'sad', label: '悲しみ（sad）' },
-  { value: 'angry', label: '怒り（angry）' },
-  { value: 'relaxed', label: '安らぎ（relaxed）' },
-  { value: 'thinking', label: '考え中（thinking）' },
-  { value: 'neutral', label: '通常（neutral）' },
-];
+const VRM_REACTION_EMOTION_OPTIONS = UI_EMOTION_WITH_KEY;
 
-const VRM_EFFECT_OPTIONS: ReadonlyArray<{
-  value: VrmEmotionEffect | 'none';
-  label: string;
-}> = [
-  { value: 'none', label: 'なし' },
-  { value: 'happy', label: '喜び（happy）' },
-  { value: 'surprised', label: '驚き（surprised）' },
-  { value: 'sad', label: '悲しみ（sad）' },
-  { value: 'angry', label: '怒り（angry）' },
-  { value: 'relaxed', label: '安らぎ（relaxed）' },
-  { value: 'thinking', label: '考え中（thinking）' },
-];
+const VRM_EFFECT_OPTIONS = UI_EFFECT_OPTIONS;
 
 const OPENAI_SPEAKERS = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 const GEMINI_TTS_MODELS = [
@@ -212,20 +193,20 @@ const VOICEPEAK_SPEAKERS = [
   { id: 'm1', name: '日本人男性 1' },
   { id: 'm2', name: '日本人男性 2' },
   { id: 'm3', name: '日本人男性 3' },
-  { id: 'c', name: '女の子' },
+  { id: 'c', name: '女孩' },
 ];
 
 const AIVIS_CLOUD_PRESETS = [
   {
     id: 'kohaku',
-    label: 'コハク',
+    label: '琥珀',
     modelUuid: '22e8ed77-94fe-4ef2-871f-a86f94e9a579',
     speakerUuid: '',
     styleId: '',
   },
   {
     id: 'mao',
-    label: 'まお',
+    label: '真央',
     modelUuid: 'a59cb814-0083-4369-8542-f51a29e72af7',
     speakerUuid: '',
     styleId: '',
@@ -474,10 +455,10 @@ export function SettingsPanel({
         const message = error instanceof Error ? error.message : String(error);
         if (isVoicevox) {
           setVoicevoxSpeakers([]);
-          setFetchError(`VOICEVOX接続エラー: ${message}`);
+          setFetchError(`VOICEVOX 连接错误: ${message}`);
         } else {
           setAivisSpeakers([]);
-          setFetchError(`AivisSpeech接続エラー: ${message}`);
+          setFetchError(`AivisSpeech 连接错误: ${message}`);
         }
       }
     };
@@ -551,7 +532,7 @@ export function SettingsPanel({
         if (controller.signal.aborted) return;
         const message = error instanceof Error ? error.message : String(error);
         setMinimaxVoices([]);
-        setFetchError(`MiniMax接続エラー: ${message}`);
+        setFetchError(`MiniMax 连接错误: ${message}`);
       } finally {
         if (!controller.signal.aborted) {
           setIsFetchingMinimaxVoices(false);
@@ -619,7 +600,7 @@ export function SettingsPanel({
         if (controller.signal.aborted) return;
         const message = error instanceof Error ? error.message : String(error);
         setElevenLabsVoices([]);
-        setFetchError(`ElevenLabs接続エラー: ${message}`);
+        setFetchError(`ElevenLabs 连接错误: ${message}`);
       } finally {
         if (!controller.signal.aborted) {
           setIsFetchingElevenLabsVoices(false);
@@ -691,7 +672,7 @@ export function SettingsPanel({
         if (controller.signal.aborted) return;
         const message = error instanceof Error ? error.message : String(error);
         setInworldVoices([]);
-        setFetchError(`Inworld接続エラー: ${message}`);
+        setFetchError(`Inworld 连接错误: ${message}`);
       } finally {
         if (!controller.signal.aborted) {
           setIsFetchingInworldVoices(false);
@@ -734,7 +715,7 @@ export function SettingsPanel({
         if (!active) return;
         const message = error instanceof Error ? error.message : String(error);
         setWebSpeechVoices([]);
-        setFetchError(`Web Speech音声一覧エラー: ${message}`);
+        setFetchError(`Web Speech 音色列表错误: ${message}`);
       } finally {
         if (active) {
           setIsFetchingWebSpeechVoices(false);
@@ -786,7 +767,7 @@ export function SettingsPanel({
         {expandedSections.llm && (
           <>
             <div className="settings-field">
-              <label htmlFor="llm-provider">Provider</label>
+              <label htmlFor="llm-provider">提供商</label>
               <select
                 id="llm-provider"
                 value={settings.llm.provider}
@@ -806,7 +787,7 @@ export function SettingsPanel({
             {settings.llm.provider !== 'gemini-nano' && (
               <div className="settings-field">
                 <label htmlFor="llm-apikey">
-                  API Key ({settings.llm.provider})
+                  API 密钥 ({settings.llm.provider})
                   {settings.llm.provider === 'openai-compatible'
                     ? ' (任意)'
                     : ''}
@@ -820,7 +801,7 @@ export function SettingsPanel({
                   }
                   placeholder={
                     settings.llm.provider === 'openai-compatible'
-                      ? '必要な場合のみ入力'
+                      ? '仅在需要时填写'
                       : 'XXX-...'
                   }
                   disabled={disabled}
@@ -830,7 +811,7 @@ export function SettingsPanel({
 
             {settings.llm.provider === 'openai-compatible' ? (
               <div className="settings-field">
-                <label htmlFor="llm-model">Model</label>
+                <label htmlFor="llm-model">模型</label>
                 <input
                   id="llm-model"
                   type="text"
@@ -842,7 +823,7 @@ export function SettingsPanel({
               </div>
             ) : (
               <div className="settings-field">
-                <label htmlFor="llm-model">Model</label>
+                <label htmlFor="llm-model">模型</label>
                 <select
                   id="llm-model"
                   value={settings.llm.model}
@@ -859,7 +840,7 @@ export function SettingsPanel({
             )}
 
             <div className="settings-field">
-              <label htmlFor="llm-system-prompt">System Prompt</label>
+              <label htmlFor="llm-system-prompt">系统提示词</label>
               <textarea
                 id="llm-system-prompt"
                 rows={6}
@@ -870,16 +851,13 @@ export function SettingsPanel({
                 disabled={disabled}
               />
               <p className="settings-field-hint">
-                入力欄からフォーカスが外れた時に反映されます。空欄の場合は
-                既定値を使用します。アバター固有の制御指示を削除すると、
-                感情表現エフェクトの連動に影響する場合があります。
+                失焦后保存。留空则使用默认值。若删除角色专属控制指令，可能影响表情特效联动。
               </p>
             </div>
 
             {isOpenAIGPT5Model && (
               <p className="settings-field-hint">
-                GPT-5 models use the Casual preset and Very Short replies in
-                this sample.
+                本示例中 GPT-5 模型使用 Casual 预设与 Very Short 回复长度。
               </p>
             )}
 
@@ -899,11 +877,11 @@ export function SettingsPanel({
                   disabled={disabled || !isXaiReasoningEffortModelSelected}
                 >
                   {allowsXaiNoneReasoningEffort && (
-                    <option value="none">None</option>
+                    <option value="none">无</option>
                   )}
                   <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
+                  <option value="medium">中</option>
+                  <option value="high">高</option>
                 </select>
                 <p className="settings-field-hint">
                   {isXaiReasoningEffortModelSelected
@@ -919,7 +897,7 @@ export function SettingsPanel({
               <>
                 <div className="settings-field">
                   <label htmlFor="openrouter-max-candidates">
-                    Max candidates
+                    最大候选数
                   </label>
                   <input
                     id="openrouter-max-candidates"
@@ -949,8 +927,8 @@ export function SettingsPanel({
                     }
                   >
                     {isRefreshingOpenRouterFreeModels
-                      ? 'Fetching...'
-                      : 'Fetch free models'}
+                      ? '获取中…'
+                      : '获取免费模型'}
                   </button>
                   {!openRouterApiKey && (
                     <p className="settings-field-hint">
@@ -977,7 +955,7 @@ export function SettingsPanel({
 
             {settings.llm.provider === 'openai-compatible' && (
               <div className="settings-field">
-                <label htmlFor="llm-endpoint">Endpoint URL</label>
+                <label htmlFor="llm-endpoint">接口地址</label>
                 <input
                   id="llm-endpoint"
                   type="text"
@@ -993,8 +971,7 @@ export function SettingsPanel({
               <>
                 <div className="settings-field">
                   <small>
-                    Gemini Nano はブラウザ内蔵 AI を使うため API Key
-                    は不要です。
+                    Gemini Nano 使用浏览器内置 AI，无需 API 密钥。
                   </small>
                 </div>
                 <div className="settings-field">
@@ -1010,20 +987,17 @@ export function SettingsPanel({
                       disabled={disabled || geminiNano.isPreparing}
                     >
                       {geminiNano.isPreparing
-                        ? 'Preparing...'
-                        : 'Prepare Model'}
+                        ? '准备中…'
+                        : '准备模型'}
                     </button>
                   )}
                   <small>
-                    Chrome 138+ が必要です。`chrome://flags` を開き、
-                    `#optimization-guide-on-device-model` と
-                    `#prompt-api-for-gemini-nano` を `Enabled` に設定してから
-                    Chrome を再起動してください。
+                    需要 Chrome 138+。在 `chrome://flags` 中启用
+                    `#optimization-guide-on-device-model` 与
+                    `#prompt-api-for-gemini-nano` 后重启 Chrome。
                   </small>
                   <small>
-                    フラグ有効化後に上の `Prepare Model` を押すとモデルの
-                    ダウンロードが始まります。初回ダウンロードには数分かかる
-                    場合があります。
+                    启用标志后点击「准备模型」开始下载；首次可能需数分钟。
                   </small>
                 </div>
               </>
@@ -1051,7 +1025,7 @@ export function SettingsPanel({
         {expandedSections.tts && (
           <>
             <div className="settings-field">
-              <label htmlFor="tts-engine">Engine</label>
+              <label htmlFor="tts-engine">引擎</label>
               <select
                 id="tts-engine"
                 value={settings.tts.engine}
@@ -1071,7 +1045,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'openai' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-openai-apikey">API Key (OpenAI)</label>
+                  <label htmlFor="tts-openai-apikey">API 密钥 (OpenAI)</label>
                   <input
                     id="tts-openai-apikey"
                     type="password"
@@ -1082,7 +1056,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-speaker">Speaker</label>
+                  <label htmlFor="tts-speaker">发音人</label>
                   <select
                     id="tts-speaker"
                     value={settings.tts.speaker}
@@ -1102,7 +1076,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'geminiTts' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-gemini-apikey">API Key (Gemini)</label>
+                  <label htmlFor="tts-gemini-apikey">API 密钥 (Gemini)</label>
                   <input
                     id="tts-gemini-apikey"
                     type="password"
@@ -1113,7 +1087,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-gemini-speaker">Voice</label>
+                  <label htmlFor="tts-gemini-speaker">音色</label>
                   <select
                     id="tts-gemini-speaker"
                     value={settings.tts.speaker}
@@ -1128,7 +1102,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-gemini-model">Model</label>
+                  <label htmlFor="tts-gemini-model">模型</label>
                   <select
                     id="tts-gemini-model"
                     value={settings.tts.geminiTtsModel || GEMINI_TTS_MODELS[0]}
@@ -1143,7 +1117,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-gemini-language">Language Code</label>
+                  <label htmlFor="tts-gemini-language">语言代码</label>
                   <input
                     id="tts-gemini-language"
                     type="text"
@@ -1164,7 +1138,7 @@ export function SettingsPanel({
                     type="text"
                     value={settings.tts.geminiTtsPrompt || ''}
                     onChange={(e) => updateGeminiTtsPrompt(e.target.value)}
-                    placeholder="明るく元気な声で話してください"
+                    placeholder="请用明亮有活力的声音说话"
                     disabled={disabled}
                   />
                 </div>
@@ -1175,7 +1149,7 @@ export function SettingsPanel({
               <>
                 {settings.llm.provider !== 'xai' && (
                   <div className="settings-field">
-                    <label htmlFor="tts-xai-apikey">API Key (xAI)</label>
+                    <label htmlFor="tts-xai-apikey">API 密钥 (xAI)</label>
                     <input
                       id="tts-xai-apikey"
                       type="password"
@@ -1187,7 +1161,7 @@ export function SettingsPanel({
                   </div>
                 )}
                 <div className="settings-field">
-                  <label htmlFor="tts-xai-speaker">Speaker</label>
+                  <label htmlFor="tts-xai-speaker">发音人</label>
                   <select
                     id="tts-xai-speaker"
                     value={settings.tts.speaker}
@@ -1202,7 +1176,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-xai-language">Language</label>
+                  <label htmlFor="tts-xai-language">语言</label>
                   <input
                     id="tts-xai-language"
                     type="text"
@@ -1213,7 +1187,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-xai-codec">Codec</label>
+                  <label htmlFor="tts-xai-codec">编码</label>
                   <select
                     id="tts-xai-codec"
                     value={settings.tts.xaiCodec || 'mp3'}
@@ -1228,7 +1202,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-xai-sample-rate">Sample Rate</label>
+                  <label htmlFor="tts-xai-sample-rate">采样率</label>
                   <select
                     id="tts-xai-sample-rate"
                     value={String(settings.tts.xaiSampleRate || 24000)}
@@ -1246,7 +1220,7 @@ export function SettingsPanel({
                 </div>
                 {(settings.tts.xaiCodec || 'mp3') === 'mp3' && (
                   <div className="settings-field">
-                    <label htmlFor="tts-xai-bit-rate">Bit Rate</label>
+                    <label htmlFor="tts-xai-bit-rate">比特率</label>
                     <select
                       id="tts-xai-bit-rate"
                       value={String(settings.tts.xaiBitRate || 128000)}
@@ -1269,7 +1243,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'unrealSpeech' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-unreal-apikey">API Key</label>
+                  <label htmlFor="tts-unreal-apikey">API 密钥</label>
                   <input
                     id="tts-unreal-apikey"
                     type="password"
@@ -1282,7 +1256,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-unreal-speaker">Speaker</label>
+                  <label htmlFor="tts-unreal-speaker">发音人</label>
                   <select
                     id="tts-unreal-speaker"
                     value={settings.tts.speaker}
@@ -1297,7 +1271,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-unreal-url">API URL</label>
+                  <label htmlFor="tts-unreal-url">API 地址</label>
                   <input
                     id="tts-unreal-url"
                     type="text"
@@ -1309,7 +1283,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-unreal-codec">Codec</label>
+                  <label htmlFor="tts-unreal-codec">编码</label>
                   <select
                     id="tts-unreal-codec"
                     value={settings.tts.unrealSpeechCodec || 'libmp3lame'}
@@ -1339,7 +1313,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-unreal-speed">Speed</label>
+                  <label htmlFor="tts-unreal-speed">语速</label>
                   <input
                     id="tts-unreal-speed"
                     type="number"
@@ -1353,7 +1327,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-unreal-pitch">Pitch</label>
+                  <label htmlFor="tts-unreal-pitch">音高</label>
                   <input
                     id="tts-unreal-pitch"
                     type="number"
@@ -1367,7 +1341,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-unreal-temperature">Temperature</label>
+                  <label htmlFor="tts-unreal-temperature">温度</label>
                   <input
                     id="tts-unreal-temperature"
                     type="number"
@@ -1386,7 +1360,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'elevenLabs' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-apikey">API Key</label>
+                  <label htmlFor="tts-eleven-apikey">API 密钥</label>
                   <input
                     id="tts-eleven-apikey"
                     type="password"
@@ -1399,7 +1373,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-speaker">Voice</label>
+                  <label htmlFor="tts-eleven-speaker">音色</label>
                   <select
                     id="tts-eleven-speaker"
                     value={settings.tts.speaker}
@@ -1412,7 +1386,7 @@ export function SettingsPanel({
                     }
                   >
                     {!settings.tts.elevenLabsApiKey && (
-                      <option value="">API Keyを入力してください</option>
+                      <option value="">请输入 API 密钥</option>
                     )}
                     {settings.tts.elevenLabsApiKey &&
                       isFetchingElevenLabsVoices && (
@@ -1421,7 +1395,7 @@ export function SettingsPanel({
                     {settings.tts.elevenLabsApiKey &&
                       !isFetchingElevenLabsVoices &&
                       elevenLabsVoices.length === 0 && (
-                        <option value="">音声一覧を取得できませんでした</option>
+                        <option value="">无法获取音色列表</option>
                       )}
                     {elevenLabsVoices.map((voice) => (
                       <option key={voice.voice_id} value={voice.voice_id}>
@@ -1433,7 +1407,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-url">API URL</label>
+                  <label htmlFor="tts-eleven-url">API 地址</label>
                   <input
                     id="tts-eleven-url"
                     type="text"
@@ -1445,7 +1419,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-model">Model</label>
+                  <label htmlFor="tts-eleven-model">模型</label>
                   <select
                     id="tts-eleven-model"
                     value={settings.tts.elevenLabsModel || ELEVENLABS_MODELS[0]}
@@ -1462,7 +1436,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-format">Output Format</label>
+                  <label htmlFor="tts-eleven-format">输出格式</label>
                   <select
                     id="tts-eleven-format"
                     value={
@@ -1482,7 +1456,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-language">Language Code</label>
+                  <label htmlFor="tts-eleven-language">语言代码</label>
                   <input
                     id="tts-eleven-language"
                     type="text"
@@ -1495,7 +1469,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-stability">Stability</label>
+                  <label htmlFor="tts-eleven-stability">稳定性</label>
                   <input
                     id="tts-eleven-stability"
                     type="number"
@@ -1532,7 +1506,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-style">Style</label>
+                  <label htmlFor="tts-eleven-style">风格</label>
                   <input
                     id="tts-eleven-style"
                     type="number"
@@ -1548,7 +1522,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-speed">Speed</label>
+                  <label htmlFor="tts-eleven-speed">语速</label>
                   <input
                     id="tts-eleven-speed"
                     type="number"
@@ -1564,7 +1538,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-eleven-seed">Seed</label>
+                  <label htmlFor="tts-eleven-seed">随机种子</label>
                   <input
                     id="tts-eleven-seed"
                     type="number"
@@ -1625,7 +1599,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'inworld' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-apikey">API Key</label>
+                  <label htmlFor="tts-inworld-apikey">API 密钥</label>
                   <input
                     id="tts-inworld-apikey"
                     type="password"
@@ -1638,7 +1612,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-speaker">Voice</label>
+                  <label htmlFor="tts-inworld-speaker">音色</label>
                   <select
                     id="tts-inworld-speaker"
                     value={settings.tts.speaker}
@@ -1651,7 +1625,7 @@ export function SettingsPanel({
                     }
                   >
                     {!settings.tts.inworldApiKey && (
-                      <option value="">API Keyを入力してください</option>
+                      <option value="">请输入 API 密钥</option>
                     )}
                     {settings.tts.inworldApiKey && isFetchingInworldVoices && (
                       <option value="">取得中...</option>
@@ -1659,7 +1633,7 @@ export function SettingsPanel({
                     {settings.tts.inworldApiKey &&
                       !isFetchingInworldVoices &&
                       inworldVoices.length === 0 && (
-                        <option value="">音声一覧を取得できませんでした</option>
+                        <option value="">无法获取音色列表</option>
                       )}
                     {inworldVoices.map((voice) => (
                       <option key={voice.voiceId} value={voice.voiceId}>
@@ -1670,7 +1644,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-url">API URL</label>
+                  <label htmlFor="tts-inworld-url">API 地址</label>
                   <input
                     id="tts-inworld-url"
                     type="text"
@@ -1682,7 +1656,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-model">Model</label>
+                  <label htmlFor="tts-inworld-model">模型</label>
                   <select
                     id="tts-inworld-model"
                     value={settings.tts.inworldModel || INWORLD_MODELS[0]}
@@ -1699,7 +1673,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-encoding">Audio Encoding</label>
+                  <label htmlFor="tts-inworld-encoding">音频编码</label>
                   <select
                     id="tts-inworld-encoding"
                     value={
@@ -1719,7 +1693,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-language">Language</label>
+                  <label htmlFor="tts-inworld-language">语言</label>
                   <input
                     id="tts-inworld-language"
                     type="text"
@@ -1732,7 +1706,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-sample-rate">Sample Rate</label>
+                  <label htmlFor="tts-inworld-sample-rate">采样率</label>
                   <input
                     id="tts-inworld-sample-rate"
                     type="number"
@@ -1745,7 +1719,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-bitrate">Bit Rate</label>
+                  <label htmlFor="tts-inworld-bitrate">比特率</label>
                   <input
                     id="tts-inworld-bitrate"
                     type="number"
@@ -1774,7 +1748,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-delivery">Delivery Mode</label>
+                  <label htmlFor="tts-inworld-delivery">传输模式</label>
                   <select
                     id="tts-inworld-delivery"
                     value={settings.tts.inworldDeliveryMode || 'default'}
@@ -1799,7 +1773,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-inworld-temperature">Temperature</label>
+                  <label htmlFor="tts-inworld-temperature">温度</label>
                   <input
                     id="tts-inworld-temperature"
                     type="number"
@@ -1818,7 +1792,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'gradium' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-gradium-apikey">API Key</label>
+                  <label htmlFor="tts-gradium-apikey">API 密钥</label>
                   <input
                     id="tts-gradium-apikey"
                     type="password"
@@ -1831,7 +1805,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-gradium-speaker">Voice</label>
+                  <label htmlFor="tts-gradium-speaker">音色</label>
                   <select
                     id="tts-gradium-speaker"
                     value={settings.tts.speaker}
@@ -1846,7 +1820,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-gradium-url">API URL</label>
+                  <label htmlFor="tts-gradium-url">API 地址</label>
                   <input
                     id="tts-gradium-url"
                     type="text"
@@ -1858,7 +1832,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-gradium-output">Output Format</label>
+                  <label htmlFor="tts-gradium-output">输出格式</label>
                   <select
                     id="tts-gradium-output"
                     value={settings.tts.gradiumOutputFormat || 'wav'}
@@ -1875,7 +1849,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-gradium-temperature">Temperature</label>
+                  <label htmlFor="tts-gradium-temperature">温度</label>
                   <input
                     id="tts-gradium-temperature"
                     type="number"
@@ -1989,7 +1963,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-piper-speed">Speed</label>
+                  <label htmlFor="tts-piper-speed">语速</label>
                   <input
                     id="tts-piper-speed"
                     type="number"
@@ -2014,10 +1988,7 @@ export function SettingsPanel({
                 </div>
                 <div className="settings-field">
                   <small>
-                    Runtime assets はサイズとサードパーティライセンスの都合で
-                    同梱していません。README の Piper Plus Setup を参照し、
-                    `public/piper/` 配下に `dist/`, `src/`, `assets/`, `models/`
-                    を配置してください。
+                    运行时资源因体积与许可未随仓库分发。请参阅 README 的 Piper Plus 说明，将 `dist/`、`src/`、`assets/`、`models/` 放到 `public/piper/`。
                   </small>
                 </div>
               </>
@@ -2042,14 +2013,14 @@ export function SettingsPanel({
                     ) : (
                       <option value="">
                         {isFetchingWebSpeechVoices
-                          ? 'Loading browser voices...'
-                          : 'Browser default voice'}
+                          ? '正在加载浏览器音色…'
+                          : '浏览器默认音色'}
                       </option>
                     )}
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-web-speech-language">Language</label>
+                  <label htmlFor="tts-web-speech-language">语言</label>
                   <input
                     id="tts-web-speech-language"
                     type="text"
@@ -2108,9 +2079,7 @@ export function SettingsPanel({
                 </div>
                 <div className="settings-field">
                   <small>
-                    Web Speech API はブラウザが直接再生します。音声バッファを
-                    取得できないため、このサンプルのリップシンクには対応して
-                    いません。
+                    Web Speech API 由浏览器直接播放，无法获取音频缓冲，本示例不支持口型同步。
                   </small>
                   {fetchError.startsWith('Web Speech') && (
                     <small className="settings-field-error">{fetchError}</small>
@@ -2123,7 +2092,7 @@ export function SettingsPanel({
               <>
                 <div className="settings-field">
                   <label htmlFor="tts-openai-compatible-apikey">
-                    API Key (optional)
+                    API 密钥 (optional)
                   </label>
                   <input
                     id="tts-openai-compatible-apikey"
@@ -2132,13 +2101,13 @@ export function SettingsPanel({
                     onChange={(e) =>
                       updateOpenAiCompatibleApiKey(e.target.value)
                     }
-                    placeholder="未入力なら Authorization ヘッダーなし"
+                    placeholder="留空则不发送 Authorization 头"
                     disabled={disabled}
                   />
                 </div>
                 <div className="settings-field">
                   <label htmlFor="tts-openai-compatible-url">
-                    Endpoint URL
+                    接口地址
                   </label>
                   <input
                     id="tts-openai-compatible-url"
@@ -2152,7 +2121,7 @@ export function SettingsPanel({
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-openai-compatible-model">Model</label>
+                  <label htmlFor="tts-openai-compatible-model">模型</label>
                   <input
                     id="tts-openai-compatible-model"
                     type="text"
@@ -2173,7 +2142,7 @@ export function SettingsPanel({
                     type="text"
                     value={settings.tts.speaker}
                     onChange={(e) => updateTTSSpeaker(e.target.value)}
-                    placeholder="未入力なら voice フィールドを送信しません"
+                    placeholder="留空则不发送 voice 字段"
                     disabled={disabled}
                   />
                 </div>
@@ -2201,7 +2170,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'voicevox' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-voicevox-speaker">Speaker</label>
+                  <label htmlFor="tts-voicevox-speaker">发音人</label>
                   <select
                     id="tts-voicevox-speaker"
                     value={settings.tts.speaker}
@@ -2220,12 +2189,12 @@ export function SettingsPanel({
                         )),
                       )
                     ) : (
-                      <option value="">サーバーから取得中...</option>
+                      <option value="">正在从服务器获取…</option>
                     )}
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-voicevox-url">API URL</label>
+                  <label htmlFor="tts-voicevox-url">API 地址</label>
                   <input
                     id="tts-voicevox-url"
                     type="text"
@@ -2241,7 +2210,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'voicepeak' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-voicepeak-speaker">Speaker</label>
+                  <label htmlFor="tts-voicepeak-speaker">发音人</label>
                   <select
                     id="tts-voicepeak-speaker"
                     value={settings.tts.speaker}
@@ -2256,7 +2225,7 @@ export function SettingsPanel({
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-voicepeak-url">API URL</label>
+                  <label htmlFor="tts-voicepeak-url">API 地址</label>
                   <input
                     id="tts-voicepeak-url"
                     type="text"
@@ -2272,7 +2241,7 @@ export function SettingsPanel({
             {settings.tts.engine === 'aivisSpeech' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-aivis-speaker">Speaker</label>
+                  <label htmlFor="tts-aivis-speaker">发音人</label>
                   <select
                     id="tts-aivis-speaker"
                     value={settings.tts.speaker}
@@ -2291,12 +2260,12 @@ export function SettingsPanel({
                         )),
                       )
                     ) : (
-                      <option value="">サーバーから取得中...</option>
+                      <option value="">正在从服务器获取…</option>
                     )}
                   </select>
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-aivis-url">API URL</label>
+                  <label htmlFor="tts-aivis-url">API 地址</label>
                   <input
                     id="tts-aivis-url"
                     type="text"
@@ -2312,13 +2281,13 @@ export function SettingsPanel({
             {settings.tts.engine === 'minimax' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-minimax-apikey">API Key</label>
+                  <label htmlFor="tts-minimax-apikey">API 密钥</label>
                   <input
                     id="tts-minimax-apikey"
                     type="password"
                     value={settings.tts.minimaxApiKey || ''}
                     onChange={(e) => updateMinimaxApiKey(e.target.value)}
-                    placeholder="MiniMax API Key"
+                    placeholder="MiniMax API 密钥"
                     disabled={disabled}
                   />
                 </div>
@@ -2349,16 +2318,16 @@ export function SettingsPanel({
                   >
                     {!settings.tts.minimaxApiKey && (
                       <option value="">
-                        APIキーを入力すると一覧を取得します
+                        输入 API 密钥后可获取列表
                       </option>
                     )}
                     {settings.tts.minimaxApiKey && isFetchingMinimaxVoices && (
-                      <option value="">スピーカー一覧を取得中...</option>
+                      <option value="">正在获取发音人列表…</option>
                     )}
                     {settings.tts.minimaxApiKey &&
                       !isFetchingMinimaxVoices &&
                       minimaxVoices.length === 0 && (
-                        <option value="">一覧を取得できませんでした</option>
+                        <option value="">无法获取列表</option>
                       )}
                     {minimaxVoices.map((voice) => (
                       <option key={voice.voice_id} value={voice.voice_id}>
@@ -2373,18 +2342,18 @@ export function SettingsPanel({
             {settings.tts.engine === 'aivisCloud' && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="tts-aiviscloud-apikey">API Key</label>
+                  <label htmlFor="tts-aiviscloud-apikey">API 密钥</label>
                   <input
                     id="tts-aiviscloud-apikey"
                     type="password"
                     value={settings.tts.aivisCloudApiKey || ''}
                     onChange={(e) => updateAivisCloudApiKey(e.target.value)}
-                    placeholder="Aivis Cloud API Key"
+                    placeholder="Aivis Cloud API 密钥"
                     disabled={disabled}
                   />
                 </div>
                 <div className="settings-field">
-                  <label htmlFor="tts-aiviscloud-preset">Voice</label>
+                  <label htmlFor="tts-aiviscloud-preset">音色</label>
                   <select
                     id="tts-aiviscloud-preset"
                     value={selectedAivisCloudPresetId}
@@ -2428,7 +2397,7 @@ export function SettingsPanel({
           onClick={() => toggleSection('visual')}
           aria-expanded={expandedSections.visual}
         >
-          <h3>Visual</h3>
+          <h3>画面</h3>
           <span
             className={`settings-section-chevron${expandedSections.visual ? ' is-open' : ''}`}
           >
@@ -2439,7 +2408,7 @@ export function SettingsPanel({
         {expandedSections.visual && (
           <>
             <div className="settings-field">
-              <label htmlFor="visual-background-mode">背景モード</label>
+              <label htmlFor="visual-background-mode">背景模式</label>
               <select
                 id="visual-background-mode"
                 value={settings.visual.backgroundMode}
@@ -2450,13 +2419,13 @@ export function SettingsPanel({
                 }
                 disabled={disabled}
               >
-                <option value="default">通常背景</option>
-                <option value="green">グリーンバック</option>
+                <option value="default">默认背景</option>
+                <option value="green">绿幕</option>
               </select>
             </div>
 
             <div className="settings-field">
-              <label htmlFor="visual-layout-mode">表示モード</label>
+              <label htmlFor="visual-layout-mode">显示模式</label>
               <select
                 id="visual-layout-mode"
                 value={settings.visual.layoutMode}
@@ -2465,8 +2434,8 @@ export function SettingsPanel({
                 }
                 disabled={disabled}
               >
-                <option value="chat">通常チャット</option>
-                <option value="broadcast">ソロ配信</option>
+                <option value="chat">常规聊天</option>
+                <option value="broadcast">单人直播</option>
               </select>
             </div>
 
@@ -2481,7 +2450,7 @@ export function SettingsPanel({
                   disabled || settings.visual.layoutMode !== 'broadcast'
                 }
               />
-              <span>ソロ配信で入力欄を表示</span>
+              <span>单人直播时显示输入框</span>
             </label>
 
             <div className="settings-field">
@@ -2502,13 +2471,13 @@ export function SettingsPanel({
                   htmlFor="background-image"
                   className={`settings-file-trigger${disabled ? ' is-disabled' : ''}`}
                 >
-                  画像を選択
+                  选择图片
                 </label>
                 <span className="settings-file-hint">PNG / JPG</span>
               </div>
               <div className="settings-file-actions">
                 <span className="settings-file-status">
-                  {backgroundImageUrl ? '設定済み' : '未設定'}
+                  {backgroundImageUrl ? '已设置' : '未设置'}
                 </span>
                 {backgroundImageUrl && (
                   <button
@@ -2517,16 +2486,16 @@ export function SettingsPanel({
                     onClick={() => onBackgroundImageChange(null)}
                     disabled={disabled}
                   >
-                    クリア
+                    清除
                   </button>
                 )}
               </div>
             </div>
             <div className="settings-field">
-              <label>アバター（VRM）</label>
+              <label>虚拟角色（VRM）</label>
               <div className="settings-file-actions">
                 <span className="settings-file-status">
-                  /avatar/StarString1.0.vrm を使用
+                  /avatar/StarString1.0.vrm 使用中
                 </span>
               </div>
             </div>
@@ -2541,7 +2510,7 @@ export function SettingsPanel({
           onClick={() => toggleSection('emotionEffects')}
           aria-expanded={expandedSections.emotionEffects}
         >
-          <h3>感情表現エフェクト</h3>
+          <h3>表情特效</h3>
           <span
             className={`settings-section-chevron${expandedSections.emotionEffects ? ' is-open' : ''}`}
           >
@@ -2563,22 +2532,22 @@ export function SettingsPanel({
                 }
                 disabled={disabled}
               >
-                <option value="none">なし</option>
-                <option value="manual">手動ボタン</option>
-                <option value="linked">発話感情に連動のみ</option>
+                <option value="none">无</option>
+                <option value="manual">手动按钮</option>
+                <option value="linked">仅随语音情感联动</option>
               </select>
               <p className="settings-field-hint">
                 {settings.visual.vrmReactionControlMode === 'none'
-                  ? '手動ボタンを表示せず、発話時のエフェクトも表示しません。'
+                  ? '不显示手动按钮，播报时也不显示特效。'
                   : settings.visual.vrmReactionControlMode === 'manual'
-                    ? 'アバター上のボタンから視覚エフェクトをプレビューします。'
-                    : '発話の emotion タグを受け取った時点で視覚エフェクトを表示します。'}
+                    ? '通过角色上的按钮预览视觉特效。'
+                    : '收到语音 emotion 标签时显示视觉特效。'}
               </p>
             </div>
 
             <div className="settings-field">
               <span className="settings-field-label">
-                感情とエフェクトの対応
+                情感与特效映射
               </span>
               <div className="settings-emotion-mapping-list">
                 {VRM_REACTION_EMOTION_OPTIONS.map((emotionOption) => (
@@ -2624,7 +2593,7 @@ export function SettingsPanel({
                 onClick={resetVisualVrmEmotionEffectMap}
                 disabled={disabled}
               >
-                感情の割り当てを初期値に戻す
+                恢复情感映射默认值
               </button>
             </div>
           </>
@@ -2632,7 +2601,7 @@ export function SettingsPanel({
       </div>
 
       <div className="settings-section">
-        <h3>Screen Vision</h3>
+        <h3>屏幕视觉</h3>
         <ScreenVisionPanel
           disabled={disabled}
           settings={settings.screenVision}

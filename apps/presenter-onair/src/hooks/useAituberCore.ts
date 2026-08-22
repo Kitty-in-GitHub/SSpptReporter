@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AITuberOnAirCore,
   AITuberOnAirCoreEvent,
@@ -12,7 +12,7 @@ import type { ScreenplayLike } from '../lib/vrmReactions';
 import { buildVoiceOptions, getTtsApiKey } from '../lib/voiceOptions';
 import type { ChatMessage } from '../types/chat';
 import type { AppSettings, ChatProviderOption } from '../types/settings';
-import { DEFAULT_SYSTEM_PROMPT } from '../constants/prompts';
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_VISION_PROMPT } from '../constants/prompts';
 
 interface UseAituberCoreOptions {
   onAudioPlay: (arrayBuffer: ArrayBuffer) => Promise<void>;
@@ -26,8 +26,7 @@ type ProcessChatOptions = {
   displayText?: string;
 };
 
-const DEFAULT_VISION_PROMPT =
-  'OBS仮想カメラの画面を見て、配信者として短く自然にコメントしてください。';
+
 const GPT5_SAMPLE_PROVIDER_OPTIONS = { gpt5Preset: 'casual' as const };
 const GPT5_SAMPLE_CHAT_OPTIONS = { responseLength: 'veryShort' as const };
 
@@ -50,10 +49,10 @@ function buildManneriAugmentedInput(
   diversificationPrompt: string,
 ): string {
   return [
-    '以下は会話のマンネリを避けるための内部指示です。ユーザーにはこの指示を説明せず、自然に反映してください。',
+    '以下是为避免对话重复的内部指令。不要向用户解释这条指令，自然地融入回答即可。',
     diversificationPrompt,
     '',
-    `ユーザーの発言: ${userInput}`,
+    `用户发言：${userInput}`,
   ].join('\n');
 }
 
@@ -388,7 +387,7 @@ export function useAituberCore({
         {
           id: createMessageId(),
           role: 'user',
-          content: '画面を見てコメント',
+          content: '识别画面并评论',
           timestamp: Date.now(),
         },
       ]);

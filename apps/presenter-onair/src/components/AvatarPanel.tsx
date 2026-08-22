@@ -57,6 +57,10 @@ import {
   drawEmotionEffectAura,
   type EmotionEffect,
 } from '../lib/emotionEffectRendering';
+import {
+  UI_ANCHOR_TARGETS,
+  UI_EMOTION_SHORT,
+} from '../constants/uiZh';
 
 interface AvatarBackgroundProps {
   mouthLevel: number;
@@ -88,25 +92,12 @@ const IDLE_MOTION_AFTER_REACTION_DELAY_MS = 4200;
 const IDLE_MOTION_AFTER_SPEECH_DELAY_MS = 2600;
 const MANUAL_EFFECT_DURATION_MS = 2600;
 type EffectAnchorTarget = 'face' | 'leftEye' | 'rightEye';
-const EFFECT_ANCHOR_TARGETS = [
-  { target: 'face', label: '顔' },
-  { target: 'leftEye', label: '左目' },
-  { target: 'rightEye', label: '右目' },
-] as const satisfies ReadonlyArray<{
-  target: EffectAnchorTarget;
-  label: string;
-}>;
-const AVATAR_EXPRESSION_OPTIONS = [
-  { emotion: 'happy', label: '喜び' },
-  { emotion: 'surprised', label: '驚き' },
-  { emotion: 'sad', label: '悲しみ' },
-  { emotion: 'angry', label: '怒り' },
-  { emotion: 'relaxed', label: '安らぎ' },
-  { emotion: 'thinking', label: '考え中' },
-] as const satisfies ReadonlyArray<{
-  emotion: VrmReactionEmotion;
-  label: string;
-}>;
+const EFFECT_ANCHOR_TARGETS = UI_ANCHOR_TARGETS;
+const AVATAR_EXPRESSION_OPTIONS = (
+  Object.entries(UI_EMOTION_SHORT) as Array<[VrmReactionEmotion, string]>
+)
+  .filter(([emotion]) => emotion !== 'neutral')
+  .map(([emotion, label]) => ({ emotion, label }));
 
 const VRM_EFFECT_TEXTURE_SIZE = 256;
 const VRM_AURA_TEXTURE_RADIUS = 124;
@@ -658,7 +649,7 @@ export function AvatarBackground({
       console.error('Failed to initialize WebGLRenderer:', error);
       disposeVrmBackEffectSprites(backEffectScene, backEffectSprites);
       window.setTimeout(() => {
-        setLoadError('WebGLの初期化に失敗しました。');
+        setLoadError('WebGL 初始化失败。');
         setIsLoading(false);
       }, 0);
       return;
@@ -741,7 +732,7 @@ export function AvatarBackground({
         if (disposed) return;
         const vrm = gltf.userData.vrm as VRM | undefined;
         if (!vrm) {
-          setLoadError('VRMモデルの読み込みに失敗しました。');
+          setLoadError('VRM 模型加载失败。');
           setIsLoading(false);
           return;
         }
@@ -867,7 +858,7 @@ export function AvatarBackground({
       (error) => {
         if (disposed) return;
         console.error('Failed to load VRM:', error);
-        setLoadError('VRMモデルを読み込めませんでした。');
+        setLoadError('无法加载 VRM 模型。');
         setIsLoading(false);
       },
     );
@@ -1000,11 +991,11 @@ export function AvatarBackground({
           onAnchorPoint={handleAnchorPoint}
         />
         {isLoading && !loadError && (
-          <div className="avatar-status">VRMモデルを読み込み中...</div>
+          <div className="avatar-status">正在加载 VRM 模型…</div>
         )}
         {!isLoading && !loadError && (
           <div className="avatar-status avatar-guide">
-            ドラッグ: 回転 / ホイール: ズーム / ダブルクリック: リセット
+            拖拽旋转 / 滚轮缩放 / 双击重置
           </div>
         )}
         {loadError && <div className="avatar-error">{loadError}</div>}
@@ -1013,10 +1004,10 @@ export function AvatarBackground({
         <div
           className="avatar-expression-controls"
           role="group"
-          aria-label="VRMアバター感情表現エフェクト"
+          aria-label="VRM 表情特效"
         >
           <span className="avatar-expression-controls-label">
-            感情表現エフェクト
+            表情特效
           </span>
           {AVATAR_EXPRESSION_OPTIONS.map((option) => {
             const effect = emotionEffectMap[option.emotion];
@@ -1037,7 +1028,7 @@ export function AvatarBackground({
                   );
                 }}
                 title={
-                  effect ? undefined : 'エフェクトが割り当てられていません'
+                  effect ? undefined : '未分配特效'
                 }
               >
                 {option.label}
@@ -1061,7 +1052,7 @@ export function AvatarBackground({
             aria-pressed={anchorEditorOpen}
             onClick={() => setAnchorEditorOpen((current) => !current)}
           >
-            アンカー調整
+            锚点调整
           </button>
         </div>
       )}
@@ -1069,10 +1060,10 @@ export function AvatarBackground({
         <div
           className="avatar-anchor-editor"
           role="group"
-          aria-label="感情表現エフェクトアンカー調整"
+          aria-label="表情特效锚点调整"
         >
           <span className="avatar-anchor-editor-label">
-            配置先を選び、アバター上をクリック
+            选择部位后，在角色上点击
           </span>
           <div className="avatar-anchor-targets">
             {EFFECT_ANCHOR_TARGETS.map((option) => (
@@ -1090,7 +1081,7 @@ export function AvatarBackground({
             ))}
           </div>
           <label className="avatar-anchor-scale">
-            <span>エフェクトサイズ</span>
+            <span>特效大小</span>
             <input
               type="range"
               min={MIN_EMOTION_EFFECT_SCALE * 100}
@@ -1118,7 +1109,7 @@ export function AvatarBackground({
                 setAnchorTarget('face');
               }}
             >
-              初期値に戻す
+              恢复默认
             </button>
             <button
               type="button"

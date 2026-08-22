@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type GeminiNanoStatus =
   | 'checking'
@@ -22,8 +22,8 @@ interface GeminiNanoState {
 }
 
 const MODEL_IO = {
-  expectedInputs: [{ type: 'text', languages: ['ja'] }],
-  expectedOutputs: [{ type: 'text', languages: ['ja'] }],
+  expectedInputs: [{ type: 'text', languages: ['zh'] }],
+  expectedOutputs: [{ type: 'text', languages: ['zh'] }],
 };
 
 function getLanguageModel(): LanguageModelAPI | undefined {
@@ -64,7 +64,7 @@ export function useGeminiNanoStatus(enabled: boolean): GeminiNanoState {
         if (!cancelled) {
           setStatus('unavailable');
           setStatusText(
-            'Chrome 138+ で Built-in AI のフラグを有効にしてください。',
+            '请使用 Chrome 138+ 并启用 Built-in AI 相关实验标志。',
           );
         }
         return;
@@ -78,25 +78,23 @@ export function useGeminiNanoStatus(enabled: boolean): GeminiNanoState {
 
         if (result === 'available') {
           setStatus('available');
-          setStatusText('Gemini Nano は利用可能です。');
+          setStatusText('Gemini Nano 已可用。');
         } else if (result === 'downloading') {
           setStatus('downloading');
-          setStatusText('Gemini Nano モデルをダウンロード中です。');
+          setStatusText('正在下载 Gemini Nano 模型…');
         } else if (result === 'downloadable') {
           setStatus('downloadable');
-          setStatusText(
-            'Gemini Nano モデルの準備が必要です。「Prepare Model」を押してください。',
-          );
+          setStatusText('需要准备 Gemini Nano 模型，请点击「准备模型」。');
         } else {
           setStatus('unavailable');
           setStatusText(
-            'Chrome 138+ で Built-in AI のフラグを有効にしてください。',
+            '请使用 Chrome 138+ 并启用 Built-in AI 相关实验标志。',
           );
         }
       } catch {
         if (!cancelled) {
           setStatus('error');
-          setStatusText('Built-in AI の状態確認に失敗しました。');
+          setStatusText('无法确认 Built-in AI 状态。');
         }
       }
     }
@@ -120,7 +118,7 @@ export function useGeminiNanoStatus(enabled: boolean): GeminiNanoState {
     preparingRef.current = true;
     setIsPreparing(true);
     setStatus('downloading');
-    setStatusText('Gemini Nano モデルをダウンロード中です。');
+    setStatusText('正在下载 Gemini Nano 模型…');
     setDownloadProgress(0);
 
     lm.create({
@@ -140,9 +138,7 @@ export function useGeminiNanoStatus(enabled: boolean): GeminiNanoState {
             }
             const progress = Math.round((event.loaded || 0) * 100);
             setDownloadProgress(progress);
-            setStatusText(
-              `Gemini Nano モデルをダウンロード中です。${progress}%`,
-            );
+            setStatusText(`正在下载 Gemini Nano 模型…${progress}%`);
           },
         );
       },
@@ -157,7 +153,7 @@ export function useGeminiNanoStatus(enabled: boolean): GeminiNanoState {
           return;
         }
         setStatus('available');
-        setStatusText('Gemini Nano は利用可能です。');
+        setStatusText('Gemini Nano 已可用。');
         setDownloadProgress(null);
       })
       .catch(() => {
@@ -165,7 +161,7 @@ export function useGeminiNanoStatus(enabled: boolean): GeminiNanoState {
           return;
         }
         setStatus('error');
-        setStatusText('Gemini Nano モデルの準備に失敗しました。');
+        setStatusText('Gemini Nano 模型准备失败。');
         setDownloadProgress(null);
       })
       .finally(() => {

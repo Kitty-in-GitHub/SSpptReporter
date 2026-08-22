@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MutableRefObject } from 'react';
+﻿import { useEffect, useRef, type MutableRefObject } from 'react';
 import type { EmotionEffectAnchor } from '../lib/emotionEffectAnchor';
 import {
   drawEmotionEffectAura,
@@ -199,7 +199,7 @@ export function EmotionEffectOverlay({
         }`}
         aria-hidden={!anchorEditorOpen}
         aria-label={
-          anchorEditorOpen ? '感情表現エフェクトアンカー配置エリア' : undefined
+          anchorEditorOpen ? '表情特效锚点放置区域' : undefined
         }
         onPointerDown={(event) => {
           if (!anchorEditorOpen || !onAnchorPoint || event.button !== 0) return;

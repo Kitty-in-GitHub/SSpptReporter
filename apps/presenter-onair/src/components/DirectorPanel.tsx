@@ -142,7 +142,7 @@ export function DirectorPanel({
         boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
       }}
     >
-      <div style={{ fontWeight: 600, marginBottom: 8 }}>Director · Phase 0</div>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>导演台 · Phase 0</div>
       <div style={{ opacity: 0.85, marginBottom: 8 }}>{status}</div>
       {!validation.ok && (
         <div style={{ color: '#ff8f8f', marginBottom: 8 }}>
@@ -188,7 +188,7 @@ export function DirectorPanel({
         </button>
       </div>
       <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-        TTS：Settings → <code>{ttsEngine}</code>
+        TTS：设置 → <code>{ttsEngine}</code>
         {supportsLipSync ? '（支持口型）' : '（当前引擎无口型）'}
       </div>
       <div style={{ marginTop: 4, opacity: 0.7, fontSize: 12 }}>

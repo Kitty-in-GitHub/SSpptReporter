@@ -256,7 +256,7 @@ export function getDirectorSpeechConfigError(
 ): string | null {
   const { engine, speaker } = settings.tts;
   if (engine === 'none') {
-    return '请在 Settings 中将 TTS 引擎设为 VOICEVOX、Gemini TTS 等（勿选 none）';
+    return '请在设置中将 TTS 引擎设为 VOICEVOX、Gemini TTS 等（勿选 none）';
   }
   if (engine === 'webSpeech') {
     return null;
@@ -275,7 +275,7 @@ export function getDirectorSpeechConfigError(
     'gradium',
   ].includes(engine);
   if (needsApiKey && !apiKey.trim()) {
-    return `请在 Settings 中配置 ${engine} 的 API Key`;
+    return `请在设置中配置 ${engine} 的 API Key`;
   }
   if (engine === 'voicevox' && !settings.tts.voicevoxApiUrl?.trim()) {
     return '请配置 VOICEVOX 地址（如 http://127.0.0.1:50021）';
@@ -287,7 +287,7 @@ export function getDirectorSpeechConfigError(
     return '请配置 VoicePeak API URL';
   }
   if (!speaker.trim() && engine !== 'openaiCompatible' && engine !== 'piperPlus') {
-    return '请在 Settings 中选择 TTS Speaker';
+    return '请在设置中选择 TTS 发音人';
   }
   return null;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AITuberOnAirCore,
   getDefaultXaiReasoningEffort,
@@ -6,7 +6,7 @@ import {
   type RefreshOpenRouterFreeModelsResult,
   type XaiReasoningEffort,
 } from '@aituber-onair/core';
-import { DEFAULT_SYSTEM_PROMPT } from '../constants/prompts';
+import { DEFAULT_SCREEN_VISION_PROMPT, DEFAULT_SYSTEM_PROMPT } from '../constants/prompts';
 import {
   normalizeEmotionEffectAnchor,
   normalizeEmotionEffectAnchors,
@@ -32,7 +32,7 @@ type ApiKeyProvider = Exclude<ChatProviderOption, 'gemini-nano'>;
 const STORAGE_KEY = 'react-vrm-app-settings';
 const DEFAULT_AIVIS_CLOUD_MODEL_UUID = '22e8ed77-94fe-4ef2-871f-a86f94e9a579';
 const DEFAULT_GEMINI_TTS_MODEL = 'gemini-3.1-flash-tts-preview';
-const DEFAULT_GEMINI_TTS_LANGUAGE_CODE = 'ja-JP';
+const DEFAULT_GEMINI_TTS_LANGUAGE_CODE = 'zh-CN';
 const DEFAULT_OPENAI_COMPATIBLE_MODEL = 'local-model';
 const DEFAULT_OPENAI_COMPATIBLE_ENDPOINT =
   'http://localhost:11434/v1/chat/completions';
@@ -58,8 +58,7 @@ const DEFAULT_PIPER_PLUS_MODEL_FILE = 'tsukuyomi-wavlm-300epoch.onnx';
 const DEFAULT_PIPER_PLUS_VOICE_FILE = 'mei_normal.htsvoice';
 const DEFAULT_OPENROUTER_MAX_CANDIDATES = 1;
 const DEFAULT_OPENROUTER_MAX_WORKING = 10;
-const DEFAULT_SCREEN_VISION_PROMPT =
-  'OBS仮想カメラの画面を見て、配信者として短く自然にコメントしてください。';
+
 const EMPTY_MODEL_IDS: string[] = [];
 
 function getOrderedModels(provider: ChatProviderOption): string[] {

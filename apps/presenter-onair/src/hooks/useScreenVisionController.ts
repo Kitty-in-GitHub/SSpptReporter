@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ScreenVisionSettings } from '../types/settings';
 
 interface ScreenVisionControllerOptions {
@@ -51,7 +51,7 @@ export function useScreenVisionController({
 
   const refreshDevices = useCallback(async () => {
     if (!navigator.mediaDevices?.enumerateDevices) {
-      setStatusMessage('このブラウザではカメラ入力を利用できません。');
+      setStatusMessage('当前浏览器无法使用摄像头。');
       return;
     }
 
@@ -78,7 +78,7 @@ export function useScreenVisionController({
 
   const startStream = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      setStatusMessage('このブラウザではカメラ入力を利用できません。');
+      setStatusMessage('当前浏览器无法使用摄像头。');
       onEnabledChange(false);
       return;
     }
@@ -96,13 +96,13 @@ export function useScreenVisionController({
       video.srcObject = nextStream;
       await video.play();
       setStream(nextStream);
-      setStatusMessage('プレビューを開始しました。');
+      setStatusMessage('已开始预览。');
       await refreshDevices();
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : 'カメラを開始できませんでした。';
+          : '无法启动摄像头。';
       setStatusMessage(message);
       onEnabledChange(false);
     }
@@ -121,21 +121,21 @@ export function useScreenVisionController({
 
     const video = captureVideoRef.current;
     if (!video || !stream) {
-      setStatusMessage('プレビューを開始してください。');
+      setStatusMessage('请先开始预览。');
       return;
     }
 
     const imageDataUrl = captureVideoFrame(video);
     if (!imageDataUrl) {
-      setStatusMessage('映像フレームを取得できませんでした。');
+      setStatusMessage('无法获取视频帧。');
       return;
     }
 
-    setStatusMessage('画面を送信しています...');
+    setStatusMessage('正在发送画面…');
     captureRunningRef.current = true;
     try {
       await onCapture(imageDataUrl, settings.prompt);
-      setStatusMessage('画面を送信しました。');
+      setStatusMessage('画面已发送。');
     } finally {
       captureRunningRef.current = false;
     }

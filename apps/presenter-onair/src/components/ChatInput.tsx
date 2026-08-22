@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { UI_CHAT } from '../constants/uiZh';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 interface ChatInputProps {
@@ -56,8 +57,8 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           placeholder={
             speech.listening
-              ? '音声認識中...'
-              : 'メッセージを入力 (Enter で送信)'
+              ? UI_CHAT.listeningPlaceholder
+              : UI_CHAT.inputPlaceholder
           }
           disabled={disabled}
           rows={2}
@@ -73,10 +74,10 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           disabled={!speech.supported}
           title={
             !speech.supported
-              ? 'お使いのブラウザは音声認識に対応していません（Chrome推奨）'
+              ? UI_CHAT.micUnsupported
               : speech.listening
-                ? '音声認識を停止'
-                : '音声認識を開始'
+                ? UI_CHAT.micStop
+                : UI_CHAT.micStart
           }
         >
           🎤
@@ -86,7 +87,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           className="send-button"
           disabled={disabled || !text.trim()}
         >
-          送信
+          {UI_CHAT.send}
         </button>
       </div>
     </div>

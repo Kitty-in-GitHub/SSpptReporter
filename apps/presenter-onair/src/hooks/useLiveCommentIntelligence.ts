@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ChatServiceFactory,
   getDefaultXaiReasoningEffort,
@@ -123,7 +123,7 @@ export function useLiveCommentIntelligence({
           blockDurationMs: viewerBlockDurationMs,
         },
         context: {
-          language: 'ja',
+          language: 'auto',
           style: 'aituber-live',
         },
       }),
@@ -184,7 +184,7 @@ export function useLiveCommentIntelligence({
           mode: 'live',
           topic: streamTopic.trim() || undefined,
           title: streamTitle.trim() || undefined,
-          language: 'ja',
+          language: 'auto',
         },
       });
 
@@ -197,7 +197,7 @@ export function useLiveCommentIntelligence({
 
       const promptForCore = formatCommentIntelligencePrompt(result);
       const authorName = selected.author.displayName ?? selected.author.name;
-      const displayText = `「${authorName}」さんのコメント: ${selected.text}`;
+      const displayText = `「${authorName}」的弹幕: ${selected.text}`;
 
       await processChat(promptForCore, { displayText });
     } finally {

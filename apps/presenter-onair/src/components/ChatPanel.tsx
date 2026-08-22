@@ -1,3 +1,4 @@
+import { UI_SETTINGS } from '../constants/uiZh';
 import type { ChatMessage } from '../types/chat';
 import type { VisualSettings } from '../types/settings';
 import type { EmotionEffectAnchor } from '../lib/emotionEffectAnchor';
@@ -77,7 +78,7 @@ export function ChatPanel({
         type="button"
         className="settings-button chat-settings-button"
         onClick={onToggleSettings}
-        aria-label="Settings"
+        aria-label={UI_SETTINGS.ariaLabel}
       >
         ⚙
       </button>

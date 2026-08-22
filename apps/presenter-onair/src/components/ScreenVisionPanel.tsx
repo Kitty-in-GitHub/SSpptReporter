@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import type { useScreenVisionController } from '../hooks/useScreenVisionController';
 import type { ScreenVisionSettings } from '../types/settings';
 
@@ -14,11 +14,11 @@ interface ScreenVisionPanelProps {
 }
 
 const AUTO_CAPTURE_INTERVAL_OPTIONS = [
-  { value: 0, label: '手動のみ' },
-  { value: 30_000, label: '30秒ごと' },
-  { value: 60_000, label: '1分ごと' },
-  { value: 120_000, label: '2分ごと' },
-  { value: 300_000, label: '5分ごと' },
+  { value: 0, label: '仅手动' },
+  { value: 30_000, label: '每 30 秒' },
+  { value: 60_000, label: '每 1 分钟' },
+  { value: 120_000, label: '每 2 分钟' },
+  { value: 300_000, label: '每 5 分钟' },
 ] as const;
 
 export function ScreenVisionPanel({
@@ -50,7 +50,7 @@ export function ScreenVisionPanel({
   return (
     <div className="screen-vision-panel">
       <div className="settings-field">
-        <label htmlFor="screen-vision-device">カメラ入力</label>
+        <label htmlFor="screen-vision-device">摄像头输入</label>
         <select
           id="screen-vision-device"
           value={settings.deviceId}
@@ -58,16 +58,16 @@ export function ScreenVisionPanel({
           disabled={disabled}
         >
           {controller.devices.length === 0 && (
-            <option value="">カメラを検出中...</option>
+            <option value="">正在检测摄像头…</option>
           )}
           {controller.devices.map((device, index) => (
             <option key={device.deviceId || index} value={device.deviceId}>
-              {device.label || `Camera ${index + 1}`}
+              {device.label || `摄像头 ${index + 1}`}
             </option>
           ))}
         </select>
         <p className="settings-field-hint">
-          OBS Virtual Cameraを選択してプレビューを開始してください。
+          选择 OBS Virtual Camera 后，点击「开始预览」。
         </p>
       </div>
 
@@ -79,7 +79,7 @@ export function ScreenVisionPanel({
       />
 
       <div className="settings-field">
-        <label htmlFor="screen-vision-prompt">画面認識時の追加指示</label>
+        <label htmlFor="screen-vision-prompt">识屏附加指令</label>
         <textarea
           id="screen-vision-prompt"
           rows={4}
@@ -88,12 +88,12 @@ export function ScreenVisionPanel({
           disabled={disabled}
         />
         <p className="settings-field-hint">
-          LLM設定の共通System Promptに加えて、画像と一緒に送信されます。
+          除 LLM 通用系统提示词外，该文本会随截图一并发送。
         </p>
       </div>
 
       <div className="settings-field">
-        <label htmlFor="screen-vision-interval">自動で見る間隔</label>
+        <label htmlFor="screen-vision-interval">自动识屏间隔</label>
         <select
           id="screen-vision-interval"
           value={settings.autoIntervalMs}
@@ -109,7 +109,7 @@ export function ScreenVisionPanel({
           ))}
         </select>
         <p className="settings-field-hint">
-          プレビュー中だけ、選択した間隔で現在のフレームを送信します。設定画面を閉じても動作します。
+          仅在预览期间按所选间隔发送当前帧；关闭设置窗口后仍会继续。
         </p>
       </div>
 
@@ -120,7 +120,7 @@ export function ScreenVisionPanel({
           onClick={controller.isPreviewing ? controller.stop : controller.start}
           disabled={disabled}
         >
-          {controller.isPreviewing ? 'プレビュー停止' : 'プレビュー開始'}
+          {controller.isPreviewing ? '停止预览' : '开始预览'}
         </button>
         <button
           type="button"
@@ -128,7 +128,7 @@ export function ScreenVisionPanel({
           onClick={() => void controller.captureAndSend()}
           disabled={disabled || !controller.isPreviewing}
         >
-          画面を見る
+          识别当前画面
         </button>
       </div>
 

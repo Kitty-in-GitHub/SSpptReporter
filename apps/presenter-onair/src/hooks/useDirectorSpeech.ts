@@ -68,7 +68,7 @@ export function useDirectorSpeech({
 
       const voiceService = voiceServiceRef.current;
       if (!voiceService) {
-        throw new Error('TTS 未初始化，请检查 Settings 中的引擎配置');
+        throw new Error('TTS 未初始化，请检查设置中的引擎配置');
       }
 
       await voiceService.speakText(trimmed);

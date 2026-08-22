@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CommentIntelligenceSettings,
   ManneriSettings,
   StreamSettings,
@@ -15,16 +15,16 @@ const MANNERI_SIMILARITY_THRESHOLD_OPTIONS = [
 const MANNERI_LOOKBACK_WINDOW_OPTIONS = [4, 6, 8, 10, 15, 20] as const;
 const MANNERI_MIN_MESSAGE_LENGTH_OPTIONS = [4, 8, 10, 16, 24] as const;
 const VIEWER_BLOCK_DURATION_OPTIONS = [
-  { label: '1分', value: 60 * 1000 },
-  { label: '5分', value: 5 * 60 * 1000 },
-  { label: '10分', value: 10 * 60 * 1000 },
-  { label: '30分', value: 30 * 60 * 1000 },
+  { label: '1 分钟', value: 60 * 1000 },
+  { label: '5 分钟', value: 5 * 60 * 1000 },
+  { label: '10 分钟', value: 10 * 60 * 1000 },
+  { label: '30 分钟', value: 30 * 60 * 1000 },
 ] as const;
 const MANNERI_COOLDOWN_OPTIONS = [
-  { label: '1分', value: 60 * 1000 },
-  { label: '3分', value: 3 * 60 * 1000 },
-  { label: '5分', value: 5 * 60 * 1000 },
-  { label: '10分', value: 10 * 60 * 1000 },
+  { label: '1 分钟', value: 60 * 1000 },
+  { label: '3 分钟', value: 3 * 60 * 1000 },
+  { label: '5 分钟', value: 5 * 60 * 1000 },
+  { label: '10 分钟', value: 10 * 60 * 1000 },
 ] as const;
 
 interface StreamSettingsProps {
@@ -156,7 +156,7 @@ export function StreamSettings({
           onClick={onToggleExpand}
           aria-expanded={isExpanded}
         >
-          <h3>Stream</h3>
+          <h3>直播</h3>
           <span
             className={`settings-section-chevron${isExpanded ? ' is-open' : ''}`}
           >
@@ -167,7 +167,7 @@ export function StreamSettings({
         {isExpanded && (
           <>
             <div className="settings-field">
-              <label htmlFor="stream-platform">Platform</label>
+              <label htmlFor="stream-platform">直播平台</label>
               <select
                 id="stream-platform"
                 value={stream.platform}
@@ -187,7 +187,7 @@ export function StreamSettings({
             {isYoutubeSelected && (
               <>
                 <div className="settings-field">
-                  <label htmlFor="stream-youtube-apikey">YouTube API Key</label>
+                  <label htmlFor="stream-youtube-apikey">YouTube API 密钥</label>
                   <input
                     id="stream-youtube-apikey"
                     type="password"
@@ -279,7 +279,7 @@ export function StreamSettings({
                   <label>Twitch Connection</label>
                   {stream.twitchAccessToken ? (
                     <div className="settings-file-actions">
-                      <span className="settings-file-status">Connected</span>
+                      <span className="settings-file-status">已连接</span>
                       <button
                         type="button"
                         className="settings-clear-button"
@@ -380,7 +380,7 @@ export function StreamSettings({
           onClick={onToggleCommentIntelligence}
           aria-expanded={isCommentIntelligenceExpanded}
         >
-          <h3>Comment Intelligence</h3>
+          <h3>弹幕智能</h3>
           <span
             className={`settings-section-chevron${isCommentIntelligenceExpanded ? ' is-open' : ''}`}
           >
@@ -402,15 +402,15 @@ export function StreamSettings({
                   disabled={disabled}
                   style={{ marginRight: 8 }}
                 />
-                コメントインテリジェンス
+                弹幕智能
               </label>
               <p className="settings-field-hint">
-                AIが処理中または発話中のライブコメントを一時的にためて、優先度付けと安全判定を行い、選ばれた1件だけを送信します。
+                在处理或播报期间暂存直播弹幕，进行优先级与安全判断，每次只发送一条。
               </p>
             </div>
 
             <div className="settings-field">
-              <label htmlFor="comment-intelligence-mode">解析モード</label>
+              <label htmlFor="comment-intelligence-mode">解析模式</label>
               <select
                 id="comment-intelligence-mode"
                 value={commentIntelligence.mode}
@@ -421,32 +421,32 @@ export function StreamSettings({
                 }
                 disabled={commentControlsDisabled}
               >
-                <option value="rules">ルール（APIキー不要）</option>
-                <option value="hybrid">ハイブリッド</option>
-                <option value="llm-assisted">LLMアシスト</option>
+                <option value="rules">规则（无需 API）</option>
+                <option value="hybrid">混合</option>
+                <option value="llm-assisted">LLM 辅助</option>
               </select>
               <p className="settings-field-hint">
-                ルールは追加のLLM呼び出しなしで動作します。ハイブリッドとLLMアシストはLLMタブのプロバイダーとモデルを使い、利用できない場合はルールに戻ります。
+                规则模式不额外调用 LLM。混合与 LLM 辅助使用「大模型」区的提供商与模型；不可用时回退到规则。
               </p>
               <div className="settings-mode-help">
                 <p>
-                  <strong>ルール:</strong>
-                  追加コストなしで固定ルールにより、安全判定、優先度付け、要約を行います。
+                  <strong>规则：</strong>
+                  无额外成本，用固定规则做安全判断、优先级与摘要。
                 </p>
                 <p>
-                  <strong>ハイブリッド:</strong>
-                  通常はルールで処理し、コメント数が設定値以上のときだけLLM解析を使います。
+                  <strong>混合：</strong>
+                  平时用规则；仅当弹幕数达到阈值时才调用 LLM 分析。
                 </p>
                 <p>
-                  <strong>LLMアシスト:</strong>
-                  毎回LLMでコメント群を分析します。文脈理解は強くなりますが、APIコストと遅延が増えます。
+                  <strong>LLM 辅助：</strong>
+                  每次用 LLM 分析弹幕，理解更好，但 API 成本与延迟更高。
                 </p>
               </div>
             </div>
 
             <div className="settings-field">
               <label htmlFor="comment-intelligence-stream-topic">
-                配信テーマ
+                直播主题
               </label>
               <input
                 id="comment-intelligence-stream-topic"
@@ -455,14 +455,14 @@ export function StreamSettings({
                 onChange={(event) =>
                   updateCommentIntelligenceStreamTopic(event.target.value)
                 }
-                placeholder="例: AIツール紹介"
+                placeholder="例：AI 工具介绍"
                 disabled={commentControlsDisabled}
               />
             </div>
 
             <div className="settings-field">
               <label htmlFor="comment-intelligence-stream-title">
-                配信タイトル
+                直播标题
               </label>
               <input
                 id="comment-intelligence-stream-title"
@@ -471,14 +471,14 @@ export function StreamSettings({
                 onChange={(event) =>
                   updateCommentIntelligenceStreamTitle(event.target.value)
                 }
-                placeholder="例: 今日の便利ツールを試す"
+                placeholder="例：今日试用效率工具"
                 disabled={commentControlsDisabled}
               />
             </div>
 
             <div className="settings-field">
               <label htmlFor="comment-intelligence-topic-filter">
-                テーマ優先度
+                主题优先级
               </label>
               <select
                 id="comment-intelligence-topic-filter"
@@ -492,8 +492,8 @@ export function StreamSettings({
                 disabled={commentControlsDisabled}
               >
                 <option value="off">通常</option>
-                <option value="prefer">テーマ重視</option>
-                <option value="require">テーマ外を拾わない</option>
+                <option value="prefer">偏重主题</option>
+                <option value="require">忽略主题外内容</option>
               </select>
             </div>
 
@@ -519,7 +519,7 @@ export function StreamSettings({
 
             <div className="settings-field">
               <label htmlFor="comment-intelligence-batch-size">
-                1回の解析で扱う最大コメント数
+                单次解析处理的最大弹幕数
               </label>
               <select
                 id="comment-intelligence-batch-size"
@@ -542,7 +542,7 @@ export function StreamSettings({
             {commentIntelligence.mode !== 'rules' && (
               <div className="settings-field">
                 <label htmlFor="comment-intelligence-llm-min-comments">
-                  LLM解析を使う最小コメント数
+                  启用 LLM 解析的最小弹幕数
                 </label>
                 <select
                   id="comment-intelligence-llm-min-comments"
@@ -577,16 +577,16 @@ export function StreamSettings({
                   disabled={commentControlsDisabled}
                   style={{ marginRight: 8 }}
                 />
-                危険な視聴者を一時的にスキップ
+                暂时跳过高风险观众
               </label>
               <p className="settings-field-hint">
-                高リスクコメントを送った視聴者は、指定期間中の解析対象から外します。危険なコメントがそのままcoreへ渡らないようにします。
+                发送高风险弹幕的观众在设定时间内不再参与解析，避免直接进入核心对话。
               </p>
             </div>
 
             <div className="settings-field">
               <label htmlFor="comment-intelligence-block-duration">
-                スキップ期間
+                跳过时长
               </label>
               <select
                 id="comment-intelligence-block-duration"
@@ -619,7 +619,7 @@ export function StreamSettings({
           onClick={onToggleManneri}
           aria-expanded={isManneriExpanded}
         >
-          <h3>Manneri</h3>
+          <h3>话题多样性</h3>
           <span
             className={`settings-section-chevron${isManneriExpanded ? ' is-open' : ''}`}
           >
@@ -644,13 +644,13 @@ export function StreamSettings({
                 Manneri
               </label>
               <p className="settings-field-hint">
-                会話が似た流れに偏ったとき、応答前に話題転換の指示を内部的に追加します。
+                当对话过于重复时，在回复前内部加入换话题指令。
               </p>
             </div>
 
             <div className="settings-field">
               <label htmlFor="manneri-similarity-threshold">
-                類似度しきい値
+                相似度阈值
               </label>
               <select
                 id="manneri-similarity-threshold"
@@ -667,12 +667,12 @@ export function StreamSettings({
                 ))}
               </select>
               <p className="settings-field-hint">
-                低いほど介入しやすく、高いほど強い重複だけを検出します。
+                数值越低越容易介入，越高则只检测明显重复。
               </p>
             </div>
 
             <div className="settings-field">
-              <label htmlFor="manneri-lookback-window">直近メッセージ数</label>
+              <label htmlFor="manneri-lookback-window">最近消息条数</label>
               <select
                 id="manneri-lookback-window"
                 value={manneri.lookbackWindow}
@@ -711,7 +711,7 @@ export function StreamSettings({
 
             <div className="settings-field">
               <label htmlFor="manneri-min-message-length">
-                最小メッセージ長
+                最短消息长度
               </label>
               <select
                 id="manneri-min-message-length"
