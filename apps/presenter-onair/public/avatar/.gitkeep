@@ -1,0 +1,6 @@
+# Runtime avatar slot (Phase 0)
+
+Place your VRoid-exported `.vrm` here as `miko.vrm`
+(or change the path in OnAir settings).
+
+VRM files are **not** committed — copy from `assets/avatars/` after clone.

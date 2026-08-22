@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.tools/
+.tmp/
+*.log
+.DS_Store
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# VRM skins stay local (copy into runtime path per README)
+*.vrm
+assets/avatars/*
+!assets/avatars/README.md
+apps/presenter-onair/public/avatar/*.vrm
+apps/presenter-web/public/avatars/*.vrm
+
+# Optional local media / large binaries
+*.wav
+*.mp3
+*.mp4

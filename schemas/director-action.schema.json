@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ssreporter.local/schemas/director-action.schema.json",
+  "title": "DirectorAction",
+  "description": "虚拟主播表演导演指令。Brain/LLM 只输出此类结构化意图；Body/Voice/UI 负责执行。不包含骨骼级控制。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mode", "utterance"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "协议版本，便于前后端兼容演进"
+    },
+    "action_id": {
+      "type": "string",
+      "description": "本条指令唯一 ID，用于打断、去重与日志关联",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["present", "qa", "idle", "system"],
+      "description": "present=讲稿；qa=评委问答；idle=待机；system=系统提示（如请重复）"
+    },
+    "utterance": {
+      "type": "string",
+      "description": "要朗读的完整中文文本；空字符串表示本拍只做动作不说话",
+      "maxLength": 2000
+    },
+    "emotion": {
+      "type": "string",
+      "enum": [
+        "neutral",
+        "confident",
+        "friendly",
+        "serious",
+        "thinking",
+        "apologetic",
+        "emphatic"
+      ],
+      "default": "neutral",
+      "description": "映射到 VRM Expression 权重表，由 Body 层解释"
+    },
+    "gesture": {
+      "type": "string",
+      "enum": [
+        "none",
+        "idle",
+        "bow",
+        "nod",
+        "think",
+        "explain",
+        "point_slide",
+        "open_hands",
+        "emphasize"
+      ],
+      "default": "none",
+      "description": "播放预置 VRMA/Mixamo 片段名"
+    },
+    "camera": {
+      "type": "string",
+      "enum": ["bust", "medium", "wide"],
+      "default": "bust",
+      "description": "虚拟机位；答辩默认 bust 半身"
+    },
+    "slide_action": {
+      "$ref": "#/$defs/SlideAction"
+    },
+    "emphasis": {
+      "type": "array",
+      "description": "utterance 内需要加重语气的区间，用 [start, end] 字符下标（含 start 不含 end）",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": { "type": "number", "minimum": 0 }
+      }
+    },
+    "qa": {
+      "$ref": "#/$defs/QaMeta"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["normal", "high", "emergency"],
+      "default": "normal",
+      "description": "emergency 可打断当前播报队列（如评委插话后的改口）"
+    },
+    "barge_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "为 true 时：停止当前 TTS/口型队列，再执行本条"
+    },
+    "notes": {
+      "type": "string",
+      "description": "仅日志/调试用，不朗读"
+    }
+  },
+  "$defs": {
+    "SlideAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "幻灯控制；无翻页需求时可省略整段",
+      "properties": {
+        "goto": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "跳转到的页码（1-based）"
+        },
+        "next": {
+          "type": "boolean",
+          "description": "相对当前页 +1"
+        },
+        "prev": {
+          "type": "boolean",
+          "description": "相对当前页 -1"
+        },
+        "highlight": {
+          "type": "string",
+          "description": "页面内强调区域的逻辑名（由呈现层映射到高亮框）"
+        },
+        "cite_only": {
+          "type": "boolean",
+          "default": false,
+          "description": "true=只翻页展示证据，不额外讲解"
+        }
+      }
+    },
+    "QaMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "仅 mode=qa 时建议填写",
+      "properties": {
+        "question_summary": {
+          "type": "string",
+          "description": "对评委问题的简短复述，便于日志与字幕"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "回答把握；低于阈值可走 admit_unknown Skill"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["slide", "faq", "doc", "skill"]
+              },
+              "ref": {
+                "type": "string",
+                "description": "如页码、FAQ id、md 路径"
+              }
+            }
+          }
+        },
+        "admit_unknown": {
+          "type": "boolean",
+          "default": false,
+          "description": "明确表示材料未覆盖，避免胡说"
+        }
+      }
+    }
+  }
+}
