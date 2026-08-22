@@ -8,6 +8,14 @@ import {
 } from '@aituber-onair/core';
 import { DEFAULT_SCREEN_VISION_PROMPT, DEFAULT_SYSTEM_PROMPT } from '../constants/prompts';
 import {
+  DEFAULT_AIVIS_SPEECH_API_URL,
+  DEFAULT_VOICEVOX_API_URL,
+  DEFAULT_VOICEPEAK_API_URL,
+  resolveAivisSpeechApiUrl,
+  resolveVoicepeakApiUrl,
+  resolveVoicevoxApiUrl,
+} from '../lib/voiceOptions';
+import {
   normalizeEmotionEffectAnchor,
   normalizeEmotionEffectAnchors,
   type EmotionEffectAnchor,
@@ -217,6 +225,9 @@ function getDefaultSettings(): AppSettings {
       piperPlusVoiceFile: DEFAULT_PIPER_PLUS_VOICE_FILE,
       piperPlusSpeed: '',
       piperPlusNoiseScale: '',
+      voicevoxApiUrl: DEFAULT_VOICEVOX_API_URL,
+      aivisSpeechApiUrl: DEFAULT_AIVIS_SPEECH_API_URL,
+      voicepeakApiUrl: DEFAULT_VOICEPEAK_API_URL,
       webSpeechRate: '1',
       webSpeechPitch: '1',
       webSpeechVolume: '1',
@@ -692,6 +703,18 @@ export function useSettings() {
           engine === 'piperPlus'
             ? prev.tts.piperPlusNoiseScale || ''
             : prev.tts.piperPlusNoiseScale,
+        voicevoxApiUrl:
+          engine === 'voicevox'
+            ? resolveVoicevoxApiUrl(prev.tts.voicevoxApiUrl)
+            : prev.tts.voicevoxApiUrl,
+        aivisSpeechApiUrl:
+          engine === 'aivisSpeech'
+            ? resolveAivisSpeechApiUrl(prev.tts.aivisSpeechApiUrl)
+            : prev.tts.aivisSpeechApiUrl,
+        voicepeakApiUrl:
+          engine === 'voicepeak'
+            ? resolveVoicepeakApiUrl(prev.tts.voicepeakApiUrl)
+            : prev.tts.voicepeakApiUrl,
       },
     }));
   }, []);

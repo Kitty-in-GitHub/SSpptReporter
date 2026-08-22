@@ -10,6 +10,22 @@
   XaiSampleRate,
 } from '@aituber-onair/core';
 import type { AppSettings, ChatProviderOption, TTSEngineOption } from '../types/settings';
+
+export const DEFAULT_VOICEVOX_API_URL = 'http://localhost:50021';
+export const DEFAULT_AIVIS_SPEECH_API_URL = 'http://localhost:10101';
+export const DEFAULT_VOICEPEAK_API_URL = 'http://localhost:20202';
+
+export function resolveVoicevoxApiUrl(url?: string): string {
+  return url?.trim() || DEFAULT_VOICEVOX_API_URL;
+}
+
+export function resolveAivisSpeechApiUrl(url?: string): string {
+  return url?.trim() || DEFAULT_AIVIS_SPEECH_API_URL;
+}
+
+export function resolveVoicepeakApiUrl(url?: string): string {
+  return url?.trim() || DEFAULT_VOICEPEAK_API_URL;
+}
 export function getTtsApiKey(
   settings: AppSettings,
   getApiKeyForProvider: (provider: ChatProviderOption) => string,
@@ -126,9 +142,9 @@ export function buildVoiceOptions(
     geminiTtsModel: tts.geminiTtsModel,
     geminiTtsLanguageCode: tts.geminiTtsLanguageCode?.trim() || undefined,
     geminiTtsPrompt: tts.geminiTtsPrompt?.trim() || undefined,
-    voicevoxApiUrl: tts.voicevoxApiUrl,
-    voicepeakApiUrl: tts.voicepeakApiUrl,
-    aivisSpeechApiUrl: tts.aivisSpeechApiUrl,
+    voicevoxApiUrl: resolveVoicevoxApiUrl(tts.voicevoxApiUrl),
+    voicepeakApiUrl: resolveVoicepeakApiUrl(tts.voicepeakApiUrl),
+    aivisSpeechApiUrl: resolveAivisSpeechApiUrl(tts.aivisSpeechApiUrl),
     groupId: tts.minimaxGroupId,
     endpoint: tts.engine === 'minimax' ? 'global' : undefined,
     aivisCloudModelUuid: tts.aivisCloudModelUuid,
@@ -277,14 +293,20 @@ export function getDirectorSpeechConfigError(
   if (needsApiKey && !apiKey.trim()) {
     return `请在设置中配置 ${engine} 的 API Key`;
   }
-  if (engine === 'voicevox' && !settings.tts.voicevoxApiUrl?.trim()) {
+  if (engine === 'voicevox' && !resolveVoicevoxApiUrl(settings.tts.voicevoxApiUrl)) {
     return '请配置 VOICEVOX 地址（如 http://127.0.0.1:50021）';
   }
-  if (engine === 'aivisSpeech' && !settings.tts.aivisSpeechApiUrl?.trim()) {
-    return '请配置 AivisSpeech API URL';
+  if (
+    engine === 'aivisSpeech' &&
+    !resolveAivisSpeechApiUrl(settings.tts.aivisSpeechApiUrl)
+  ) {
+    return '请配置 AivisSpeech API 地址（默认 http://localhost:10101）';
   }
-  if (engine === 'voicepeak' && !settings.tts.voicepeakApiUrl?.trim()) {
-    return '请配置 VoicePeak API URL';
+  if (
+    engine === 'voicepeak' &&
+    !resolveVoicepeakApiUrl(settings.tts.voicepeakApiUrl)
+  ) {
+    return '请配置 VoicePeak API 地址';
   }
   if (!speaker.trim() && engine !== 'openaiCompatible' && engine !== 'piperPlus') {
     return '请在设置中选择 TTS 发音人';

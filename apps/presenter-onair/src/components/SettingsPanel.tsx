@@ -22,8 +22,14 @@ import type {
   VrmEmotionEffect,
   VrmReactionControlMode,
 } from '../lib/vrmReactions';
-import type { ChatProviderOption, TTSEngineOption } from '../types/settings';
+import {
+  DEFAULT_AIVIS_SPEECH_API_URL,
+  DEFAULT_VOICEVOX_API_URL,
+  resolveAivisSpeechApiUrl,
+  resolveVoicevoxApiUrl,
+} from '../lib/voiceOptions';
 import type { useSettings } from '../hooks/useSettings';
+import type { ChatProviderOption, TTSEngineOption } from '../types/settings';
 
 type SettingsHook = ReturnType<typeof useSettings>;
 type ScreenVisionController = ReturnType<typeof useScreenVisionController>;
@@ -428,8 +434,8 @@ export function SettingsPanel({
     const fetchSpeakers = async () => {
       const isVoicevox = settings.tts.engine === 'voicevox';
       const baseUrl = isVoicevox
-        ? settings.tts.voicevoxApiUrl || 'http://localhost:50021'
-        : settings.tts.aivisSpeechApiUrl || 'http://localhost:10101';
+        ? resolveVoicevoxApiUrl(settings.tts.voicevoxApiUrl)
+        : resolveAivisSpeechApiUrl(settings.tts.aivisSpeechApiUrl);
 
       try {
         const response = await fetch(`${baseUrl}/speakers`, {
@@ -2198,7 +2204,7 @@ export function SettingsPanel({
                   <input
                     id="tts-voicevox-url"
                     type="text"
-                    value={settings.tts.voicevoxApiUrl || ''}
+                    value={settings.tts.voicevoxApiUrl || DEFAULT_VOICEVOX_API_URL}
                     onChange={(e) => updateVoicevoxApiUrl(e.target.value)}
                     placeholder="http://localhost:50021"
                     disabled={disabled}
@@ -2269,7 +2275,7 @@ export function SettingsPanel({
                   <input
                     id="tts-aivis-url"
                     type="text"
-                    value={settings.tts.aivisSpeechApiUrl || ''}
+                    value={settings.tts.aivisSpeechApiUrl || DEFAULT_AIVIS_SPEECH_API_URL}
                     onChange={(e) => updateAivisSpeechApiUrl(e.target.value)}
                     placeholder="http://localhost:10101"
                     disabled={disabled}
