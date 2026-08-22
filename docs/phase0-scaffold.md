@@ -4,8 +4,8 @@
 不接完整 Brain / PPT；只搭骨架与可跑通的身体。
 
 > **现状（已落地）**：身体底座为 `apps/presenter-onair`（AITuber OnAir VRM 模板）；  
-> npm workspaces；`packages/director` 已接线；运行时模型 `public/avatar/miko.vrm`。  
-> 旧名 `presenter-web` 仅作占位说明，请以 `presenter-onair` 为准。
+> npm workspaces；`packages/director` 已接线；运行时模型 `public/avatar/StarString1.0.vrm`。  
+> 跨设备接力见 [`AGENTS.md`](../AGENTS.md) 与 [`dev-log.md`](./dev-log.md)。
 
 ---
 

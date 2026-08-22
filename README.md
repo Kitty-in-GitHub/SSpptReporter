@@ -41,6 +41,17 @@ npm run dev
 
 讲稿 / FAQ / persona 放在 `content/`，随**私有**仓库同步（勿公开仓）。
 
+## 跨设备开发（给其他 AI / 换机）
+
+| 文档 | 用途 |
+|------|------|
+| [`AGENTS.md`](./AGENTS.md) | **AI 接手入口**（状态、约束、下一步） |
+| [`docs/dev-log.md`](./docs/dev-log.md) | **开发日志**（每完成一项在顶部追加） |
+| [`docs/cross-device-dev.md`](./docs/cross-device-dev.md) | 换机搭建、同步、排错 |
+| [`docs/decisions.md`](./docs/decisions.md) | 架构决策（ADR，避免重复争论） |
+
+私仓：`https://github.com/Kitty-in-GitHub/SSpptReporter.git`
+
 ## 架构文档
 
 - 技术路径：`docs/virtual-host-presenter-path.md`
