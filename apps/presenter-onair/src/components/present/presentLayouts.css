@@ -58,6 +58,13 @@
   line-height: 1;
 }
 
+.present-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .present-stage {
   position: relative;
   flex: 1;
@@ -189,4 +196,80 @@
 .present-avatar-stage .avatar-background {
   position: absolute;
   inset: 0;
+}
+
+.present-playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.present-playback-controls button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.present-playback-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.present-playback-primary {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  font-weight: 600;
+}
+
+.present-script-cue {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 12, 20, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.present-script-cue-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  min-height: 52px;
+}
+
+.present-script-cue-progress {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #93c5fd;
+  white-space: nowrap;
+}
+
+.present-script-cue-text {
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #f1f5f9;
+}
+
+.present-script-cue-idle {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.55;
+}
+
+.present-script-cue-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.18);
+  color: #fcd34d;
 }

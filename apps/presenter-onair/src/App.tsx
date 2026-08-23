@@ -13,6 +13,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { useAudioLipsync } from './hooks/useAudioLipsync';
 import { useDeckScriptEditor } from './hooks/useDeckScriptEditor';
 import { useDirectorSpeech } from './hooks/useDirectorSpeech';
+import { useDeckScriptPlayback } from './hooks/useDeckScriptPlayback';
 import { useDirectorQueue } from './hooks/useDirectorQueue';
 import { useSlideDeck } from './hooks/useSlideDeck';
 import { useAituberCore } from './hooks/useAituberCore';
@@ -188,6 +189,12 @@ export default function App() {
     onResetEmotion: () =>
       emitAvatarReaction({ type: 'reset', fadeMs: 280 }),
     onSlideAction: slideDeck.applyDirectorSlideAction,
+  });
+
+  const deckScriptPlayback = useDeckScriptPlayback({
+    activeDeckId: settingsHook.settings.present.activeDeckId,
+    deckScriptUrl: slideDeck.deck?.scriptUrl,
+    queue: directorQueue,
   });
 
   const isDirectorBusy =
@@ -412,6 +419,10 @@ export default function App() {
           presentLayout={settingsHook.settings.present.presentLayout}
           pipCorner={settingsHook.settings.present.pipCorner}
           slideDeck={slideDeck}
+          directorQueue={directorQueue}
+          playbackDisabled={isProcessing || isSpeaking || isDirectorBusy}
+          isDeckScriptLoading={deckScriptPlayback.isLoading}
+          onPlayDeckScript={() => void deckScriptPlayback.playDeckScript()}
           onPresentLayoutChange={settingsHook.updatePresentLayout}
           onSessionModeChange={settingsHook.updatePresentSessionMode}
           onToggleSettings={toggleSettingsDialog}
@@ -483,12 +494,12 @@ export default function App() {
       )}
 
       <DirectorPanel
+        sessionMode={sessionMode}
         disabled={isProcessing || isSpeaking || isDirectorBusy}
         supportsLipSync={supportsLipSync}
         ttsEngine={directorTtsEngine}
-        activeDeckId={settingsHook.settings.present.activeDeckId}
-        deckScriptUrl={slideDeck.deck?.scriptUrl}
         queue={directorQueue}
+        deckPlayback={deckScriptPlayback}
         onSpeak={speakDirector}
         onApplyEmotion={emitAvatarReaction}
         onResetEmotion={() =>

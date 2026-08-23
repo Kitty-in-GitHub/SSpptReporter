@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { UI_SETTINGS } from '../../constants/uiZh';
+import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
 import { PRESENT_LAYOUT_LABELS, type PresentLayout, type SessionMode } from '../../types/present';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
 import type { EmotionEffectAnchor } from '../../lib/emotionEffectAnchor';
@@ -11,13 +13,21 @@ import type {
 import { AvatarBackground } from '../AvatarPanel';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentControls } from './PresentControls';
+import { PresentPlaybackControls } from './PresentPlaybackControls';
+import { PresentScriptCue } from './PresentScriptCue';
 import { SessionModeToolbar } from './SessionModeToolbar';
 import './presentLayouts.css';
+
+type DirectorQueueApi = ReturnType<typeof useDirectorQueue>;
 
 interface PresentShellProps {
   presentLayout: PresentLayout;
   pipCorner: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   slideDeck: SlideDeckController;
+  directorQueue: DirectorQueueApi;
+  playbackDisabled?: boolean;
+  isDeckScriptLoading?: boolean;
+  onPlayDeckScript: () => void;
   onPresentLayoutChange: (layout: PresentLayout) => void;
   onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
@@ -34,10 +44,27 @@ interface PresentShellProps {
   backgroundMode: 'default' | 'green';
 }
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  const tag = target.tagName;
+  return (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    target.isContentEditable
+  );
+}
+
 export function PresentShell({
   presentLayout,
   pipCorner,
   slideDeck,
+  directorQueue,
+  playbackDisabled = false,
+  isDeckScriptLoading = false,
+  onPlayDeckScript,
   onPresentLayoutChange,
   onSessionModeChange,
   onToggleSettings,
@@ -62,6 +89,51 @@ export function PresentShell({
       : slideDeck.loadError
         ? 'deck 加载失败'
         : '未加载 deck');
+
+  const currentAction =
+    directorQueue.currentIndex >= 0
+      ? directorQueue.queue[directorQueue.currentIndex]
+      : null;
+
+  const slideControlsDisabled =
+    !slideDeck.pdfUrl ||
+    slideDeck.isLoading ||
+    Boolean(slideDeck.loadError);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      if (event.key === ' ' || event.code === 'Space') {
+        const { playbackState } = directorQueue;
+        if (playbackState === 'playing') {
+          event.preventDefault();
+          directorQueue.pause();
+        } else if (playbackState === 'paused') {
+          event.preventDefault();
+          directorQueue.resume();
+        }
+        return;
+      }
+
+      if (slideControlsDisabled) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        slideDeck.prevPage();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        slideDeck.nextPage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [directorQueue, slideControlsDisabled, slideDeck]);
 
   const avatarStage = showAvatar ? (
     <div
@@ -137,37 +209,52 @@ export function PresentShell({
         <PresentControls
           currentPage={slideDeck.currentPage}
           pageCount={slideDeck.pageCount}
-          disabled={
-            !slideDeck.pdfUrl ||
-            slideDeck.isLoading ||
-            Boolean(slideDeck.loadError)
-          }
+          disabled={slideControlsDisabled}
           onPrev={slideDeck.prevPage}
           onNext={slideDeck.nextPage}
         />
+        <PresentPlaybackControls
+          playbackState={directorQueue.playbackState}
+          playDisabled={playbackDisabled}
+          isLoading={isDeckScriptLoading}
+          onPlayDeckScript={onPlayDeckScript}
+          onPause={directorQueue.pause}
+          onResume={directorQueue.resume}
+          onSkip={directorQueue.skip}
+          onStop={directorQueue.stop}
+        />
       </SessionModeToolbar>
 
-      <div className="present-stage">
-        {presentLayout === 'slide_full' && slideStage}
-        {presentLayout === 'avatar_full' && avatarStage}
-        {presentLayout === 'split_slide_left' && (
-          <>
-            {slideStage}
-            {avatarStage}
-          </>
-        )}
-        {presentLayout === 'split_slide_right' && (
-          <>
-            {avatarStage}
-            {slideStage}
-          </>
-        )}
-        {presentLayout === 'pip' && (
-          <>
-            {slideStage}
-            {avatarStage}
-          </>
-        )}
+      <div className="present-body">
+        <div className="present-stage">
+          {presentLayout === 'slide_full' && slideStage}
+          {presentLayout === 'avatar_full' && avatarStage}
+          {presentLayout === 'split_slide_left' && (
+            <>
+              {slideStage}
+              {avatarStage}
+            </>
+          )}
+          {presentLayout === 'split_slide_right' && (
+            <>
+              {avatarStage}
+              {slideStage}
+            </>
+          )}
+          {presentLayout === 'pip' && (
+            <>
+              {slideStage}
+              {avatarStage}
+            </>
+          )}
+        </div>
+
+        <PresentScriptCue
+          playbackState={directorQueue.playbackState}
+          currentAction={currentAction ?? null}
+          currentIndex={directorQueue.currentIndex}
+          queueLength={directorQueue.queue.length}
+        />
       </div>
     </div>
   );
