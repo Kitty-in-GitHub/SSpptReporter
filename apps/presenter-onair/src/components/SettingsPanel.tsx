@@ -300,6 +300,7 @@ export function SettingsPanel({
   updatePiperPlusNoiseScale,
   updateVisualBackgroundMode,
   updateVisualLayoutMode,
+  updateVisualVrmFramingZoom,
   updateVisualShowInputInBroadcast,
   updateVisualVrmReactionControlMode,
   updateVisualVrmEmotionEffect,
@@ -2437,14 +2438,36 @@ export function SettingsPanel({
                 value={settings.visual.backgroundMode}
                 onChange={(e) =>
                   updateVisualBackgroundMode(
-                    e.target.value as 'default' | 'green',
+                    e.target.value as 'default' | 'green' | 'transparent',
                   )
                 }
                 disabled={disabled}
               >
                 <option value="default">默认背景</option>
+                <option value="transparent">透明（仅皮套）</option>
                 <option value="green">绿幕</option>
               </select>
+            </div>
+
+            <div className="settings-field">
+              <label htmlFor="visual-vrm-framing-zoom">
+                镜头拉近（{Math.round(settings.visual.vrmFramingZoom * 100)}%）
+              </label>
+              <input
+                id="visual-vrm-framing-zoom"
+                type="range"
+                min={50}
+                max={200}
+                step={5}
+                value={Math.round(settings.visual.vrmFramingZoom * 100)}
+                onChange={(e) =>
+                  updateVisualVrmFramingZoom(Number(e.target.value) / 100)
+                }
+                disabled={disabled}
+              />
+              <p className="settings-field-hint">
+                滚轮仍可微调；双击皮套区域恢复当前滑块构图。锚点里的「特效大小」不是镜头缩放。
+              </p>
             </div>
 
             <div className="settings-field">

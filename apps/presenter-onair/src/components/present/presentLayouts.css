@@ -116,6 +116,79 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
+.present-avatar-stage.is-transparent-bg {
+  background: transparent !important;
+}
+
+.present-avatar-stage.is-pip-borderless {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent !important;
+}
+
+.present-pip-drag-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(232, 238, 248, 0.85);
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 12, 20, 0.72),
+    rgba(8, 12, 20, 0)
+  );
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.present-avatar-stage.is-pip-borderless .present-pip-drag-handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.present-avatar-stage.is-pip-borderless:hover .present-pip-drag-handle,
+.present-avatar-stage.is-pip-borderless:focus-within .present-pip-drag-handle {
+  opacity: 1;
+}
+
+.present-pip-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.present-pip-borderless {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.present-pip-borderless input {
+  accent-color: #3b82f6;
+}
+
+.present-pip-reset {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .present-layout-pip.present-pip-bottom-right .present-avatar-stage {
   right: 20px;
   bottom: 20px;

@@ -63,13 +63,15 @@ export function ChatPanel({
   const panelStyle =
     visual.backgroundMode === 'green'
       ? { backgroundColor: '#00ff00' }
-      : backgroundImageUrl
-        ? {
-            backgroundImage: `url(${backgroundImageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }
-        : undefined;
+      : visual.backgroundMode === 'transparent'
+        ? { backgroundColor: 'transparent' }
+        : backgroundImageUrl
+          ? {
+              backgroundImage: `url(${backgroundImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+          : undefined;
 
   return (
     <div
@@ -116,6 +118,7 @@ export function ChatPanel({
         effectAnchor={effectAnchor}
         onEffectAnchorChange={onEffectAnchorChange}
         onEffectAnchorReset={onEffectAnchorReset}
+        vrmFramingZoom={visual.vrmFramingZoom}
       />
       {isBroadcast ? (
         broadcastCaption && (

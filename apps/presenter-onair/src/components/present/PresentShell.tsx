@@ -1,7 +1,18 @@
-import { useEffect } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { UI_SETTINGS } from '../../constants/uiZh';
 import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
-import { PRESENT_LAYOUT_LABELS, type PresentLayout, type SessionMode } from '../../types/present';
+import {
+  PRESENT_LAYOUT_LABELS,
+  type PipCorner,
+  type PresentLayout,
+  type SessionMode,
+} from '../../types/present';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
 import type { EmotionEffectAnchor } from '../../lib/emotionEffectAnchor';
 import type {
@@ -13,6 +24,7 @@ import type {
 import { AvatarBackground } from '../AvatarPanel';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentControls } from './PresentControls';
+import { PresentPipControls } from './PresentPipControls';
 import { PresentPlaybackControls } from './PresentPlaybackControls';
 import { PresentScriptCue } from './PresentScriptCue';
 import { SessionModeToolbar } from './SessionModeToolbar';
@@ -22,13 +34,19 @@ type DirectorQueueApi = ReturnType<typeof useDirectorQueue>;
 
 interface PresentShellProps {
   presentLayout: PresentLayout;
-  pipCorner: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  pipCorner: PipCorner;
+  pipBorderless: boolean;
+  pipOffsetX: number;
+  pipOffsetY: number;
   slideDeck: SlideDeckController;
   directorQueue: DirectorQueueApi;
   playbackDisabled?: boolean;
   isDeckScriptLoading?: boolean;
   onPlayDeckScript: () => void;
   onPresentLayoutChange: (layout: PresentLayout) => void;
+  onPipCornerChange: (corner: PipCorner) => void;
+  onPipBorderlessChange: (borderless: boolean) => void;
+  onPipOffsetChange: (offsetX: number, offsetY: number) => void;
   onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
   mouthLevel: number;
@@ -41,7 +59,8 @@ interface PresentShellProps {
   onEffectAnchorChange: (anchor: EmotionEffectAnchor) => void;
   onEffectAnchorReset: () => void;
   backgroundImageUrl?: string | null;
-  backgroundMode: 'default' | 'green';
+  backgroundMode: 'default' | 'green' | 'transparent';
+  vrmFramingZoom: number;
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -57,15 +76,41 @@ function isEditableTarget(target: EventTarget | null): boolean {
   );
 }
 
+function resolveAvatarStageStyle(
+  backgroundMode: PresentShellProps['backgroundMode'],
+  backgroundImageUrl?: string | null,
+): CSSProperties | undefined {
+  if (backgroundMode === 'green') {
+    return { backgroundColor: '#00ff00' };
+  }
+  if (backgroundMode === 'transparent') {
+    return { backgroundColor: 'transparent' };
+  }
+  if (backgroundImageUrl) {
+    return {
+      backgroundImage: `url(${backgroundImageUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    };
+  }
+  return undefined;
+}
+
 export function PresentShell({
   presentLayout,
   pipCorner,
+  pipBorderless,
+  pipOffsetX,
+  pipOffsetY,
   slideDeck,
   directorQueue,
   playbackDisabled = false,
   isDeckScriptLoading = false,
   onPlayDeckScript,
   onPresentLayoutChange,
+  onPipCornerChange,
+  onPipBorderlessChange,
+  onPipOffsetChange,
   onSessionModeChange,
   onToggleSettings,
   mouthLevel,
@@ -79,9 +124,19 @@ export function PresentShell({
   onEffectAnchorReset,
   backgroundImageUrl,
   backgroundMode,
+  vrmFramingZoom,
 }: PresentShellProps) {
+  const pipDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+
   const showSlide = presentLayout !== 'avatar_full';
   const showAvatar = presentLayout !== 'slide_full';
+  const isPipLayout = presentLayout === 'pip';
   const deckTitle =
     slideDeck.deck?.title ??
     (slideDeck.isLoading
@@ -99,6 +154,52 @@ export function PresentShell({
     !slideDeck.pdfUrl ||
     slideDeck.isLoading ||
     Boolean(slideDeck.loadError);
+
+  const finishPipDrag = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = pipDragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) {
+        return;
+      }
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      pipDragRef.current = null;
+    },
+    [],
+  );
+
+  const handlePipDragStart = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!isPipLayout || event.button !== 0) {
+        return;
+      }
+      pipDragRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: pipOffsetX,
+        originY: pipOffsetY,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    },
+    [isPipLayout, pipOffsetX, pipOffsetY],
+  );
+
+  const handlePipDragMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = pipDragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) {
+        return;
+      }
+      onPipOffsetChange(
+        drag.originX + (event.clientX - drag.startX),
+        drag.originY + (event.clientY - drag.startY),
+      );
+    },
+    [onPipOffsetChange],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -135,21 +236,37 @@ export function PresentShell({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [directorQueue, slideControlsDisabled, slideDeck]);
 
+  const avatarStageClassName = [
+    'present-avatar-stage',
+    backgroundMode === 'transparent' ? 'is-transparent-bg' : '',
+    isPipLayout ? 'is-pip-window' : '',
+    isPipLayout && pipBorderless ? 'is-pip-borderless' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const avatarStageStyle: CSSProperties = {
+    ...resolveAvatarStageStyle(backgroundMode, backgroundImageUrl),
+    ...(isPipLayout
+      ? { transform: `translate(${pipOffsetX}px, ${pipOffsetY}px)` }
+      : {}),
+  };
+
   const avatarStage = showAvatar ? (
-    <div
-      className="present-avatar-stage"
-      style={
-        backgroundMode === 'green'
-          ? { backgroundColor: '#00ff00' }
-          : backgroundImageUrl
-            ? {
-                backgroundImage: `url(${backgroundImageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : undefined
-      }
-    >
+    <div className={avatarStageClassName} style={avatarStageStyle}>
+      {isPipLayout ? (
+        <div
+          className="present-pip-drag-handle"
+          onPointerDown={handlePipDragStart}
+          onPointerMove={handlePipDragMove}
+          onPointerUp={finishPipDrag}
+          onPointerCancel={finishPipDrag}
+          onLostPointerCapture={finishPipDrag}
+          title="拖动调整画中画位置"
+        >
+          ⠿ 拖动
+        </div>
+      ) : null}
       <AvatarBackground
         mouthLevel={mouthLevel}
         isSpeaking={isSpeaking}
@@ -160,6 +277,7 @@ export function PresentShell({
         effectAnchor={effectAnchor}
         onEffectAnchorChange={onEffectAnchorChange}
         onEffectAnchorReset={onEffectAnchorReset}
+        vrmFramingZoom={vrmFramingZoom}
       />
     </div>
   ) : null;
@@ -206,6 +324,15 @@ export function PresentShell({
             ))}
           </select>
         </label>
+        {isPipLayout ? (
+          <PresentPipControls
+            pipCorner={pipCorner}
+            pipBorderless={pipBorderless}
+            onPipCornerChange={onPipCornerChange}
+            onPipBorderlessChange={onPipBorderlessChange}
+            onResetPipOffset={() => onPipOffsetChange(0, 0)}
+          />
+        ) : null}
         <PresentControls
           currentPage={slideDeck.currentPage}
           pageCount={slideDeck.pageCount}

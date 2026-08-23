@@ -31,6 +31,9 @@ export interface PresentSettings {
   presentLayout: PresentLayout;
   activeDeckId: string;
   pipCorner: PipCorner;
+  pipBorderless: boolean;
+  pipOffsetX: number;
+  pipOffsetY: number;
 }
 
 export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
@@ -38,7 +41,17 @@ export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
   presentLayout: 'split_slide_left',
   activeDeckId: 'demo',
   pipCorner: 'bottom-right',
+  pipBorderless: false,
+  pipOffsetX: 0,
+  pipOffsetY: 0,
 };
+
+const PIP_CORNERS: PipCorner[] = [
+  'bottom-right',
+  'bottom-left',
+  'top-right',
+  'top-left',
+];
 
 export function normalizePresentSettings(
   partial?: Partial<PresentSettings> | null,
@@ -53,8 +66,25 @@ export function normalizePresentSettings(
         ? partial.sessionMode
         : DEFAULT_PRESENT_SETTINGS.sessionMode,
     presentLayout: partial?.presentLayout ?? DEFAULT_PRESENT_SETTINGS.presentLayout,
-    pipCorner: partial?.pipCorner ?? DEFAULT_PRESENT_SETTINGS.pipCorner,
+    pipCorner: PIP_CORNERS.includes(partial?.pipCorner as PipCorner)
+      ? (partial!.pipCorner as PipCorner)
+      : DEFAULT_PRESENT_SETTINGS.pipCorner,
+    pipBorderless: partial?.pipBorderless ?? DEFAULT_PRESENT_SETTINGS.pipBorderless,
+    pipOffsetX: clampNumber(partial?.pipOffsetX, -480, 480, 0),
+    pipOffsetY: clampNumber(partial?.pipOffsetY, -480, 480, 0),
   };
+}
+
+function clampNumber(
+  value: number | undefined,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(Math.max(value, min), max);
 }
 
 export const PRESENT_LAYOUT_LABELS: Record<PresentLayout, string> = {
@@ -63,4 +93,11 @@ export const PRESENT_LAYOUT_LABELS: Record<PresentLayout, string> = {
   pip: '幻灯全屏 + 画中画',
   slide_full: '纯幻灯',
   avatar_full: '纯主播',
+};
+
+export const PIP_CORNER_LABELS: Record<PipCorner, string> = {
+  'bottom-right': '右下',
+  'bottom-left': '左下',
+  'top-right': '右上',
+  'top-left': '左上',
 };

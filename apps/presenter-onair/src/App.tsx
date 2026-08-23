@@ -418,12 +418,18 @@ export default function App() {
         <PresentShell
           presentLayout={settingsHook.settings.present.presentLayout}
           pipCorner={settingsHook.settings.present.pipCorner}
+          pipBorderless={settingsHook.settings.present.pipBorderless}
+          pipOffsetX={settingsHook.settings.present.pipOffsetX}
+          pipOffsetY={settingsHook.settings.present.pipOffsetY}
           slideDeck={slideDeck}
           directorQueue={directorQueue}
           playbackDisabled={isProcessing || isSpeaking || isDirectorBusy}
           isDeckScriptLoading={deckScriptPlayback.isLoading}
           onPlayDeckScript={() => void deckScriptPlayback.playDeckScript()}
           onPresentLayoutChange={settingsHook.updatePresentLayout}
+          onPipCornerChange={settingsHook.updatePresentPipCorner}
+          onPipBorderlessChange={settingsHook.updatePresentPipBorderless}
+          onPipOffsetChange={settingsHook.updatePresentPipOffset}
           onSessionModeChange={settingsHook.updatePresentSessionMode}
           onToggleSettings={toggleSettingsDialog}
           mouthLevel={mouthLevel}
@@ -451,6 +457,7 @@ export default function App() {
           }
           backgroundImageUrl={backgroundImageUrl}
           backgroundMode={settingsHook.settings.visual.backgroundMode}
+          vrmFramingZoom={settingsHook.settings.visual.vrmFramingZoom}
         />
       ) : (
         <ChatPanel

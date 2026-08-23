@@ -39,9 +39,15 @@ import type {
   TTSEngineOption,
 } from '../types/settings';
 import {
+  DEFAULT_VRM_FRAMING_ZOOM,
+  MAX_VRM_FRAMING_ZOOM,
+  MIN_VRM_FRAMING_ZOOM,
+} from '../types/settings';
+import {
   DEFAULT_PRESENT_SETTINGS,
   normalizePresentSettings,
   type PresentLayout,
+  type PresentSettings,
   type SessionMode,
 } from '../types/present';
 
@@ -246,6 +252,7 @@ function getDefaultSettings(): AppSettings {
       backgroundMode: 'default',
       layoutMode: 'chat',
       showInputInBroadcast: false,
+      vrmFramingZoom: DEFAULT_VRM_FRAMING_ZOOM,
       vrmEmotionEffectAnchors: {},
       vrmReactionControlMode: 'none',
       vrmEmotionEffectMap: { ...DEFAULT_VRM_EMOTION_EFFECT_MAP },
@@ -311,6 +318,13 @@ function normalizeTtsSettings(
   return merged;
 }
 
+function clampVrmFramingZoom(value: number | undefined): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_VRM_FRAMING_ZOOM;
+  }
+  return Math.min(Math.max(value, MIN_VRM_FRAMING_ZOOM), MAX_VRM_FRAMING_ZOOM);
+}
+
 function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -330,6 +344,12 @@ function loadSettings(): AppSettings {
         visual: {
           ...defaults.visual,
           ...saved.visual,
+          backgroundMode:
+            saved.visual?.backgroundMode === 'green' ||
+            saved.visual?.backgroundMode === 'transparent'
+              ? saved.visual.backgroundMode
+              : defaults.visual.backgroundMode,
+          vrmFramingZoom: clampVrmFramingZoom(saved.visual?.vrmFramingZoom),
           vrmEmotionEffectAnchors: normalizeEmotionEffectAnchors(
             saved.visual?.vrmEmotionEffectAnchors,
           ),
@@ -995,6 +1015,41 @@ export function useSettings() {
     }));
   }, []);
 
+  const updatePresentPipCorner = useCallback((pipCorner: PresentSettings['pipCorner']) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({ ...prev.present, pipCorner }),
+    }));
+  }, []);
+
+  const updatePresentPipBorderless = useCallback((pipBorderless: boolean) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({ ...prev.present, pipBorderless }),
+    }));
+  }, []);
+
+  const updatePresentPipOffset = useCallback((pipOffsetX: number, pipOffsetY: number) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({
+        ...prev.present,
+        pipOffsetX,
+        pipOffsetY,
+      }),
+    }));
+  }, []);
+
+  const updateVisualVrmFramingZoom = useCallback((vrmFramingZoom: number) => {
+    setSettings((prev) => ({
+      ...prev,
+      visual: {
+        ...prev.visual,
+        vrmFramingZoom: clampVrmFramingZoom(vrmFramingZoom),
+      },
+    }));
+  }, []);
+
   const updateVisualShowInputInBroadcast = useCallback(
     (showInputInBroadcast: boolean) => {
       setSettings((prev) => ({
@@ -1429,6 +1484,10 @@ export function useSettings() {
     updatePresentSessionMode,
     updatePresentLayout,
     updatePresentActiveDeckId,
+    updatePresentPipCorner,
+    updatePresentPipBorderless,
+    updatePresentPipOffset,
+    updateVisualVrmFramingZoom,
     updateVisualShowInputInBroadcast,
     updateVisualVrmReactionControlMode,
     updateVisualVrmEmotionEffect,
