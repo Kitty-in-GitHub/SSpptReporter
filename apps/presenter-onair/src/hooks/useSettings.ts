@@ -15,6 +15,7 @@ import {
   DEFAULT_VOICEVOX_API_URL,
   DEFAULT_VOICEPEAK_API_URL,
   resolveAivisSpeechApiUrl,
+  resolveOpenAiCompatibleApiUrl,
   resolveVoicepeakApiUrl,
   resolveVoicevoxApiUrl,
 } from '../lib/voiceOptions';
@@ -284,6 +285,25 @@ function getDefaultSettings(): AppSettings {
   };
 }
 
+function normalizeTtsSettings(
+  saved: Partial<AppSettings['tts']> | undefined,
+  defaults: AppSettings['tts'],
+): AppSettings['tts'] {
+  const merged = { ...defaults, ...saved };
+  if (merged.engine === 'openaiCompatible') {
+    merged.openAiCompatibleApiUrl = resolveOpenAiCompatibleApiUrl(
+      merged.openAiCompatibleApiUrl,
+    );
+    if (!merged.openAiCompatibleModel?.trim()) {
+      merged.openAiCompatibleModel = DEFAULT_EDGE_TTS_MODEL;
+    }
+    if (!merged.speaker?.trim()) {
+      merged.speaker = DEFAULT_EDGE_TTS_VOICE;
+    }
+  }
+  return merged;
+}
+
 function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -299,7 +319,7 @@ function loadSettings(): AppSettings {
             saved.llm?.openRouterDynamicFreeModels,
           ),
         },
-        tts: { ...defaults.tts, ...saved.tts },
+        tts: normalizeTtsSettings(saved.tts, defaults.tts),
         visual: {
           ...defaults.visual,
           ...saved.visual,

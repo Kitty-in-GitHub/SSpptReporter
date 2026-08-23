@@ -20,7 +20,15 @@
 
 ---
 
-### 2026-08-22 · 修复 dev 启动：清端口 + Windows Python 检测
+### 2026-08-22 · 修复 TTS「Network error while fetching」
+
+- **原因**：浏览器从 `localhost:5173` 跨域请求 `127.0.0.1:5050` 可能被拦截；localStorage 里空的 model/url 也会导致异常
+- **做了什么**：
+  - Vite 代理 `/api/tts` → `127.0.0.1:5050`（开发默认同源）
+  - `resolveOpenAiCompatibleApiUrl` 自动把本地 5050 直连改写为代理
+  - 加载设置时补全空的 model / speaker
+- **验证**：重启 `npm run dev` → Director 试播；`GET /api/tts/health` 200
+- **相关文件**：`vite.config.ts`、`voiceOptions.ts`、`useSettings.ts`
 
 - **做了什么**：
   - `scripts/dev-stop.mjs`：`npm run dev` 前自动释放 5173/5174/5050（含 IPv6）

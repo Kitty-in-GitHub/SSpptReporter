@@ -15,9 +15,15 @@ export const DEFAULT_VOICEVOX_API_URL = 'http://localhost:50021';
 export const DEFAULT_AIVIS_SPEECH_API_URL = 'http://localhost:10101';
 export const DEFAULT_VOICEPEAK_API_URL = 'http://localhost:20202';
 
-/** Edge-TTS + openai-edge-tts 等本地 OpenAI 兼容网关（见 docs/tts-selection.md） */
-export const DEFAULT_EDGE_TTS_API_URL =
+/** Edge-TTS 网关直连地址（文档 / 单独调试用） */
+export const DEFAULT_EDGE_TTS_API_URL_DIRECT =
   'http://127.0.0.1:5050/v1/audio/speech';
+
+/** 开发时走 Vite 同源代理，避免浏览器跨域拦截 localhost → 127.0.0.1 */
+export const DEFAULT_EDGE_TTS_API_URL =
+  typeof import.meta !== 'undefined' && import.meta.env.DEV
+    ? '/api/tts/v1/audio/speech'
+    : DEFAULT_EDGE_TTS_API_URL_DIRECT;
 export const DEFAULT_EDGE_TTS_MODEL = 'tts-1';
 export const DEFAULT_EDGE_TTS_VOICE = 'zh-CN-XiaoxiaoNeural';
 
@@ -31,6 +37,29 @@ export function resolveAivisSpeechApiUrl(url?: string): string {
 
 export function resolveVoicepeakApiUrl(url?: string): string {
   return url?.trim() || DEFAULT_VOICEPEAK_API_URL;
+}
+
+const LOCAL_TTS_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+function isLocalTtsGatewayUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return LOCAL_TTS_HOSTS.has(parsed.hostname) && parsed.port === '5050';
+  } catch {
+    return false;
+  }
+}
+
+/** 开发环境将本地 5050 直连改写为 Vite 同源代理 */
+export function resolveOpenAiCompatibleApiUrl(url?: string): string {
+  const trimmed = url?.trim();
+  if (trimmed) {
+    if (import.meta.env.DEV && isLocalTtsGatewayUrl(trimmed)) {
+      return DEFAULT_EDGE_TTS_API_URL;
+    }
+    return trimmed;
+  }
+  return DEFAULT_EDGE_TTS_API_URL;
 }
 export function getTtsApiKey(
   settings: AppSettings,
@@ -140,8 +169,9 @@ export function buildVoiceOptions(
         ? undefined
         : tts.speaker,
     apiKey,
-    openAiCompatibleApiUrl: tts.openAiCompatibleApiUrl,
-    openAiCompatibleModel: tts.openAiCompatibleModel,
+    openAiCompatibleApiUrl: resolveOpenAiCompatibleApiUrl(tts.openAiCompatibleApiUrl),
+    openAiCompatibleModel:
+      tts.openAiCompatibleModel?.trim() || DEFAULT_EDGE_TTS_MODEL,
     openAiCompatibleSpeed: Number.isNaN(parsedOpenAiCompatibleSpeed)
       ? undefined
       : parsedOpenAiCompatibleSpeed,
@@ -300,7 +330,7 @@ export function getDirectorSpeechConfigError(
   }
   if (
     engine === 'openaiCompatible' &&
-    !settings.tts.openAiCompatibleApiUrl?.trim()
+    !resolveOpenAiCompatibleApiUrl(settings.tts.openAiCompatibleApiUrl)
   ) {
     return `请配置 OpenAI-Compatible TTS 地址（Edge-TTS 默认 ${DEFAULT_EDGE_TTS_API_URL}）`;
   }

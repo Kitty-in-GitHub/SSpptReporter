@@ -25,6 +25,7 @@ import type {
 import {
   DEFAULT_AIVIS_SPEECH_API_URL,
   DEFAULT_EDGE_TTS_API_URL,
+  DEFAULT_EDGE_TTS_API_URL_DIRECT,
   DEFAULT_EDGE_TTS_MODEL,
   DEFAULT_EDGE_TTS_VOICE,
   DEFAULT_VOICEVOX_API_URL,
@@ -2131,6 +2132,11 @@ export function SettingsPanel({
                     placeholder={DEFAULT_EDGE_TTS_API_URL}
                     disabled={disabled}
                   />
+                  <p className="settings-field-hint">
+                    开发默认走同源代理 {DEFAULT_EDGE_TTS_API_URL}（需{' '}
+                    <code>npm run dev</code> 同时起 TTS 网关）。直连网关可用{' '}
+                    {DEFAULT_EDGE_TTS_API_URL_DIRECT}。
+                  </p>
                 </div>
                 <div className="settings-field">
                   <label htmlFor="tts-openai-compatible-model">模型</label>
@@ -2159,8 +2165,8 @@ export function SettingsPanel({
                   />
                   <p className="settings-field-hint">
                     Edge-TTS 示例：{DEFAULT_EDGE_TTS_VOICE}（晓晓）、
-                    zh-CN-YunxiNeural（云希）。需先在本机启动 openai-edge-tts
-                    等服务，见 docs/tts-selection.md。
+                    zh-CN-YunxiNeural（云希）。运行根目录{' '}
+                    <code>npm run dev</code> 即可，无需单独装 openai-edge-tts。
                   </p>
                 </div>
                 <div className="settings-field">
