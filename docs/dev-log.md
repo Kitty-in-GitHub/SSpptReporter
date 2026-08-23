@@ -20,6 +20,14 @@
 
 ---
 
+### 2026-08-22 · Phase 1.5：应用内编辑讲稿（A+C）
+
+- **做了什么**：
+  - 第三种模式「编辑讲稿」：左 PDF + 右表单；localStorage 草稿 + dev 写盘 API
+  - `PUT /api/content/decks/:id/slides/:page`、`POST .../compile`
+  - `serializeSlideMarkdown` / `parseSlideMarkdownToDraft`；`ScriptEditorShell`
+- **验证**：`npm run dev` → 编辑讲稿 → 改字 → 保存并编译 → 汇报模式播放本场讲稿
+
 ### 2026-08-22 · 修复 Windows Ctrl+C 乱码
 
 - **原因**：`concurrently` + 嵌套 `npm run` 走 cmd.exe，Ctrl+C 弹出 GBK「终止批处理操作吗」在 UTF-8 终端显示乱码

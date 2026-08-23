@@ -8,8 +8,10 @@ import {
 import { ChatPanel } from './components/ChatPanel';
 import { DirectorPanel } from './components/DirectorPanel';
 import { PresentShell } from './components/present/PresentShell';
+import { ScriptEditorShell } from './components/present/ScriptEditorShell';
 import { SettingsPanel } from './components/SettingsPanel';
 import { useAudioLipsync } from './hooks/useAudioLipsync';
+import { useDeckScriptEditor } from './hooks/useDeckScriptEditor';
 import { useDirectorSpeech } from './hooks/useDirectorSpeech';
 import { useDirectorQueue } from './hooks/useDirectorQueue';
 import { useSlideDeck } from './hooks/useSlideDeck';
@@ -174,6 +176,10 @@ export default function App() {
     });
 
   const slideDeck = useSlideDeck(settingsHook.settings.present.activeDeckId);
+  const scriptEditor = useDeckScriptEditor(
+    settingsHook.settings.present.activeDeckId,
+    slideDeck.pageCount,
+  );
 
   const directorQueue = useDirectorQueue({
     speak: speakDirector,
@@ -390,11 +396,18 @@ export default function App() {
     };
   }, []);
 
-  const isPresentMode = settingsHook.settings.present.sessionMode === 'present';
+  const sessionMode = settingsHook.settings.present.sessionMode;
 
   return (
     <div className="app">
-      {isPresentMode ? (
+      {sessionMode === 'edit' ? (
+        <ScriptEditorShell
+          slideDeck={slideDeck}
+          editor={scriptEditor}
+          onSessionModeChange={settingsHook.updatePresentSessionMode}
+          onToggleSettings={toggleSettingsDialog}
+        />
+      ) : sessionMode === 'present' ? (
         <PresentShell
           presentLayout={settingsHook.settings.present.presentLayout}
           pipCorner={settingsHook.settings.present.pipCorner}
@@ -462,6 +475,9 @@ export default function App() {
           onToggleSettings={toggleSettingsDialog}
           onEnterPresentMode={() =>
             settingsHook.updatePresentSessionMode('present')
+          }
+          onEnterEditMode={() =>
+            settingsHook.updatePresentSessionMode('edit')
           }
         />
       )}

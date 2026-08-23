@@ -1,4 +1,4 @@
-export type SessionMode = 'chat' | 'present';
+export type SessionMode = 'chat' | 'present' | 'edit';
 
 export type PresentLayout =
   | 'split_slide_left'
@@ -49,7 +49,9 @@ export function normalizePresentSettings(
     ...partial,
     activeDeckId: activeDeckId || DEFAULT_PRESENT_SETTINGS.activeDeckId,
     sessionMode:
-      partial?.sessionMode === 'present' ? 'present' : DEFAULT_PRESENT_SETTINGS.sessionMode,
+      partial?.sessionMode === 'present' || partial?.sessionMode === 'edit'
+        ? partial.sessionMode
+        : DEFAULT_PRESENT_SETTINGS.sessionMode,
     presentLayout: partial?.presentLayout ?? DEFAULT_PRESENT_SETTINGS.presentLayout,
     pipCorner: partial?.pipCorner ?? DEFAULT_PRESENT_SETTINGS.pipCorner,
   };

@@ -102,6 +102,18 @@ npm run compile:deck
 # 在应用中把 activeDeckId 设为 my-defense（后续可在 UI 选择）
 ```
 
+## 应用内编辑（Phase 1.5）
+
+`npm run dev` 下可用 **编辑讲稿** 模式（工具栏：聊天 / 汇报 / 编辑讲稿）：
+
+- 左侧：PDF 当前页预览
+- 右侧：朗读文本、`emotion` / `gesture` / 翻页动作表单
+- **保存本页**：写回 `content/decks/<id>/slides/NN.md`（仅 dev API）
+- **保存并编译**：写盘 + 生成 `script.jsonl`
+- 未保存修改自动写入 `localStorage` 草稿；可点「放弃草稿」恢复磁盘版本
+
+改完后切到 **汇报** → Director **播放本场讲稿** 验收。
+
 ## 相关文件
 
 | 用途 | 路径 |

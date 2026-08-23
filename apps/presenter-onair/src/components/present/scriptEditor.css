@@ -1,0 +1,156 @@
+.script-editor-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0f141d;
+  color: #e8eef8;
+}
+
+.session-mode-toolbar {
+  flex-wrap: wrap;
+}
+
+.script-editor-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.script-editor-actions button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.script-editor-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.script-editor-actions button.is-primary {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.script-editor-status {
+  padding: 6px 14px;
+  font-size: 12px;
+  background: rgba(59, 130, 246, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.script-editor-status.is-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ffb4b4;
+}
+
+.script-editor-status.is-dirty {
+  background: rgba(234, 179, 8, 0.12);
+}
+
+.script-editor-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+.script-editor-pdf,
+.script-editor-form {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.script-editor-pdf {
+  background: #111722;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.script-editor-form {
+  padding: 16px 18px;
+}
+
+.script-editor-form-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.script-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.script-editor-field textarea,
+.script-editor-field select,
+.script-editor-field input[type='number'] {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.script-editor-field textarea {
+  resize: vertical;
+  min-height: 160px;
+  line-height: 1.5;
+}
+
+.script-editor-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.script-editor-slide-action {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0;
+}
+
+.script-editor-slide-action legend {
+  padding: 0 6px;
+  font-size: 13px;
+}
+
+.script-editor-slide-action label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.script-editor-goto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.script-editor-goto input {
+  width: 72px;
+}
+
+.script-editor-loading,
+.present-slide-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  opacity: 0.75;
+}

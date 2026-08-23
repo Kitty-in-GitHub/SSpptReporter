@@ -1,5 +1,5 @@
 import { UI_SETTINGS } from '../../constants/uiZh';
-import { PRESENT_LAYOUT_LABELS, type PresentLayout } from '../../types/present';
+import { PRESENT_LAYOUT_LABELS, type PresentLayout, type SessionMode } from '../../types/present';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
 import type { EmotionEffectAnchor } from '../../lib/emotionEffectAnchor';
 import type {
@@ -11,6 +11,7 @@ import type {
 import { AvatarBackground } from '../AvatarPanel';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentControls } from './PresentControls';
+import { SessionModeToolbar } from './SessionModeToolbar';
 import './presentLayouts.css';
 
 interface PresentShellProps {
@@ -18,7 +19,7 @@ interface PresentShellProps {
   pipCorner: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   slideDeck: SlideDeckController;
   onPresentLayoutChange: (layout: PresentLayout) => void;
-  onSessionModeChange: (mode: 'chat' | 'present') => void;
+  onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
   mouthLevel: number;
   isSpeaking: boolean;
@@ -111,15 +112,13 @@ export function PresentShell({
     <div
       className={`present-shell present-layout-${presentLayout} present-pip-${pipCorner}`}
     >
-      <header className="present-toolbar">
-        <div className="present-toolbar-group">
-          <button type="button" onClick={() => onSessionModeChange('chat')}>
-            聊天
-          </button>
-          <button type="button" className="is-active" disabled>
-            汇报
-          </button>
-        </div>
+      <SessionModeToolbar
+        sessionMode="present"
+        onSessionModeChange={onSessionModeChange}
+        onToggleSettings={onToggleSettings}
+        settingsAriaLabel={UI_SETTINGS.ariaLabel}
+        title={deckTitle}
+      >
         <label className="present-toolbar-layout">
           布局
           <select
@@ -146,16 +145,7 @@ export function PresentShell({
           onPrev={slideDeck.prevPage}
           onNext={slideDeck.nextPage}
         />
-        <div className="present-toolbar-title">{deckTitle}</div>
-        <button
-          type="button"
-          className="present-settings-button"
-          onClick={onToggleSettings}
-          aria-label={UI_SETTINGS.ariaLabel}
-        >
-          ⚙
-        </button>
-      </header>
+      </SessionModeToolbar>
 
       <div className="present-stage">
         {presentLayout === 'slide_full' && slideStage}

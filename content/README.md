@@ -14,7 +14,7 @@ npm run compile:deck
 # 3. 启动应用
 npm run dev
 
-# 4. 汇报模式 → 导演台「播放本场讲稿」
+# 4. 应用内「编辑讲稿」，或汇报模式 → Director「播放本场讲稿」
 ```
 
 详细规范见 [`docs/content-decks.md`](../docs/content-decks.md)。

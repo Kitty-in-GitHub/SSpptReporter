@@ -21,6 +21,7 @@
 | Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试 + 队列） |
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
 | Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
+| 编辑讲稿 | `ScriptEditorShell`（见 `docs/content-decks.md`） |
 | 知识库 `content/` | `content/decks/` MD 讲稿 + 编译入队（见 `docs/content-decks.md`） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 

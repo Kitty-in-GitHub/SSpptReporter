@@ -30,6 +30,7 @@ interface ChatPanelProps {
   backgroundImageUrl?: string | null;
   visual: VisualSettings;
   onEnterPresentMode?: () => void;
+  onEnterEditMode?: () => void;
 }
 
 export function ChatPanel({
@@ -50,6 +51,7 @@ export function ChatPanel({
   backgroundImageUrl,
   visual,
   onEnterPresentMode,
+  onEnterEditMode,
 }: ChatPanelProps) {
   const isBroadcast = visual.layoutMode === 'broadcast';
   const shouldShowInput = !isBroadcast || visual.showInputInBroadcast;
@@ -84,6 +86,15 @@ export function ChatPanel({
             onClick={onEnterPresentMode}
           >
             汇报
+          </button>
+        )}
+        {onEnterEditMode && (
+          <button
+            type="button"
+            className="chat-mode-button"
+            onClick={onEnterEditMode}
+          >
+            编辑讲稿
           </button>
         )}
         <button
