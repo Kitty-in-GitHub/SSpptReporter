@@ -6,13 +6,14 @@
   "scripts": {
     "dev:stop": "node scripts/dev-stop.mjs",
     "predev": "node scripts/dev-stop.mjs",
-    "dev": "concurrently -k -n web,tts \"npm run dev:web\" \"npm run dev:tts\"",
+    "dev": "node scripts/dev.mjs",
     "dev:web": "npm run dev -w @ssreporter/presenter-onair",
     "dev:tts": "npm run start -w @ssreporter/tts-gateway",
     "setup:tts": "npm run setup -w @ssreporter/tts-gateway",
     "build": "npm run build -w @ssreporter/presenter-onair",
     "typecheck": "npm run typecheck -w @ssreporter/director && npm run typecheck -w @ssreporter/presenter-onair",
-    "test": "npm run test -w @ssreporter/director && npm run test -w @ssreporter/presenter-onair"
+    "test": "npm run test -w @ssreporter/director && npm run test -w @ssreporter/presenter-onair",
+    "compile:deck": "npm run compile:deck -w @ssreporter/director"
   },
   "workspaces": [
     "apps/*",

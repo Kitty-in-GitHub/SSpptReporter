@@ -20,6 +20,49 @@
 
 ---
 
+### 2026-08-22 · 修复 Windows Ctrl+C 乱码
+
+- **原因**：`concurrently` + 嵌套 `npm run` 走 cmd.exe，Ctrl+C 弹出 GBK「终止批处理操作吗」在 UTF-8 终端显示乱码
+- **修复**：`scripts/dev.mjs` 直接用 Node 拉起 Vite + TTS，Ctrl+C 一次干净退出
+- **验证**：`npm run dev` → Ctrl+C，无乱码、无需多次 Y/N
+
+### 2026-08-22 · Phase 1 Step 2：content/decks + MD 讲稿编译入队
+
+- **做了什么**：
+  - 方案 B：`content/decks/demo/slides/*.md` → `compileDeckScript` → `script.jsonl`
+  - `packages/director`：编译器 + 单测 + `npm run compile:deck`
+  - Vite `/content` 静态服务；`loadDeckScript`；Director「播放本场讲稿」
+  - 文档：`docs/content-decks.md`、`content/README.md`
+- **验证**：`npm run compile:deck` → 4 条 action；`npm run dev` → 汇报模式 → 播放本场讲稿
+- **相关文件**：`compile-deck-script.ts`、`content/decks/demo/`、`loadDeckScript.ts`、`DirectorPanel.tsx`
+
+### 2026-08-22 · Phase 1 Step 3：Present + PDF 汇报
+
+- **做了什么**：
+  - `PresentShell`（5 种布局）+ `PdfSlideViewer`（pdfjs-dist）+ `useSlideDeck`
+  - `App.tsx`：`sessionMode === 'present'` 切换汇报壳层；Director `slide_action` → PDF 翻页
+  - `useSettings`：`present` 默认与持久化；聊天页「汇报」入口
+  - `public/decks/demo/`（`generate-demo-deck.mjs` 生成 4 页 PDF + `deck.json`）
+  - 文档：`docs/present-deck.md`
+- **未做 / 阻塞**：本机手动验收（汇报模式 + 播放队列翻页）
+- **下一台机器应优先**：Step 2 知识库 `content/decks` + `script.jsonl` 入队
+- **相关文件**：`PresentShell.tsx`、`useSlideDeck.ts`、`App.tsx`、`docs/present-deck.md`
+- **验证方式**：`npm run dev` → 右上角「汇报」→ 见 demo PDF → Director「播放队列」应同步翻页
+
+### 2026-08-22 · Phase 1 Step 1：Director 队列
+
+- **做了什么**：
+  - `packages/director`：`queue.ts`（校验入队、`runDirectorQueue`、`barge_in`/emergency 合并）+ 8 项单测
+  - `useDirectorQueue` + Director 面板：播放队列 fixture、暂停/继续/跳过/停止
+  - `sample-queue.json`（4 条 present + slide_action）；`slide_action` 暂 console（Step 3 接 PDF）
+- **验证**：`npm run test -w @ssreporter/director` → 14 passed；`npm run dev` → 导演台「播放队列」
+- **相关文件**：`packages/director/src/queue.ts`、`useDirectorQueue.ts`、`DirectorPanel.tsx`
+
+- **设备/环境**：Win10 / conda ssreporter / `npm run dev`
+- **验收项**：VRM 加载、Edge-TTS 中文发声、口型、Director 表情、非法 JSON 拒绝（见 `docs/phase0-acceptance.md`）
+- **下一台机器应优先**：Director 队列 → 知识库 `content/` → Phase 1 PPT 双栏
+- **验证方式**：Director 播放 `sample-action.json`，TTS 经 `/api/tts` 代理
+
 ### 2026-08-22 · 修复 TTS「Network error while fetching」
 
 - **原因**：浏览器从 `localhost:5173` 跨域请求 `127.0.0.1:5050` 可能被拦截；localStorage 里空的 model/url 也会导致异常
@@ -30,12 +73,16 @@
 - **验证**：重启 `npm run dev` → Director 试播；`GET /api/tts/health` 200
 - **相关文件**：`vite.config.ts`、`voiceOptions.ts`、`useSettings.ts`
 
+### 2026-08-22 · 修复 dev 启动：清端口 + Windows Python 检测
+
 - **做了什么**：
   - `scripts/dev-stop.mjs`：`npm run dev` 前自动释放 5173/5174/5050（含 IPv6）
   - 修复 `start.mjs` Windows 误报「Python deps missing」（`shell: false`）
   - TTS 绑定前检测端口，冲突时提示 `npm run dev:stop`
 - **验证**：`npm run dev` → Vite + `Uvicorn running on :5050`，无 10048
 - **相关文件**：`scripts/dev-stop.mjs`、`apps/tts-gateway/scripts/start.mjs`、根 `package.json`
+
+### 2026-08-22 · Phase A：本机 TTS 网关一键启动
 
 - **做了什么**：
   - 新增 `apps/tts-gateway`（Edge-TTS + FastAPI，`127.0.0.1:5050`）

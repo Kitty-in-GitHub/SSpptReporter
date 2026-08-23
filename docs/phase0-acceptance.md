@@ -1,5 +1,8 @@
 # Phase 0 验收清单
 
+> **状态：已通过**（2026-08-22，wang 本机验收）  
+> VRM + Edge-TTS + 口型 + Director 表情 + schema 非法 JSON 拒绝。
+
 完成标准：浏览器加载 **StarString1.0.vrm** + Settings TTS 发声 + **口型可见** + Director fixture 驱动表情 + schema 拒绝非法 JSON。
 
 ---
@@ -62,4 +65,4 @@ npm run test
 - 无 LLM Brain、无 Director 队列、无 `barge_in`
 - 无 PPT 双栏
 
-Phase 0 完成后进入 Phase 1：知识库 + Present 模式 + Director 队列。
+Phase 0 已完成（2026-08-22 验收通过）。进入 Phase 1：知识库 + Present 模式 + Director 队列。

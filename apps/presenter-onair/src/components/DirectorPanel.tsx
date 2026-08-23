@@ -1,36 +1,29 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
-  emotionToVrmExpression,
   validateDirectorAction,
-  type DirectorAction,
+  type SlideAction,
 } from '@ssreporter/director';
 import sampleAction from '../fixtures/sample-action.json';
-import {
-  createVrmReactionFromEffect,
-  createVrmReactionFromScreenplay,
-  type VrmAvatarReactionDraft,
-  type VrmEmotionEffect,
-} from '../lib/vrmReactions';
+import sampleQueue from '../fixtures/sample-queue.json';
+import { loadDeckScript } from '../lib/content/loadDeckScript';
+import { toDirectorReactionDraft } from '../lib/directorReactions';
+import type { useDirectorQueue } from '../hooks/useDirectorQueue';
+import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
 import type { TTSEngineOption } from '../types/settings';
+
+type DirectorQueueApi = ReturnType<typeof useDirectorQueue>;
 
 interface DirectorPanelProps {
   disabled?: boolean;
   supportsLipSync: boolean;
   ttsEngine: TTSEngineOption;
+  activeDeckId: string;
+  deckScriptUrl?: string | null;
+  queue: DirectorQueueApi;
   onSpeak: (text: string) => Promise<void>;
   onApplyEmotion: (draft: VrmAvatarReactionDraft) => void;
   onResetEmotion: () => void;
 }
-
-const VRM_EMOTION_SET = new Set<string>([
-  'happy',
-  'surprised',
-  'sad',
-  'angry',
-  'relaxed',
-  'thinking',
-  'neutral',
-]);
 
 const INVALID_FIXTURE = {
   schema_version: '9.9',
@@ -38,26 +31,6 @@ const INVALID_FIXTURE = {
   utterance: '这条应被拒绝',
   emotion: 'not-a-real-emotion',
 };
-
-function toReactionDraft(action: DirectorAction): VrmAvatarReactionDraft | null {
-  const mapped = emotionToVrmExpression[action.emotion ?? 'neutral'] ?? 'neutral';
-  if (mapped === 'neutral' || !VRM_EMOTION_SET.has(mapped)) return null;
-
-  const fromScreenplay = createVrmReactionFromScreenplay({
-    emotion: mapped,
-    text: action.utterance,
-  });
-  if (fromScreenplay) return fromScreenplay;
-
-  if (mapped !== 'neutral') {
-    return createVrmReactionFromEffect(
-      mapped as VrmEmotionEffect,
-      action.utterance,
-    );
-  }
-
-  return null;
-}
 
 function completionMessage(supportsLipSync: boolean, ttsEngine: TTSEngineOption) {
   if (ttsEngine === 'webSpeech') {
@@ -69,18 +42,42 @@ function completionMessage(supportsLipSync: boolean, ttsEngine: TTSEngineOption)
   return '播放完成';
 }
 
+function formatSlideAction(slideAction: SlideAction): string {
+  if (slideAction.goto) {
+    return `goto ${slideAction.goto}`;
+  }
+  if (slideAction.next) {
+    return 'next';
+  }
+  if (slideAction.prev) {
+    return 'prev';
+  }
+  if (slideAction.highlight) {
+    return `highlight ${slideAction.highlight}`;
+  }
+  return 'slide';
+}
+
 export function DirectorPanel({
   disabled = false,
   supportsLipSync,
   ttsEngine,
+  activeDeckId,
+  deckScriptUrl,
+  queue,
   onSpeak,
   onApplyEmotion,
   onResetEmotion,
 }: DirectorPanelProps) {
-  const [status, setStatus] = useState('就绪：可播放 sample DirectorAction');
+  const [status, setStatus] = useState('就绪：可播放单条或本场讲稿');
   const [lastErrors, setLastErrors] = useState<string[]>([]);
 
   const validation = useMemo(() => validateDirectorAction(sampleAction), []);
+  const queueValidation = useMemo(
+    () => sampleQueue.map((item) => validateDirectorAction(item)),
+    [],
+  );
+  const queueIsValid = queueValidation.every((item) => item.ok);
 
   const runFixture = useCallback(async () => {
     setLastErrors([]);
@@ -92,10 +89,12 @@ export function DirectorPanel({
     }
 
     const action = result.action;
-    const draft = toReactionDraft(action);
-
+    queue.stop();
     onResetEmotion();
-    if (draft) onApplyEmotion(draft);
+    const draft = toDirectorReactionDraft(action);
+    if (draft) {
+      onApplyEmotion(draft);
+    }
 
     setStatus(`播放中：${action.action_id ?? 'fixture'} / ${action.mode}`);
     try {
@@ -110,9 +109,61 @@ export function DirectorPanel({
     onApplyEmotion,
     onResetEmotion,
     onSpeak,
+    queue,
     supportsLipSync,
     ttsEngine,
   ]);
+
+  const runDeckScript = useCallback(async () => {
+    setLastErrors([]);
+    queue.stop();
+
+    setStatus(`加载讲稿：${activeDeckId}…`);
+    try {
+      const actions = await loadDeckScript(activeDeckId, deckScriptUrl);
+      setStatus(`队列播放中：0 / ${actions.length}`);
+      await queue.playQueue(actions);
+      if (queue.lastRejections.length > 0) {
+        setLastErrors(queue.lastRejections);
+      }
+      setStatus(
+        queue.playbackState === 'idle'
+          ? `本场讲稿播放完成（${actions.length} 条）`
+          : `队列状态：${queue.playbackState}`,
+      );
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : '本场讲稿播放失败');
+    }
+  }, [activeDeckId, deckScriptUrl, queue]);
+
+  const runQueueFixture = useCallback(async () => {
+    setLastErrors([]);
+    queue.stop();
+
+    if (!queueIsValid) {
+      const errors = queueValidation
+        .filter((item) => !item.ok)
+        .flatMap((item) => (item.ok ? [] : item.errors));
+      setLastErrors(errors);
+      setStatus('队列 fixture 校验失败');
+      return;
+    }
+
+    setStatus(`队列播放中：0 / ${sampleQueue.length}`);
+    try {
+      await queue.playQueue(sampleQueue);
+      if (queue.lastRejections.length > 0) {
+        setLastErrors(queue.lastRejections);
+      }
+      setStatus(
+        queue.playbackState === 'idle'
+          ? `队列播放完成（${sampleQueue.length} 条）`
+          : `队列状态：${queue.playbackState}`,
+      );
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : '队列播放失败');
+    }
+  }, [queue, queueIsValid, queueValidation]);
 
   const runInvalidFixture = useCallback(() => {
     const result = validateDirectorAction(INVALID_FIXTURE);
@@ -122,8 +173,13 @@ export function DirectorPanel({
       return;
     }
     setLastErrors(result.errors);
-    setStatus('非法 JSON 已被 schema 拒绝（符合 Phase 0 #6）');
+    setStatus('非法 JSON 已被 schema 拒绝');
   }, []);
+
+  const currentAction =
+    queue.currentIndex >= 0 ? queue.queue[queue.currentIndex] : null;
+  const isQueueBusy =
+    queue.playbackState === 'playing' || queue.playbackState === 'paused';
 
   return (
     <div
@@ -132,7 +188,7 @@ export function DirectorPanel({
         left: 12,
         bottom: 12,
         zIndex: 40,
-        maxWidth: 360,
+        maxWidth: 380,
         padding: '12px 14px',
         borderRadius: 10,
         background: 'rgba(20, 24, 32, 0.92)',
@@ -142,58 +198,128 @@ export function DirectorPanel({
         boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
       }}
     >
-      <div style={{ fontWeight: 600, marginBottom: 8 }}>导演台 · Phase 0</div>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>导演台 · Phase 1</div>
       <div style={{ opacity: 0.85, marginBottom: 8 }}>{status}</div>
+      {isQueueBusy && (
+        <div style={{ opacity: 0.85, marginBottom: 8 }}>
+          队列：{queue.playbackState}
+          {queue.queue.length > 0 && (
+            <>
+              {' '}
+              · {queue.currentIndex + 1}/{queue.queue.length}
+            </>
+          )}
+          {currentAction?.action_id && (
+            <>
+              {' '}
+              · <code>{currentAction.action_id}</code>
+            </>
+          )}
+          {currentAction?.slide_action && (
+            <>
+              {' '}
+              · slide {formatSlideAction(currentAction.slide_action)}
+            </>
+          )}
+        </div>
+      )}
       {!validation.ok && (
         <div style={{ color: '#ff8f8f', marginBottom: 8 }}>
           fixture 无效：{validation.errors.join('; ')}
         </div>
       )}
-      {lastErrors.length > 0 && (
+      {(lastErrors.length > 0 || queue.lastRejections.length > 0) && (
         <div style={{ color: '#ff8f8f', marginBottom: 8 }}>
-          {lastErrors.join('; ')}
+          {[...lastErrors, ...queue.lastRejections].join('; ')}
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button
           type="button"
-          disabled={disabled || !validation.ok}
+          disabled={disabled || !validation.ok || isQueueBusy}
           onClick={() => void runFixture()}
-          style={{
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            border: 0,
-            borderRadius: 8,
-            padding: '8px 12px',
-            background: '#3b82f6',
-            color: '#fff',
-            fontWeight: 600,
-          }}
+          style={buttonStyle(disabled || !validation.ok || isQueueBusy, true)}
         >
-          播放 sample-action.json
+          播放单条
+        </button>
+        <button
+          type="button"
+          disabled={disabled || isQueueBusy}
+          onClick={() => void runDeckScript()}
+          style={buttonStyle(disabled || isQueueBusy, true)}
+        >
+          播放本场讲稿
+        </button>
+        <button
+          type="button"
+          disabled={disabled || !queueIsValid || isQueueBusy}
+          onClick={() => void runQueueFixture()}
+          style={buttonStyle(disabled || !queueIsValid || isQueueBusy, false)}
+        >
+          fixture 队列
         </button>
         <button
           type="button"
           disabled={disabled}
           onClick={runInvalidFixture}
-          style={{
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            border: '1px solid #64748b',
-            borderRadius: 8,
-            padding: '8px 12px',
-            background: 'transparent',
-            color: '#e8eef8',
-          }}
+          style={buttonStyle(disabled, false)}
         >
           测试非法 JSON
+        </button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+        <button
+          type="button"
+          disabled={!isQueueBusy || queue.playbackState !== 'playing'}
+          onClick={queue.pause}
+          style={buttonStyle(
+            !isQueueBusy || queue.playbackState !== 'playing',
+            false,
+          )}
+        >
+          暂停
+        </button>
+        <button
+          type="button"
+          disabled={queue.playbackState !== 'paused'}
+          onClick={queue.resume}
+          style={buttonStyle(queue.playbackState !== 'paused', false)}
+        >
+          继续
+        </button>
+        <button
+          type="button"
+          disabled={!isQueueBusy}
+          onClick={queue.skip}
+          style={buttonStyle(!isQueueBusy, false)}
+        >
+          跳过
+        </button>
+        <button
+          type="button"
+          disabled={!isQueueBusy}
+          onClick={queue.stop}
+          style={buttonStyle(!isQueueBusy, false)}
+        >
+          停止
         </button>
       </div>
       <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
         TTS：设置 → <code>{ttsEngine}</code>
         {supportsLipSync ? '（支持口型）' : '（当前引擎无口型）'}
       </div>
-      <div style={{ marginTop: 4, opacity: 0.7, fontSize: 12 }}>
-        VRM：<code>public/avatar/StarString1.0.vrm</code>
-      </div>
     </div>
   );
+}
+
+function buttonStyle(disabled: boolean, primary: boolean) {
+  return {
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    border: primary ? 0 : '1px solid #64748b',
+    borderRadius: 8,
+    padding: '8px 12px',
+    background: primary ? '#3b82f6' : 'transparent',
+    color: '#e8eef8',
+    fontWeight: primary ? 600 : 400,
+  } as const;
 }

@@ -7,9 +7,12 @@ import {
 } from 'react';
 import { ChatPanel } from './components/ChatPanel';
 import { DirectorPanel } from './components/DirectorPanel';
+import { PresentShell } from './components/present/PresentShell';
 import { SettingsPanel } from './components/SettingsPanel';
 import { useAudioLipsync } from './hooks/useAudioLipsync';
 import { useDirectorSpeech } from './hooks/useDirectorSpeech';
+import { useDirectorQueue } from './hooks/useDirectorQueue';
+import { useSlideDeck } from './hooks/useSlideDeck';
 import { useAituberCore } from './hooks/useAituberCore';
 import { useLiveCommentIntelligence } from './hooks/useLiveCommentIntelligence';
 import { useScreenVisionController } from './hooks/useScreenVisionController';
@@ -169,6 +172,21 @@ export default function App() {
       getApiKeyForProvider: settingsHook.getApiKeyForProvider,
       onPlay: handleAudioPlay,
     });
+
+  const slideDeck = useSlideDeck(settingsHook.settings.present.activeDeckId);
+
+  const directorQueue = useDirectorQueue({
+    speak: speakDirector,
+    stopSpeech: stop,
+    onApplyEmotion: emitAvatarReaction,
+    onResetEmotion: () =>
+      emitAvatarReaction({ type: 'reset', fadeMs: 280 }),
+    onSlideAction: slideDeck.applyDirectorSlideAction,
+  });
+
+  const isDirectorBusy =
+    directorQueue.playbackState === 'playing' ||
+    directorQueue.playbackState === 'paused';
 
   const handleSpeechStart = useCallback(
     (screenplay: ScreenplayLike) => {
@@ -372,45 +390,89 @@ export default function App() {
     };
   }, []);
 
+  const isPresentMode = settingsHook.settings.present.sessionMode === 'present';
+
   return (
     <div className="app">
-      <ChatPanel
-        messages={messages}
-        partialResponse={partialResponse}
-        isProcessing={isProcessing}
-        onSend={handleSend}
-        mouthLevel={mouthLevel}
-        isSpeaking={isSpeaking}
-        avatarReaction={avatarReaction}
-        emotionEffectReaction={emotionEffectReaction}
-        reactionControlMode={
-          settingsHook.settings.visual.vrmReactionControlMode
-        }
-        emotionEffectMap={settingsHook.settings.visual.vrmEmotionEffectMap}
-        effectAnchor={getEmotionEffectAnchor(
-          settingsHook.settings.visual.vrmEmotionEffectAnchors,
-          VRM_EFFECT_ANCHOR_PROFILE_ID,
-        )}
-        onEffectAnchorChange={(anchor) =>
-          settingsHook.updateVisualVrmEmotionEffectAnchor(
+      {isPresentMode ? (
+        <PresentShell
+          presentLayout={settingsHook.settings.present.presentLayout}
+          pipCorner={settingsHook.settings.present.pipCorner}
+          slideDeck={slideDeck}
+          onPresentLayoutChange={settingsHook.updatePresentLayout}
+          onSessionModeChange={settingsHook.updatePresentSessionMode}
+          onToggleSettings={toggleSettingsDialog}
+          mouthLevel={mouthLevel}
+          isSpeaking={isSpeaking}
+          avatarReaction={avatarReaction}
+          emotionEffectReaction={emotionEffectReaction}
+          reactionControlMode={
+            settingsHook.settings.visual.vrmReactionControlMode
+          }
+          emotionEffectMap={settingsHook.settings.visual.vrmEmotionEffectMap}
+          effectAnchor={getEmotionEffectAnchor(
+            settingsHook.settings.visual.vrmEmotionEffectAnchors,
             VRM_EFFECT_ANCHOR_PROFILE_ID,
-            anchor,
-          )
-        }
-        onEffectAnchorReset={() =>
-          settingsHook.resetVisualVrmEmotionEffectAnchor(
+          )}
+          onEffectAnchorChange={(anchor) =>
+            settingsHook.updateVisualVrmEmotionEffectAnchor(
+              VRM_EFFECT_ANCHOR_PROFILE_ID,
+              anchor,
+            )
+          }
+          onEffectAnchorReset={() =>
+            settingsHook.resetVisualVrmEmotionEffectAnchor(
+              VRM_EFFECT_ANCHOR_PROFILE_ID,
+            )
+          }
+          backgroundImageUrl={backgroundImageUrl}
+          backgroundMode={settingsHook.settings.visual.backgroundMode}
+        />
+      ) : (
+        <ChatPanel
+          messages={messages}
+          partialResponse={partialResponse}
+          isProcessing={isProcessing}
+          onSend={handleSend}
+          mouthLevel={mouthLevel}
+          isSpeaking={isSpeaking}
+          avatarReaction={avatarReaction}
+          emotionEffectReaction={emotionEffectReaction}
+          reactionControlMode={
+            settingsHook.settings.visual.vrmReactionControlMode
+          }
+          emotionEffectMap={settingsHook.settings.visual.vrmEmotionEffectMap}
+          effectAnchor={getEmotionEffectAnchor(
+            settingsHook.settings.visual.vrmEmotionEffectAnchors,
             VRM_EFFECT_ANCHOR_PROFILE_ID,
-          )
-        }
-        backgroundImageUrl={backgroundImageUrl}
-        visual={settingsHook.settings.visual}
-        onToggleSettings={toggleSettingsDialog}
-      />
+          )}
+          onEffectAnchorChange={(anchor) =>
+            settingsHook.updateVisualVrmEmotionEffectAnchor(
+              VRM_EFFECT_ANCHOR_PROFILE_ID,
+              anchor,
+            )
+          }
+          onEffectAnchorReset={() =>
+            settingsHook.resetVisualVrmEmotionEffectAnchor(
+              VRM_EFFECT_ANCHOR_PROFILE_ID,
+            )
+          }
+          backgroundImageUrl={backgroundImageUrl}
+          visual={settingsHook.settings.visual}
+          onToggleSettings={toggleSettingsDialog}
+          onEnterPresentMode={() =>
+            settingsHook.updatePresentSessionMode('present')
+          }
+        />
+      )}
 
       <DirectorPanel
-        disabled={isProcessing || isSpeaking}
+        disabled={isProcessing || isSpeaking || isDirectorBusy}
         supportsLipSync={supportsLipSync}
         ttsEngine={directorTtsEngine}
+        activeDeckId={settingsHook.settings.present.activeDeckId}
+        deckScriptUrl={slideDeck.deck?.scriptUrl}
+        queue={directorQueue}
         onSpeak={speakDirector}
         onApplyEmotion={emitAvatarReaction}
         onResetEmotion={() =>

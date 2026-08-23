@@ -1,0 +1,42 @@
+[
+  {
+    "schema_version": "1.0",
+    "action_id": "present-01",
+    "mode": "present",
+    "utterance": "各位老师好，我是答辩助手。接下来由我介绍项目背景与目标。",
+    "emotion": "friendly",
+    "gesture": "bow",
+    "camera": "bust",
+    "slide_action": { "goto": 1 }
+  },
+  {
+    "schema_version": "1.0",
+    "action_id": "present-02",
+    "mode": "present",
+    "utterance": "第二页我们来看整体技术架构，分为呈现层、导演层和知识库三层。",
+    "emotion": "confident",
+    "gesture": "explain",
+    "camera": "bust",
+    "slide_action": { "next": true }
+  },
+  {
+    "schema_version": "1.0",
+    "action_id": "present-03",
+    "mode": "present",
+    "utterance": "第三页是 Phase 1 的落地计划：先做 Director 队列，再做 PDF 汇报呈现。",
+    "emotion": "emphatic",
+    "gesture": "point_slide",
+    "camera": "bust",
+    "slide_action": { "goto": 3 }
+  },
+  {
+    "schema_version": "1.0",
+    "action_id": "present-04",
+    "mode": "present",
+    "utterance": "以上是我的阶段性汇报，谢谢各位老师。",
+    "emotion": "friendly",
+    "gesture": "bow",
+    "camera": "bust",
+    "slide_action": { "next": true }
+  }
+]

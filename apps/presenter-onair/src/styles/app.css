@@ -605,17 +605,48 @@ body {
   justify-content: flex-end;
 }
 
-.chat-settings-button {
+.chat-panel-toolbar {
   position: absolute;
   top: 12px;
   right: 16px;
   z-index: 4;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chat-mode-button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(22, 33, 62, 0.9);
+  color: #e8eef8;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.chat-mode-button:hover {
+  background: rgba(59, 130, 246, 0.85);
+  border-color: #3b82f6;
+}
+
+.chat-settings-button {
+  position: static;
   background: rgba(22, 33, 62, 0.9);
   transition: opacity 0.15s;
 }
 
-.chat-panel-broadcast .chat-settings-button {
+.chat-panel-broadcast .chat-panel-toolbar {
   opacity: 0;
+}
+
+.chat-panel-broadcast:hover .chat-panel-toolbar,
+.chat-panel-toolbar:focus-within {
+  opacity: 1;
+}
+
+.chat-panel-broadcast .chat-settings-button {
+  opacity: 1;
 }
 
 .chat-panel-broadcast:hover .chat-settings-button,

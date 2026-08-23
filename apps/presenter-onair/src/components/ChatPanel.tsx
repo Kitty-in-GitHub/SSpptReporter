@@ -29,6 +29,7 @@ interface ChatPanelProps {
   onEffectAnchorReset: () => void;
   backgroundImageUrl?: string | null;
   visual: VisualSettings;
+  onEnterPresentMode?: () => void;
 }
 
 export function ChatPanel({
@@ -48,6 +49,7 @@ export function ChatPanel({
   onEffectAnchorReset,
   backgroundImageUrl,
   visual,
+  onEnterPresentMode,
 }: ChatPanelProps) {
   const isBroadcast = visual.layoutMode === 'broadcast';
   const shouldShowInput = !isBroadcast || visual.showInputInBroadcast;
@@ -74,14 +76,25 @@ export function ChatPanel({
       }`}
       style={panelStyle}
     >
-      <button
-        type="button"
-        className="settings-button chat-settings-button"
-        onClick={onToggleSettings}
-        aria-label={UI_SETTINGS.ariaLabel}
-      >
-        ⚙
-      </button>
+      <div className="chat-panel-toolbar">
+        {onEnterPresentMode && (
+          <button
+            type="button"
+            className="chat-mode-button"
+            onClick={onEnterPresentMode}
+          >
+            汇报
+          </button>
+        )}
+        <button
+          type="button"
+          className="settings-button chat-settings-button"
+          onClick={onToggleSettings}
+          aria-label={UI_SETTINGS.ariaLabel}
+        >
+          ⚙
+        </button>
+      </div>
       <AvatarBackground
         mouthLevel={mouthLevel}
         isSpeaking={isSpeaking}

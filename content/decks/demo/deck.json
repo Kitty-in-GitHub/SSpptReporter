@@ -1,0 +1,9 @@
+{
+  "id": "demo",
+  "title": "答辩示例",
+  "slideSource": {
+    "type": "pdf",
+    "url": "/decks/demo/slides.pdf"
+  },
+  "scriptUrl": "/content/decks/demo/script.jsonl"
+}

@@ -38,6 +38,12 @@ import type {
   StreamingPlatformOption,
   TTSEngineOption,
 } from '../types/settings';
+import {
+  DEFAULT_PRESENT_SETTINGS,
+  normalizePresentSettings,
+  type PresentLayout,
+  type SessionMode,
+} from '../types/present';
 
 type ApiKeyProvider = Exclude<ChatProviderOption, 'gemini-nano'>;
 
@@ -244,6 +250,7 @@ function getDefaultSettings(): AppSettings {
       vrmReactionControlMode: 'none',
       vrmEmotionEffectMap: { ...DEFAULT_VRM_EMOTION_EFFECT_MAP },
     },
+    present: { ...DEFAULT_PRESENT_SETTINGS },
     screenVision: {
       deviceId: '',
       prompt: DEFAULT_SCREEN_VISION_PROMPT,
@@ -335,6 +342,7 @@ function loadSettings(): AppSettings {
             saved.visual?.vrmEmotionEffectMap,
           ),
         },
+        present: normalizePresentSettings(saved.present),
         screenVision: { ...defaults.screenVision, ...saved.screenVision },
         stream: { ...defaults.stream, ...saved.stream },
         commentIntelligence: {
@@ -966,6 +974,27 @@ export function useSettings() {
     [],
   );
 
+  const updatePresentSessionMode = useCallback((sessionMode: SessionMode) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({ ...prev.present, sessionMode }),
+    }));
+  }, []);
+
+  const updatePresentLayout = useCallback((presentLayout: PresentLayout) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({ ...prev.present, presentLayout }),
+    }));
+  }, []);
+
+  const updatePresentActiveDeckId = useCallback((activeDeckId: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({ ...prev.present, activeDeckId }),
+    }));
+  }, []);
+
   const updateVisualShowInputInBroadcast = useCallback(
     (showInputInBroadcast: boolean) => {
       setSettings((prev) => ({
@@ -1397,6 +1426,9 @@ export function useSettings() {
     updatePiperPlusNoiseScale,
     updateVisualBackgroundMode,
     updateVisualLayoutMode,
+    updatePresentSessionMode,
+    updatePresentLayout,
+    updatePresentActiveDeckId,
     updateVisualShowInputInBroadcast,
     updateVisualVrmReactionControlMode,
     updateVisualVrmEmotionEffect,

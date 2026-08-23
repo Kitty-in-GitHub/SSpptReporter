@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { serveMonorepoContent } from './vite-content-plugin';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // npm workspaces hoist three to the monorepo root
@@ -29,7 +30,7 @@ export default defineConfig({
       },
     ],
   },
-  plugins: [react()],
+  plugins: [react(), serveMonorepoContent()],
   server: {
     proxy: {
       '/api/tts': {

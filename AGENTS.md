@@ -15,12 +15,13 @@
 
 | 项 | 状态 |
 |----|------|
-| Phase 0 | **代码完成，待本机口型验收**（见 `docs/phase0-acceptance.md`） |
+| Phase 0 | **已通过本机验收**（见 `docs/phase0-acceptance.md`） |
+| Phase 1 | **进行中**：Director 队列 ✅、Present+PDF ✅、content/decks 讲稿入队 ✅ |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
-| Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试） |
-| Director UI | `DirectorPanel` → Settings TTS → `useAudioLipsync` 口型 |
-| 知识库 `content/` | 目录已建，内容待填（Phase 1） |
-| PPT 双栏 | 未做（Phase 1） |
+| Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试 + 队列） |
+| Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
+| Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
+| 知识库 `content/` | `content/decks/` MD 讲稿 + 编译入队（见 `docs/content-decks.md`） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 
 ## 仓库结构（必记）
@@ -71,6 +72,10 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 |------|------|
 | 加载 VRM | `apps/presenter-onair/src/components/AvatarPanel.tsx` → `VRM_FILE_URL` |
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |
+| Present 汇报 | `apps/presenter-onair/src/components/present/PresentShell.tsx` |
+| PDF 幻灯 | `apps/presenter-onair/src/components/present/PdfSlideViewer.tsx` |
+| deck 规范 | `docs/present-deck.md` |
+| 讲稿内容包 | `docs/content-decks.md` |
 | Director TTS | `apps/presenter-onair/src/hooks/useDirectorSpeech.ts` |
 | TTS 配置构建 | `apps/presenter-onair/src/lib/voiceOptions.ts` |
 | 本机 TTS 网关 | `apps/tts-gateway/server.py` |
@@ -81,10 +86,10 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 
 ## 建议的下一步（优先级）
 
-1. **本机验收 Phase 0**：按 `docs/phase0-acceptance.md` 测 VOICEVOX + 云端 TTS 口型
-2. **Director 队列**：LLM/脚本 → `validateDirectorAction` → 顺序播放
-3. **知识库**：`content/persona/`、`content/decks/<场次>/`、`content/faq/`
-4. **Phase 1 呈现**：Web 左栏 PPT/PDF + 右栏 VRM
+1. **本机验收 Step 2**：改 `slides/*.md` → `npm run compile:deck` → 播放本场讲稿
+2. **Phase 2 Q&A**：`content/persona`、`content/faq` + Brain RAG
+3. **Director 队列**（已完成）：`sample-queue.json` / content 讲稿试播
+4. （可选）备选 TTS：VOICEVOX / 云端 Gemini 口型复测
 
 每完成一项，**在 `docs/dev-log.md` 顶部追加一条日志**（见该文件模板）。
 

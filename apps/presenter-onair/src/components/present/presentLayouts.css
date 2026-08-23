@@ -1,0 +1,192 @@
+.present-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0f141d;
+  color: #e8eef8;
+}
+
+.present-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: rgba(12, 16, 24, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 20;
+}
+
+.present-toolbar-group {
+  display: flex;
+  gap: 6px;
+}
+
+.present-toolbar button,
+.present-controls button,
+.present-toolbar-layout select {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.present-toolbar button.is-active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.present-toolbar-layout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.present-toolbar-title {
+  margin-left: auto;
+  opacity: 0.8;
+  font-size: 13px;
+}
+
+.present-settings-button {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.present-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.present-layout-split_slide_left .present-stage,
+.present-layout-split_slide_right .present-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.present-layout-slide_full .present-stage,
+.present-layout-avatar_full .present-stage {
+  display: block;
+}
+
+.present-layout-pip .present-stage {
+  display: block;
+}
+
+.present-slide-stage,
+.present-avatar-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #111722;
+}
+
+.present-layout-slide_full .present-slide-stage,
+.present-layout-avatar_full .present-avatar-stage {
+  width: 100%;
+  height: 100%;
+}
+
+.present-layout-pip .present-slide-stage {
+  width: 100%;
+  height: 100%;
+}
+
+.present-layout-pip .present-avatar-stage {
+  position: absolute;
+  width: min(32vw, 360px);
+  height: min(48vh, 520px);
+  z-index: 10;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.present-layout-pip.present-pip-bottom-right .present-avatar-stage {
+  right: 20px;
+  bottom: 20px;
+}
+
+.present-layout-pip.present-pip-bottom-left .present-avatar-stage {
+  left: 20px;
+  bottom: 20px;
+}
+
+.present-layout-pip.present-pip-top-right .present-avatar-stage {
+  right: 20px;
+  top: 20px;
+}
+
+.present-layout-pip.present-pip-top-left .present-avatar-stage {
+  left: 20px;
+  top: 20px;
+}
+
+.present-slide-viewer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.present-slide-canvas {
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100% - 28px);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.present-slide-status,
+.present-slide-error {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.present-slide-error {
+  color: #ff9b9b;
+  padding: 24px;
+}
+
+.present-slide-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(232, 238, 248, 0.75);
+  font-size: 14px;
+}
+
+.present-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.present-controls-page {
+  min-width: 72px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.present-avatar-stage .avatar-background {
+  position: absolute;
+  inset: 0;
+}

@@ -4,6 +4,7 @@ import type {
   VrmEmotionEffectMap,
   VrmReactionControlMode,
 } from '../lib/vrmReactions';
+import type { PresentSettings } from './present';
 
 export type ChatProviderOption =
   | 'openai'
@@ -193,6 +194,7 @@ export interface AppSettings {
   llm: LLMSettings;
   tts: TTSSettings;
   visual: VisualSettings;
+  present: PresentSettings;
   screenVision: ScreenVisionSettings;
   stream: StreamSettings;
   commentIntelligence: CommentIntelligenceSettings;
