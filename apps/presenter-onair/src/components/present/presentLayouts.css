@@ -439,3 +439,134 @@
 .present-shell.is-stage-mode .present-stage {
   flex: 1;
 }
+
+.present-qa-panel {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 10, 18, 0.96);
+}
+
+.present-qa-panel.is-collapsed .present-qa-body {
+  display: none;
+}
+
+.present-qa-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  min-height: 40px;
+}
+
+.present-qa-toggle {
+  border: none;
+  background: transparent;
+  color: #bfdbfe;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.present-qa-toggle:hover {
+  color: #dbeafe;
+}
+
+.present-qa-status {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.present-qa-status.is-error {
+  color: #fca5a5;
+  opacity: 1;
+}
+
+.present-qa-body {
+  padding: 0 16px 12px;
+}
+
+.present-qa-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.present-qa-input {
+  flex: 1;
+  min-height: 56px;
+  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  padding: 8px 10px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.present-qa-input:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.45);
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.present-qa-mic,
+.present-qa-submit {
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.present-qa-mic.is-active {
+  border-color: rgba(248, 113, 113, 0.65);
+  background: rgba(127, 29, 29, 0.45);
+  color: #fecaca;
+}
+
+.present-qa-submit {
+  border-color: rgba(59, 130, 246, 0.55);
+  background: rgba(37, 99, 235, 0.35);
+  color: #dbeafe;
+  font-weight: 600;
+}
+
+.present-qa-submit:disabled,
+.present-qa-mic:disabled,
+.present-qa-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.present-qa-interim {
+  margin: 6px 0 0;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.present-qa-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #fca5a5;
+}
+
+.present-qa-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.present-qa-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.18);
+  color: #fcd34d;
+  font-weight: 600;
+}

@@ -12,6 +12,7 @@ const workspaceThreeRoot = path.resolve(
   '../../node_modules/three',
 );
 const directorRoot = path.resolve(__dirname, '../../packages/director/src');
+const brainRoot = path.resolve(__dirname, '../../packages/brain/src');
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -20,6 +21,10 @@ export default defineConfig({
       {
         find: '@ssreporter/director',
         replacement: path.resolve(directorRoot, 'index.ts'),
+      },
+      {
+        find: '@ssreporter/brain',
+        replacement: path.resolve(brainRoot, 'index.ts'),
       },
       {
         find: /^three$/,

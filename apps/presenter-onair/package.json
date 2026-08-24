@@ -17,6 +17,7 @@
     "@aituber-onair/manneri": "^0.4.0",
     "@pixiv/three-vrm": "^1.0.9",
     "@pixiv/three-vrm-animation": "^3.4.5",
+    "@ssreporter/brain": "*",
     "@ssreporter/director": "*",
     "pdfjs-dist": "^6.2.108",
     "react": "^19.2.0",

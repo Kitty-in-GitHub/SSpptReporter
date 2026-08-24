@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@ssreporter/director": ["../../packages/director/src/index.ts"]
+      "@ssreporter/director": ["../../packages/director/src/index.ts"],
+      "@ssreporter/brain": ["../../packages/brain/src/index.ts"]
     },
 
     /* Linting */

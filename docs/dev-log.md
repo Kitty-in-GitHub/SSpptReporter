@@ -20,6 +20,25 @@
 
 ---
 
+---
+
+### 2026-08-24 · Phase 2 MVP：Brain + 汇报模式 Q&A 面板
+
+- **做了什么**：
+  - `packages/brain`：persona/FAQ/slide 关键词检索、`answerQuestion` → `DirectorAction`（`mode: qa`）、Vitest
+  - `content/persona/presenter.md`、`content/faq/demo.md`、`docs/content-qa.md`
+  - 汇报模式底部 `QaPanel`：文字 + Web Speech（zh-CN）→ `barge_in` 入队 + TTS
+  - `docs/phase2-acceptance.md` 验收清单
+- **未做 / 阻塞**：向量 RAG、云端 ASR、打断后自动续播
+- **下一台机器应优先**：按 `docs/phase2-acceptance.md` 本机验收；真 FAQ 放 `content-private/faq/`
+- **相关文件**：`packages/brain/`、`QaPanel.tsx`、`useBrainQa.ts`、`docs/phase2-acceptance.md`
+- **验证方式**：`npm run test` · `npm run dev` → 汇报 → 评委提问
+
+### 2026-08-24 · Phase 1 正式验收通过
+
+- **状态**：按 `docs/phase1-acceptance.md` 本机验收通过（demo 彩排闭环）
+- **下一台机器应优先**：Phase 2 Q&A（`packages/brain` + 汇报模式提问面板）
+
 ### 2026-08-24 · 文档：自制 VRMA 双路径（Blender / Unity）
 
 - **做了什么**：

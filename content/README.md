@@ -25,12 +25,12 @@ npm run dev
 
 ```
 content/decks/<deckId>/
-├── deck.json          # 场次元数据 + PDF 路径
-├── slides/            # 每页讲稿（主格式）
-│   01.md
-│   02.md
-│   └── ...
-└── script.jsonl       # 编译产物（npm run compile:deck 生成）
+├── deck.json
+├── slides/
+└── script.jsonl
+
+content/persona/     # Phase 2：答辩助手人设
+content/faq/           # Phase 2：FAQ 条目
 ```
 
 PDF 放在 `apps/presenter-onair/public/decks/<deckId>/slides.pdf`，在 `deck.json` 里引用。  
@@ -41,6 +41,7 @@ PDF 放在 `apps/presenter-onair/public/decks/<deckId>/slides.pdf`，在 `deck.j
 | 位置 | Git | 说明 |
 |------|-----|------|
 | `content/decks/demo/` | ✅ | 示例讲稿 |
+| `content/persona/`、`content/faq/` | ✅ | Phase 2 示例知识库 |
 | `public/decks/demo/` | ✅ | 示例 PDF |
 | `content-private/` | ❌ | 真实答辩 / persona / FAQ |
 | `public/decks/<其他>/` | ❌ | 私有 PDF |
@@ -49,5 +50,5 @@ PDF 放在 `apps/presenter-onair/public/decks/<deckId>/slides.pdf`，在 `deck.j
 
 ## 与 LLM 的关系
 
-- **Phase 1（现在）**：`slides/*.md` 由你手写，编译后驱动 Present 播放
-- **Phase 2（后续）**：同目录材料可作为按页 RAG；persona / FAQ 建议放 `content-private/`
+- **Phase 1**：`slides/*.md` 编译驱动 Present 播放
+- **Phase 2**：persona / faq / slides 供 Brain RAG；详见 [`docs/content-qa.md`](../docs/content-qa.md)

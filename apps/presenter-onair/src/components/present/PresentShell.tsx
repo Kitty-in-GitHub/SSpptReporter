@@ -35,7 +35,10 @@ import { PresentControls } from './PresentControls';
 import { PresentPipControls } from './PresentPipControls';
 import { PresentPlaybackControls } from './PresentPlaybackControls';
 import { PresentScriptCue } from './PresentScriptCue';
+import { QaPanel } from './QaPanel';
 import { SessionModeToolbar } from './SessionModeToolbar';
+import { useBrainQa } from '../../hooks/useBrainQa';
+import type { AppSettings, ChatProviderOption } from '../../types/settings';
 import './presentLayouts.css';
 
 type DirectorQueueApi = ReturnType<typeof useDirectorQueue>;
@@ -74,6 +77,9 @@ interface PresentShellProps {
   backgroundMode: 'default' | 'green' | 'transparent';
   vrmCameraFraming: VrmCameraFraming;
   onVrmCameraFramingChange?: (framing: VrmCameraFraming) => void;
+  activeDeckId: string;
+  llmSettings: AppSettings['llm'];
+  getApiKeyForProvider: (provider: ChatProviderOption) => string;
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -142,7 +148,16 @@ export function PresentShell({
   backgroundMode,
   vrmCameraFraming,
   onVrmCameraFramingChange,
+  activeDeckId,
+  llmSettings,
+  getApiKeyForProvider,
 }: PresentShellProps) {
+  const brainQa = useBrainQa({
+    deckId: activeDeckId,
+    currentSlidePage: slideDeck.currentPage,
+    llmSettings,
+    getApiKeyForProvider,
+  });
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [stageMode, setStageMode] = useState(false);
   const [chromeRevealed, setChromeRevealed] = useState(false);
@@ -536,12 +551,19 @@ export function PresentShell({
         </div>
 
         {!stageMode ? (
-          <PresentScriptCue
-            playbackState={directorQueue.playbackState}
-            currentAction={currentAction ?? null}
-            currentIndex={directorQueue.currentIndex}
-            queueLength={directorQueue.queue.length}
-          />
+          <>
+            <PresentScriptCue
+              playbackState={directorQueue.playbackState}
+              currentAction={currentAction ?? null}
+              currentIndex={directorQueue.currentIndex}
+              queueLength={directorQueue.queue.length}
+            />
+            <QaPanel
+              brainQa={brainQa}
+              directorQueue={directorQueue}
+              disabled={playbackDisabled}
+            />
+          </>
         ) : null}
       </div>
     </div>

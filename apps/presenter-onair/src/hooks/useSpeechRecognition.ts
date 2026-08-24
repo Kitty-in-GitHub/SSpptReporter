@@ -3,11 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 type SpeechRecognitionInstance = InstanceType<typeof SpeechRecognition>;
 
 interface UseSpeechRecognitionOptions {
+  lang?: string;
   onFinalTranscript?: (text: string) => void;
 }
 
 export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
   const onFinalTranscript = options?.onFinalTranscript;
+  const lang = options?.lang ?? 'ja-JP';
   const supported =
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
@@ -23,7 +25,7 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
     const SpeechRecognitionCtor =
       window.SpeechRecognition ?? window.webkitSpeechRecognition;
     const recognition = new SpeechRecognitionCtor();
-    recognition.lang = 'ja-JP';
+    recognition.lang = lang;
     recognition.interimResults = true;
     recognition.continuous = true;
 
@@ -61,7 +63,7 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
     return () => {
       recognition.abort();
     };
-  }, [supported, onFinalTranscript]);
+  }, [supported, onFinalTranscript, lang]);
 
   const start = useCallback(() => {
     if (!recognitionRef.current || listening) return;

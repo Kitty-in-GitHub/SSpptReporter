@@ -469,6 +469,9 @@ export default function App() {
           vrmCameraFraming={settingsHook.settings.visual.vrmCameraFraming}
           onVrmCameraFramingChange={settingsHook.updateVisualVrmCameraFraming}
           onStageModeChange={setPresentStageMode}
+          activeDeckId={settingsHook.settings.present.activeDeckId}
+          llmSettings={settingsHook.settings.llm}
+          getApiKeyForProvider={settingsHook.getApiKeyForProvider}
         />
       ) : (
         <ChatPanel

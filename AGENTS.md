@@ -16,7 +16,8 @@
 | 项 | 状态 |
 |----|------|
 | Phase 0 | **已通过本机验收**（见 `docs/phase0-acceptance.md`） |
-| Phase 1 | **功能完成、待正式验收**：Director 队列 ✅、Present+PDF ✅、讲稿编译入队 ✅、gesture Expression ✅ |
+| Phase 1 | **已通过本机验收**（见 `docs/phase1-acceptance.md`） |
+| Phase 2 | **功能完成、待正式验收**：Brain RAG + 汇报模式 Q&A 面板（见 `docs/phase2-acceptance.md`） |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
 | Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试 + 队列） |
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
@@ -33,6 +34,7 @@ SSreporter/
 ├── apps/presenter-onair/     ← 主应用（AITuber OnAir VRM 模板 + 我们的补丁）
 ├── apps/tts-gateway/         ← 本机 Edge-TTS 网关（npm run dev 一并启动）
 ├── packages/director/        ← DirectorAction 类型与校验
+├── packages/brain/           ← Q&A 检索 + LLM → DirectorAction
 ├── content/                  ← 示例知识库（可公开）
 ├── content-private/          ← 私有知识库（不进 Git）
 ├── assets/avatars/           ← VRM 本地归档（不进 Git）
@@ -77,6 +79,8 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | 加载 VRM | `apps/presenter-onair/src/components/AvatarPanel.tsx` → `VRM_FILE_URL` |
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |
 | Present 汇报 | `apps/presenter-onair/src/components/present/PresentShell.tsx` |
+| Q&A 面板 | `apps/presenter-onair/src/components/present/QaPanel.tsx` |
+| Brain Q&A | `packages/brain` · `apps/presenter-onair/src/hooks/useBrainQa.ts` |
 | PDF 幻灯 | `apps/presenter-onair/src/components/present/PdfSlideViewer.tsx` |
 | deck 规范 | `docs/present-deck.md` |
 | 讲稿内容包 | `docs/content-decks.md` |
@@ -90,8 +94,8 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 
 ## 建议的下一步（优先级）
 
-1. **Phase 1 正式验收**：按 `docs/phase1-acceptance.md` 打勾（demo 或 `content-private` 真材料）
-2. **Phase 2 Q&A**：`content/persona`、`content/faq` + Brain RAG
+1. **Phase 2 正式验收**：按 `docs/phase2-acceptance.md` 打勾（demo FAQ + 可选私有材料）
+2. Phase 2 增强：向量 RAG、云端 ASR、打断后自动续播讲稿
 3. （可选）自制 / 替换 VRMA：见 [`docs/vrma-authoring.md`](docs/vrma-authoring.md)；或 `npm run setup:gestures` 下载开源占位
 4. （可选）备选 TTS：VOICEVOX / 云端 Gemini 口型复测
 
@@ -114,5 +118,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | `docs/director-json-schema.md` | Director 协议说明 |
 | `docs/phase0-acceptance.md` | Phase 0 手动验收步骤 |
 | `docs/phase1-acceptance.md` | Phase 1 Present 闭环验收 |
+| `docs/phase2-acceptance.md` | Phase 2 Q&A 验收 |
+| `docs/content-qa.md` | persona / FAQ 知识库规范 |
 | `docs/vrma-authoring.md` | 自制 VRMA（Blender / Unity）下载与教程 |
 | `docs/tts-selection.md` | TTS 选型（云端 / 本机 / 核显兜底） |
