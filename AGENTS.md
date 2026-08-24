@@ -92,7 +92,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 
 1. **Phase 1 正式验收**：按 `docs/phase1-acceptance.md` 打勾（demo 或 `content-private` 真材料）
 2. **Phase 2 Q&A**：`content/persona`、`content/faq` + Brain RAG
-3. （可选）VRMA 手势片段：放入 `public/avatar/gestures/` 增强骨骼动效
+3. （可选）自制 / 替换 VRMA：见 [`docs/vrma-authoring.md`](docs/vrma-authoring.md)；或 `npm run setup:gestures` 下载开源占位
 4. （可选）备选 TTS：VOICEVOX / 云端 Gemini 口型复测
 
 每完成一项，**在 `docs/dev-log.md` 顶部追加一条日志**（见该文件模板）。
@@ -114,4 +114,5 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | `docs/director-json-schema.md` | Director 协议说明 |
 | `docs/phase0-acceptance.md` | Phase 0 手动验收步骤 |
 | `docs/phase1-acceptance.md` | Phase 1 Present 闭环验收 |
+| `docs/vrma-authoring.md` | 自制 VRMA（Blender / Unity）下载与教程 |
 | `docs/tts-selection.md` | TTS 选型（云端 / 本机 / 核显兜底） |

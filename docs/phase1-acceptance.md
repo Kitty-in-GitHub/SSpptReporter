@@ -70,7 +70,7 @@ PDF：`apps/presenter-onair/public/decks/demo/slides.pdf`
 | 项 | 状态 |
 |----|------|
 | `gesture` → Expression 近似手势 | **已接通**（`gestureToVrmReaction.ts` + `directorReactions.ts`） |
-| `gesture` → VRMA 骨骼 one-shot | 可选：将 `.vrma` 放入 `public/avatar/gestures/`；缺失时用 Expression fallback |
+| `gesture` → VRMA 骨骼 one-shot | 可选：将 `.vrma` 放入 `public/avatar/gestures/`；缺失时用 Expression fallback。自制教程见 [`vrma-authoring.md`](./vrma-authoring.md) |
 | `camera` 每句切换（bust/medium/wide） | 未接通；使用 Settings 全局镜头构图 |
 | LLM Brain / 评委 Q&A RAG | Phase 2 |
 | ASR 打断 | Phase 2 |

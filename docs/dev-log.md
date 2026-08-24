@@ -20,6 +20,14 @@
 
 ---
 
+### 2026-08-24 · 文档：自制 VRMA 双路径（Blender / Unity）
+
+- **做了什么**：
+  - 新增 `docs/vrma-authoring.md`：Blender + Unity 下载链接、简教程、B 站与中文图文链接、接入检查清单
+  - 交叉引用：`phase1-acceptance.md`、`AGENTS.md`
+- **相关文件**：`docs/vrma-authoring.md`
+- **验证方式**：打开文档按路径选软件；自写 `.vrma` 覆盖 `public/avatar/gestures/` 后播放讲稿
+
 ### 2026-08-24 · Phase 1 抛光：gesture 执行 + 验收文档 + compile CLI
 
 - **做了什么**：
