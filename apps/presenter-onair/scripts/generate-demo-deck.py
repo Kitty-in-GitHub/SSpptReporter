@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import os
 import platform
 from pathlib import Path
 
@@ -12,6 +11,10 @@ from fpdf import FPDF, XPos, YPos
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "public" / "decks" / "demo"
+
+# PowerPoint 宽屏 16:9（13.33" × 7.5" @ 72 dpi），横向页面用 orientation=P + 宽>高
+PAGE_W = 960
+PAGE_H = 540
 
 # Keep in sync with content/decks/demo/slides/*.md page order.
 SLIDES = [
@@ -118,38 +121,38 @@ def main() -> None:
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    pdf = RehearsalPdf(orientation="L", unit="pt", format=(1280, 720))
+    # fpdf2：orientation=L 会交换 format 两维；宽>高时须用 P，否则会生成竖屏页
+    pdf = RehearsalPdf(orientation="P", unit="pt", format=(PAGE_W, PAGE_H))
     pdf.set_auto_page_break(auto=False)
     pdf.add_font("body", "", str(font_path))
     pdf.add_font("title", "", str(font_path))
     print(f"Using font: {font_path}")
 
-    margin_x = 72
-    page_w = 1280
-    page_h = 720
+    margin_x = 54
+    header_h = 72
 
     for index, slide in enumerate(SLIDES):
         pdf.add_page()
         pdf.set_fill_color(31, 59, 115)
-        pdf.rect(0, 0, page_w, 96, style="F")
+        pdf.rect(0, 0, PAGE_W, header_h, style="F")
 
-        pdf.set_font("title", size=36)
+        pdf.set_font("title", size=28)
         pdf.set_text_color(255, 255, 255)
-        pdf.set_xy(margin_x, 32)
-        pdf.cell(0, 40, slide["title"], new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_xy(margin_x, 24)
+        pdf.cell(0, 32, slide["title"], new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
-        pdf.set_font("body", size=16)
+        pdf.set_font("body", size=12)
         pdf.set_text_color(217, 230, 255)
-        pdf.set_xy(page_w - margin_x - 140, 38)
-        pdf.cell(140, 24, f"第 {index + 1} / {len(SLIDES)} 页", align="R")
+        pdf.set_xy(PAGE_W - margin_x - 110, 28)
+        pdf.cell(110, 20, f"第 {index + 1} / {len(SLIDES)} 页", align="R")
 
-        cursor_y = 150
-        pdf.set_font("body", size=24)
+        cursor_y = 112
+        pdf.set_font("body", size=20)
         pdf.set_text_color(38, 46, 61)
         for bullet in slide["bullets"]:
             pdf.set_xy(margin_x, cursor_y)
-            pdf.multi_cell(page_w - margin_x * 2, 32, f"• {bullet}")
-            cursor_y = pdf.get_y() + 8
+            pdf.multi_cell(PAGE_W - margin_x * 2, 26, f"• {bullet}")
+            cursor_y = pdf.get_y() + 6
 
     pdf_path = OUT_DIR / "slides.pdf"
     pdf.output(str(pdf_path))
