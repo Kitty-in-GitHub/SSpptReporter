@@ -38,6 +38,7 @@ interface PresentShellProps {
   pipBorderless: boolean;
   pipOffsetX: number;
   pipOffsetY: number;
+  pipSize: number;
   slideDeck: SlideDeckController;
   directorQueue: DirectorQueueApi;
   playbackDisabled?: boolean;
@@ -46,6 +47,7 @@ interface PresentShellProps {
   onPresentLayoutChange: (layout: PresentLayout) => void;
   onPipCornerChange: (corner: PipCorner) => void;
   onPipBorderlessChange: (borderless: boolean) => void;
+  onPipSizeChange: (size: number) => void;
   onPipOffsetChange: (offsetX: number, offsetY: number) => void;
   onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
@@ -102,6 +104,7 @@ export function PresentShell({
   pipBorderless,
   pipOffsetX,
   pipOffsetY,
+  pipSize,
   slideDeck,
   directorQueue,
   playbackDisabled = false,
@@ -110,6 +113,7 @@ export function PresentShell({
   onPresentLayoutChange,
   onPipCornerChange,
   onPipBorderlessChange,
+  onPipSizeChange,
   onPipOffsetChange,
   onSessionModeChange,
   onToggleSettings,
@@ -248,7 +252,11 @@ export function PresentShell({
   const avatarStageStyle: CSSProperties = {
     ...resolveAvatarStageStyle(backgroundMode, backgroundImageUrl),
     ...(isPipLayout
-      ? { transform: `translate(${pipOffsetX}px, ${pipOffsetY}px)` }
+      ? {
+          transform: `translate(${pipOffsetX}px, ${pipOffsetY}px)`,
+          width: `min(${32 * pipSize}vw, ${360 * pipSize}px)`,
+          height: `min(${48 * pipSize}vh, ${520 * pipSize}px)`,
+        }
       : {}),
   };
 
@@ -328,8 +336,10 @@ export function PresentShell({
           <PresentPipControls
             pipCorner={pipCorner}
             pipBorderless={pipBorderless}
+            pipSize={pipSize}
             onPipCornerChange={onPipCornerChange}
             onPipBorderlessChange={onPipBorderlessChange}
+            onPipSizeChange={onPipSizeChange}
             onResetPipOffset={() => onPipOffsetChange(0, 0)}
           />
         ) : null}

@@ -421,6 +421,7 @@ export default function App() {
           pipBorderless={settingsHook.settings.present.pipBorderless}
           pipOffsetX={settingsHook.settings.present.pipOffsetX}
           pipOffsetY={settingsHook.settings.present.pipOffsetY}
+          pipSize={settingsHook.settings.present.pipSize}
           slideDeck={slideDeck}
           directorQueue={directorQueue}
           playbackDisabled={isProcessing || isSpeaking || isDirectorBusy}
@@ -429,6 +430,7 @@ export default function App() {
           onPresentLayoutChange={settingsHook.updatePresentLayout}
           onPipCornerChange={settingsHook.updatePresentPipCorner}
           onPipBorderlessChange={settingsHook.updatePresentPipBorderless}
+          onPipSizeChange={settingsHook.updatePresentPipSize}
           onPipOffsetChange={settingsHook.updatePresentPipOffset}
           onSessionModeChange={settingsHook.updatePresentSessionMode}
           onToggleSettings={toggleSettingsDialog}

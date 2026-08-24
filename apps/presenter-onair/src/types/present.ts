@@ -34,6 +34,8 @@ export interface PresentSettings {
   pipBorderless: boolean;
   pipOffsetX: number;
   pipOffsetY: number;
+  /** 1 = 默认画中画窗口大小 */
+  pipSize: number;
 }
 
 export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
@@ -44,7 +46,12 @@ export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
   pipBorderless: false,
   pipOffsetX: 0,
   pipOffsetY: 0,
+  pipSize: 1,
 };
+
+export const MIN_PIP_SIZE = 0.6;
+export const MAX_PIP_SIZE = 1.8;
+export const DEFAULT_PIP_SIZE = 1;
 
 const PIP_CORNERS: PipCorner[] = [
   'bottom-right',
@@ -72,6 +79,12 @@ export function normalizePresentSettings(
     pipBorderless: partial?.pipBorderless ?? DEFAULT_PRESENT_SETTINGS.pipBorderless,
     pipOffsetX: clampNumber(partial?.pipOffsetX, -480, 480, 0),
     pipOffsetY: clampNumber(partial?.pipOffsetY, -480, 480, 0),
+    pipSize: clampNumber(
+      partial?.pipSize,
+      MIN_PIP_SIZE,
+      MAX_PIP_SIZE,
+      DEFAULT_PIP_SIZE,
+    ),
   };
 }
 

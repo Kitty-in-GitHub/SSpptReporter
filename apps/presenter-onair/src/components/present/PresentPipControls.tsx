@@ -1,19 +1,27 @@
-import type { PipCorner } from '../../types/present';
-import { PIP_CORNER_LABELS } from '../../types/present';
+import {
+  MAX_PIP_SIZE,
+  MIN_PIP_SIZE,
+  PIP_CORNER_LABELS,
+  type PipCorner,
+} from '../../types/present';
 
 interface PresentPipControlsProps {
   pipCorner: PipCorner;
   pipBorderless: boolean;
+  pipSize: number;
   onPipCornerChange: (corner: PipCorner) => void;
   onPipBorderlessChange: (borderless: boolean) => void;
+  onPipSizeChange: (size: number) => void;
   onResetPipOffset: () => void;
 }
 
 export function PresentPipControls({
   pipCorner,
   pipBorderless,
+  pipSize,
   onPipCornerChange,
   onPipBorderlessChange,
+  onPipSizeChange,
   onResetPipOffset,
 }: PresentPipControlsProps) {
   return (
@@ -32,6 +40,20 @@ export function PresentPipControls({
             </option>
           ))}
         </select>
+      </label>
+      <label className="present-pip-size">
+        <span>窗口 {Math.round(pipSize * 100)}%</span>
+        <input
+          type="range"
+          min={Math.round(MIN_PIP_SIZE * 100)}
+          max={Math.round(MAX_PIP_SIZE * 100)}
+          step={5}
+          value={Math.round(pipSize * 100)}
+          onChange={(event) =>
+            onPipSizeChange(Number(event.target.value) / 100)
+          }
+          title="画中画窗口大小"
+        />
       </label>
       <label className="present-pip-borderless">
         <input

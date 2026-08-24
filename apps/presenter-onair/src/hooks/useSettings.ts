@@ -1040,6 +1040,13 @@ export function useSettings() {
     }));
   }, []);
 
+  const updatePresentPipSize = useCallback((pipSize: number) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({ ...prev.present, pipSize }),
+    }));
+  }, []);
+
   const updateVisualVrmFramingZoom = useCallback((vrmFramingZoom: number) => {
     setSettings((prev) => ({
       ...prev,
@@ -1487,6 +1494,7 @@ export function useSettings() {
     updatePresentPipCorner,
     updatePresentPipBorderless,
     updatePresentPipOffset,
+    updatePresentPipSize,
     updateVisualVrmFramingZoom,
     updateVisualShowInputInBroadcast,
     updateVisualVrmReactionControlMode,

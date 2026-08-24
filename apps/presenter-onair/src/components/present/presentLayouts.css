@@ -167,6 +167,18 @@
   flex-wrap: wrap;
 }
 
+.present-pip-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.present-pip-size input[type='range'] {
+  width: 88px;
+  accent-color: #3b82f6;
+}
+
 .present-pip-borderless {
   display: inline-flex;
   align-items: center;
