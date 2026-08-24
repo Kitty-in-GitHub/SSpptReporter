@@ -300,7 +300,8 @@ export function SettingsPanel({
   updatePiperPlusNoiseScale,
   updateVisualBackgroundMode,
   updateVisualLayoutMode,
-  updateVisualVrmFramingZoom,
+  updateVisualVrmCameraFraming,
+  resetVisualVrmCameraFraming,
   updateVisualShowInputInBroadcast,
   updateVisualVrmReactionControlMode,
   updateVisualVrmEmotionEffect,
@@ -2450,8 +2451,43 @@ export function SettingsPanel({
             </div>
 
             <div className="settings-field">
-              <label htmlFor="visual-vrm-framing-zoom">
-                镜头拉近（{Math.round(settings.visual.vrmFramingZoom * 100)}%）
+              <label>镜头构图</label>
+              <label className="settings-range-field" htmlFor="visual-vrm-framing-pan-x">
+                左右（{Math.round(settings.visual.vrmCameraFraming.panX * 100)}）
+              </label>
+              <input
+                id="visual-vrm-framing-pan-x"
+                type="range"
+                min={-100}
+                max={100}
+                step={5}
+                value={Math.round(settings.visual.vrmCameraFraming.panX * 100)}
+                onChange={(e) =>
+                  updateVisualVrmCameraFraming({
+                    panX: Number(e.target.value) / 100,
+                  })
+                }
+                disabled={disabled}
+              />
+              <label className="settings-range-field" htmlFor="visual-vrm-framing-pan-y">
+                上下（{Math.round(settings.visual.vrmCameraFraming.panY * 100)}）
+              </label>
+              <input
+                id="visual-vrm-framing-pan-y"
+                type="range"
+                min={-100}
+                max={100}
+                step={5}
+                value={Math.round(settings.visual.vrmCameraFraming.panY * 100)}
+                onChange={(e) =>
+                  updateVisualVrmCameraFraming({
+                    panY: Number(e.target.value) / 100,
+                  })
+                }
+                disabled={disabled}
+              />
+              <label className="settings-range-field" htmlFor="visual-vrm-framing-zoom">
+                远近（{Math.round(settings.visual.vrmCameraFraming.zoom * 100)}%）
               </label>
               <input
                 id="visual-vrm-framing-zoom"
@@ -2459,14 +2495,26 @@ export function SettingsPanel({
                 min={50}
                 max={200}
                 step={5}
-                value={Math.round(settings.visual.vrmFramingZoom * 100)}
+                value={Math.round(settings.visual.vrmCameraFraming.zoom * 100)}
                 onChange={(e) =>
-                  updateVisualVrmFramingZoom(Number(e.target.value) / 100)
+                  updateVisualVrmCameraFraming({
+                    zoom: Number(e.target.value) / 100,
+                  })
                 }
                 disabled={disabled}
               />
+              <div className="settings-file-actions">
+                <button
+                  type="button"
+                  className="settings-clear-button"
+                  onClick={resetVisualVrmCameraFraming}
+                  disabled={disabled}
+                >
+                  恢复默认构图
+                </button>
+              </div>
               <p className="settings-field-hint">
-                滚轮仍可微调；双击皮套区域恢复当前滑块构图。锚点里的「特效大小」不是镜头缩放。
+                皮套上：左键旋转、滚轮缩放、右键拖动平移；松手后自动保存。双击恢复为上方滑块设定。锚点里的「特效大小」不是镜头。
               </p>
             </div>
 

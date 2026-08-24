@@ -37,11 +37,11 @@ import type {
   ChatProviderOption,
   StreamingPlatformOption,
   TTSEngineOption,
+  VrmCameraFraming,
 } from '../types/settings';
 import {
-  DEFAULT_VRM_FRAMING_ZOOM,
-  MAX_VRM_FRAMING_ZOOM,
-  MIN_VRM_FRAMING_ZOOM,
+  DEFAULT_VRM_CAMERA_FRAMING,
+  normalizeVrmCameraFraming,
 } from '../types/settings';
 import {
   DEFAULT_PRESENT_SETTINGS,
@@ -252,7 +252,7 @@ function getDefaultSettings(): AppSettings {
       backgroundMode: 'default',
       layoutMode: 'chat',
       showInputInBroadcast: false,
-      vrmFramingZoom: DEFAULT_VRM_FRAMING_ZOOM,
+      vrmCameraFraming: { ...DEFAULT_VRM_CAMERA_FRAMING },
       vrmEmotionEffectAnchors: {},
       vrmReactionControlMode: 'none',
       vrmEmotionEffectMap: { ...DEFAULT_VRM_EMOTION_EFFECT_MAP },
@@ -318,11 +318,15 @@ function normalizeTtsSettings(
   return merged;
 }
 
-function clampVrmFramingZoom(value: number | undefined): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return DEFAULT_VRM_FRAMING_ZOOM;
-  }
-  return Math.min(Math.max(value, MIN_VRM_FRAMING_ZOOM), MAX_VRM_FRAMING_ZOOM);
+function normalizeSavedVrmCameraFraming(
+  savedVisual: Partial<AppSettings['visual']> | undefined,
+): VrmCameraFraming {
+  const legacyZoom = (savedVisual as { vrmFramingZoom?: number } | undefined)
+    ?.vrmFramingZoom;
+  return normalizeVrmCameraFraming({
+    ...savedVisual?.vrmCameraFraming,
+    zoom: savedVisual?.vrmCameraFraming?.zoom ?? legacyZoom,
+  });
 }
 
 function loadSettings(): AppSettings {
@@ -349,7 +353,7 @@ function loadSettings(): AppSettings {
             saved.visual?.backgroundMode === 'transparent'
               ? saved.visual.backgroundMode
               : defaults.visual.backgroundMode,
-          vrmFramingZoom: clampVrmFramingZoom(saved.visual?.vrmFramingZoom),
+          vrmCameraFraming: normalizeSavedVrmCameraFraming(saved.visual),
           vrmEmotionEffectAnchors: normalizeEmotionEffectAnchors(
             saved.visual?.vrmEmotionEffectAnchors,
           ),
@@ -1047,12 +1051,28 @@ export function useSettings() {
     }));
   }, []);
 
-  const updateVisualVrmFramingZoom = useCallback((vrmFramingZoom: number) => {
+  const updateVisualVrmCameraFraming = useCallback(
+    (partial: Partial<VrmCameraFraming>) => {
+      setSettings((prev) => ({
+        ...prev,
+        visual: {
+          ...prev.visual,
+          vrmCameraFraming: normalizeVrmCameraFraming({
+            ...prev.visual.vrmCameraFraming,
+            ...partial,
+          }),
+        },
+      }));
+    },
+    [],
+  );
+
+  const resetVisualVrmCameraFraming = useCallback(() => {
     setSettings((prev) => ({
       ...prev,
       visual: {
         ...prev.visual,
-        vrmFramingZoom: clampVrmFramingZoom(vrmFramingZoom),
+        vrmCameraFraming: { ...DEFAULT_VRM_CAMERA_FRAMING },
       },
     }));
   }, []);
@@ -1495,7 +1515,8 @@ export function useSettings() {
     updatePresentPipBorderless,
     updatePresentPipOffset,
     updatePresentPipSize,
-    updateVisualVrmFramingZoom,
+    updateVisualVrmCameraFraming,
+    resetVisualVrmCameraFraming,
     updateVisualShowInputInBroadcast,
     updateVisualVrmReactionControlMode,
     updateVisualVrmEmotionEffect,

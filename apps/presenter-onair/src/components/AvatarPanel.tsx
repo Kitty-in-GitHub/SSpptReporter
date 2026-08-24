@@ -59,6 +59,13 @@ import {
   type EmotionEffect,
 } from '../lib/emotionEffectRendering';
 import {
+  framingFromTargetOffset,
+  normalizeVrmCameraFraming,
+  resolveVrmCameraFramingOffsets,
+  type VrmCameraFraming,
+  type VrmCameraFramingBase,
+} from '../lib/vrmCameraFraming';
+import {
   UI_ANCHOR_TARGETS,
   UI_EMOTION_SHORT,
 } from '../constants/uiZh';
@@ -73,33 +80,54 @@ interface AvatarBackgroundProps {
   effectAnchor: EmotionEffectAnchor;
   onEffectAnchorChange: (anchor: EmotionEffectAnchor) => void;
   onEffectAnchorReset: () => void;
-  vrmFramingZoom?: number;
+  vrmCameraFraming?: VrmCameraFraming;
+  onVrmCameraFramingChange?: (framing: VrmCameraFraming) => void;
 }
 
 interface CameraFramingState {
   camera: PerspectiveCamera;
   controls: OrbitControls;
-  baseDistance: number;
-  lookAtX: number;
-  lookAtY: number;
-  cameraY: number;
+  base: VrmCameraFramingBase;
   defaultCameraPosition: Vector3;
   defaultTarget: Vector3;
 }
 
 function applyVrmCameraFraming(
   framing: CameraFramingState,
-  zoom: number,
+  cameraFraming: VrmCameraFraming,
 ): void {
-  const safeZoom = Math.min(Math.max(zoom, 0.5), 2);
-  const distance = Math.max(0.35, framing.baseDistance / safeZoom);
-  framing.camera.position.set(framing.lookAtX, framing.cameraY, distance);
-  framing.controls.target.set(framing.lookAtX, framing.lookAtY, 0);
+  const safe = normalizeVrmCameraFraming(cameraFraming);
+  const { offsetX, offsetY, distance } = resolveVrmCameraFramingOffsets(
+    framing.base,
+    safe,
+  );
+  const targetX = framing.base.lookAtX + offsetX;
+  const targetY = framing.base.lookAtY + offsetY;
+  framing.camera.position.set(
+    targetX,
+    framing.base.cameraY + offsetY,
+    distance,
+  );
+  framing.controls.target.set(targetX, targetY, 0);
   framing.controls.minDistance = Math.max(0.25, distance * 0.35);
   framing.controls.maxDistance = Math.max(3, distance * 2.2);
   framing.controls.update();
   framing.defaultCameraPosition.copy(framing.camera.position);
   framing.defaultTarget.copy(framing.controls.target);
+}
+
+function readVrmCameraFramingFromControls(
+  framing: CameraFramingState,
+): VrmCameraFraming {
+  const distance = framing.camera.position.distanceTo(framing.controls.target);
+  const zoom =
+    distance > 0 ? framing.base.baseDistance / distance : framing.base.baseDistance;
+  return framingFromTargetOffset(
+    framing.base,
+    framing.controls.target.x,
+    framing.controls.target.y,
+    zoom,
+  );
 }
 
 const VRM_AMBIENT_LIGHT_INTENSITY = 0.38;
@@ -482,11 +510,17 @@ export function AvatarBackground({
   effectAnchor,
   onEffectAnchorChange,
   onEffectAnchorReset,
-  vrmFramingZoom = 1,
+  vrmCameraFraming,
+  onVrmCameraFramingChange,
 }: AvatarBackgroundProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const cameraFramingRef = useRef<CameraFramingState | null>(null);
+  const applyingFramingRef = useRef(false);
+  const vrmCameraFramingRef = useRef(
+    normalizeVrmCameraFraming(vrmCameraFraming),
+  );
+  const onVrmCameraFramingChangeRef = useRef(onVrmCameraFramingChange);
   const vrmRef = useRef<VRM | null>(null);
   const expressionControllerRef = useRef<VrmExpressionController | null>(null);
   const mouthExpressionNameRef = useRef<string | null>(null);
@@ -529,10 +563,21 @@ export function AvatarBackground({
   }, [effectAnchor]);
 
   useEffect(() => {
+    onVrmCameraFramingChangeRef.current = onVrmCameraFramingChange;
+  }, [onVrmCameraFramingChange]);
+
+  useEffect(() => {
+    vrmCameraFramingRef.current = normalizeVrmCameraFraming(vrmCameraFraming);
     const framing = cameraFramingRef.current;
     if (!framing) return;
-    applyVrmCameraFraming(framing, vrmFramingZoom);
-  }, [vrmFramingZoom]);
+    applyingFramingRef.current = true;
+    applyVrmCameraFraming(framing, vrmCameraFramingRef.current);
+    applyingFramingRef.current = false;
+  }, [
+    vrmCameraFraming?.panX,
+    vrmCameraFraming?.panY,
+    vrmCameraFraming?.zoom,
+  ]);
 
   const handleAnchorPoint = useCallback(
     (x: number, y: number) => {
@@ -720,7 +765,8 @@ export function AvatarBackground({
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.enablePan = false;
+    controls.enablePan = true;
+    controls.screenSpacePanning = true;
     controls.enableZoom = true;
     controls.enableRotate = true;
     controls.rotateSpeed = 0.75;
@@ -729,6 +775,20 @@ export function AvatarBackground({
     controls.maxPolarAngle = Math.PI * 0.55;
     controls.target.set(0, 1.1, 0);
     controls.update();
+
+    const syncFramingFromControls = () => {
+      if (applyingFramingRef.current) {
+        return;
+      }
+      const framing = cameraFramingRef.current;
+      const onChange = onVrmCameraFramingChangeRef.current;
+      if (!framing || !onChange) {
+        return;
+      }
+      onChange(readVrmCameraFramingFromControls(framing));
+    };
+
+    controls.addEventListener('end', syncFramingFromControls);
 
     const resetCamera = () => {
       const framing = cameraFramingRef.current;
@@ -820,14 +880,23 @@ export function AvatarBackground({
         cameraFramingRef.current = {
           camera,
           controls,
-          baseDistance: distance,
-          lookAtX,
-          lookAtY,
-          cameraY,
+          base: {
+            lookAtX,
+            lookAtY,
+            cameraY,
+            baseDistance: distance,
+            panSpanX: Math.max(modelWidth * 0.45, 0.25),
+            panSpanY: Math.max(modelHeight * 0.32, 0.2),
+          },
           defaultCameraPosition: camera.position.clone(),
           defaultTarget: controls.target.clone(),
         };
-        applyVrmCameraFraming(cameraFramingRef.current, vrmFramingZoom);
+        applyingFramingRef.current = true;
+        applyVrmCameraFraming(
+          cameraFramingRef.current,
+          vrmCameraFramingRef.current,
+        );
+        applyingFramingRef.current = false;
 
         camera.near = 0.01;
         camera.far = Math.max(50, distance * 20);
@@ -999,6 +1068,7 @@ export function AvatarBackground({
         VRMUtils.deepDispose(loadedVrm.scene);
       }
       canvas.removeEventListener('dblclick', resetCamera);
+      controls.removeEventListener('end', syncFramingFromControls);
       canvas.removeEventListener('pointerdown', setDraggingCursor);
       canvas.removeEventListener('pointerup', clearDraggingCursor);
       canvas.removeEventListener('pointerleave', clearDraggingCursor);

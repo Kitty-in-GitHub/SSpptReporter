@@ -5,6 +5,7 @@ import type {
   VrmReactionControlMode,
 } from '../lib/vrmReactions';
 import type { PresentSettings } from './present';
+import type { VrmCameraFraming } from '../lib/vrmCameraFraming';
 
 export type ChatProviderOption =
   | 'openai'
@@ -174,16 +175,19 @@ export interface ManneriSettings {
   minMessageLength: number;
 }
 
-export const MIN_VRM_FRAMING_ZOOM = 0.5;
-export const MAX_VRM_FRAMING_ZOOM = 2;
-export const DEFAULT_VRM_FRAMING_ZOOM = 1;
+export type { VrmCameraFraming };
+export {
+  DEFAULT_VRM_CAMERA_FRAMING,
+  MAX_VRM_FRAMING_ZOOM,
+  MIN_VRM_FRAMING_ZOOM,
+  normalizeVrmCameraFraming,
+} from '../lib/vrmCameraFraming';
 
 export interface VisualSettings {
   backgroundMode: 'default' | 'green' | 'transparent';
   layoutMode: 'chat' | 'broadcast';
   showInputInBroadcast: boolean;
-  /** 1 = 默认构图；越大镜头越近（半身特写） */
-  vrmFramingZoom: number;
+  vrmCameraFraming: VrmCameraFraming;
   vrmEmotionEffectAnchors: Record<string, EmotionEffectAnchor>;
   vrmReactionControlMode: VrmReactionControlMode;
   vrmEmotionEffectMap: VrmEmotionEffectMap;

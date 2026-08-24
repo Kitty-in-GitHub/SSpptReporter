@@ -31,6 +31,9 @@ interface ChatPanelProps {
   visual: VisualSettings;
   onEnterPresentMode?: () => void;
   onEnterEditMode?: () => void;
+  onVrmCameraFramingChange?: (
+    framing: VisualSettings['vrmCameraFraming'],
+  ) => void;
 }
 
 export function ChatPanel({
@@ -52,6 +55,7 @@ export function ChatPanel({
   visual,
   onEnterPresentMode,
   onEnterEditMode,
+  onVrmCameraFramingChange,
 }: ChatPanelProps) {
   const isBroadcast = visual.layoutMode === 'broadcast';
   const shouldShowInput = !isBroadcast || visual.showInputInBroadcast;
@@ -118,7 +122,8 @@ export function ChatPanel({
         effectAnchor={effectAnchor}
         onEffectAnchorChange={onEffectAnchorChange}
         onEffectAnchorReset={onEffectAnchorReset}
-        vrmFramingZoom={visual.vrmFramingZoom}
+        vrmCameraFraming={visual.vrmCameraFraming}
+        onVrmCameraFramingChange={onVrmCameraFramingChange}
       />
       {isBroadcast ? (
         broadcastCaption && (

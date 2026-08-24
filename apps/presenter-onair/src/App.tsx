@@ -459,7 +459,8 @@ export default function App() {
           }
           backgroundImageUrl={backgroundImageUrl}
           backgroundMode={settingsHook.settings.visual.backgroundMode}
-          vrmFramingZoom={settingsHook.settings.visual.vrmFramingZoom}
+          vrmCameraFraming={settingsHook.settings.visual.vrmCameraFraming}
+          onVrmCameraFramingChange={settingsHook.updateVisualVrmCameraFraming}
         />
       ) : (
         <ChatPanel
@@ -499,6 +500,7 @@ export default function App() {
           onEnterEditMode={() =>
             settingsHook.updatePresentSessionMode('edit')
           }
+          onVrmCameraFramingChange={settingsHook.updateVisualVrmCameraFraming}
         />
       )}
 

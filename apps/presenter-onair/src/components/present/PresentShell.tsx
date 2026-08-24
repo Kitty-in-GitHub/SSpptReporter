@@ -13,7 +13,7 @@ import {
   type PresentLayout,
   type SessionMode,
 } from '../../types/present';
-import type { SlideDeckController } from '../../hooks/useSlideDeck';
+import type { VrmCameraFraming } from '../../lib/vrmCameraFraming';
 import type { EmotionEffectAnchor } from '../../lib/emotionEffectAnchor';
 import type {
   VrmAvatarReaction,
@@ -62,7 +62,8 @@ interface PresentShellProps {
   onEffectAnchorReset: () => void;
   backgroundImageUrl?: string | null;
   backgroundMode: 'default' | 'green' | 'transparent';
-  vrmFramingZoom: number;
+  vrmCameraFraming: VrmCameraFraming;
+  onVrmCameraFramingChange?: (framing: VrmCameraFraming) => void;
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -128,7 +129,8 @@ export function PresentShell({
   onEffectAnchorReset,
   backgroundImageUrl,
   backgroundMode,
-  vrmFramingZoom,
+  vrmCameraFraming,
+  onVrmCameraFramingChange,
 }: PresentShellProps) {
   const pipDragRef = useRef<{
     pointerId: number;
@@ -285,7 +287,8 @@ export function PresentShell({
         effectAnchor={effectAnchor}
         onEffectAnchorChange={onEffectAnchorChange}
         onEffectAnchorReset={onEffectAnchorReset}
-        vrmFramingZoom={vrmFramingZoom}
+        vrmCameraFraming={vrmCameraFraming}
+        onVrmCameraFramingChange={onVrmCameraFramingChange}
       />
     </div>
   ) : null;
