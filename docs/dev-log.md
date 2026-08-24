@@ -20,6 +20,16 @@
 
 ---
 
+### 2026-08-24 · demo 彩排闭环：6 页 PDF + 讲稿替换
+
+- **做了什么**：
+  - `content/decks/demo/slides/01–06.md`：Phase 1 彩排验收讲稿（rehearse-01…06）
+  - `generate-demo-deck.py` + mjs 包装：生成 6 页中文 PDF（fpdf2 + 系统字体）
+  - `npm run compile:deck` → `script.jsonl` 6 条 action
+  - `deck.json` 标题改为「Phase 1 彩排验收」
+- **验证**：`node apps/presenter-onair/scripts/generate-demo-deck.mjs` → `npm run compile:deck` → `npm run dev` → 汇报 → 播放本场讲稿
+- **相关文件**：`content/decks/demo/`、`public/decks/demo/slides.pdf`、`scripts/generate-demo-deck.py`
+
 ### 2026-08-23 · 公开准备：LICENSE + 双知识库 + 上游 fork 说明
 
 - **做了什么**：

@@ -33,10 +33,12 @@ Phase 1 汇报呈现：浏览器内 PDF 翻页 + VRM 主播，由 Director `slid
 ## 内置 demo
 
 ```bash
+pip install fpdf2   # 首次生成需安装
 node apps/presenter-onair/scripts/generate-demo-deck.mjs
+npm run compile:deck
 ```
 
-生成 `public/decks/demo/slides.pdf`（4 页）与 `deck.json`。默认 `activeDeckId` 为 `demo`。
+生成 `public/decks/demo/slides.pdf`（6 页 Phase 1 彩排）与 `deck.json`；讲稿见 `content/decks/demo/slides/*.md`。默认 `activeDeckId` 为 `demo`。
 
 ## 布局（presentLayout）
 
