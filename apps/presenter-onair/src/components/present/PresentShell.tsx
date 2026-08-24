@@ -2,11 +2,19 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { UI_SETTINGS } from '../../constants/uiZh';
 import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
+import type { SlideDeckController } from '../../hooks/useSlideDeck';
+import {
+  exitBrowserFullscreen,
+  getFullscreenElement,
+  requestElementFullscreen,
+  subscribeFullscreenChange,
+} from '../../lib/browserFullscreen';
 import {
   PRESENT_LAYOUT_LABELS,
   type PipCorner,
@@ -51,6 +59,8 @@ interface PresentShellProps {
   onPipOffsetChange: (offsetX: number, offsetY: number) => void;
   onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
+  /** 演讲模式：隐藏导演台等外层面板 */
+  onStageModeChange?: (active: boolean) => void;
   mouthLevel: number;
   isSpeaking: boolean;
   avatarReaction?: VrmAvatarReaction | null;
@@ -118,6 +128,7 @@ export function PresentShell({
   onPipOffsetChange,
   onSessionModeChange,
   onToggleSettings,
+  onStageModeChange,
   mouthLevel,
   isSpeaking,
   avatarReaction,
@@ -132,6 +143,10 @@ export function PresentShell({
   vrmCameraFraming,
   onVrmCameraFramingChange,
 }: PresentShellProps) {
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const [stageMode, setStageMode] = useState(false);
+  const [chromeRevealed, setChromeRevealed] = useState(false);
+  const stageModeRef = useRef(false);
   const pipDragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -160,6 +175,53 @@ export function PresentShell({
     !slideDeck.pdfUrl ||
     slideDeck.isLoading ||
     Boolean(slideDeck.loadError);
+
+  const exitStageMode = useCallback(async () => {
+    stageModeRef.current = false;
+    setStageMode(false);
+    setChromeRevealed(false);
+    onStageModeChange?.(false);
+    await exitBrowserFullscreen();
+  }, [onStageModeChange]);
+
+  const enterStageMode = useCallback(async () => {
+    stageModeRef.current = true;
+    setStageMode(true);
+    setChromeRevealed(false);
+    onStageModeChange?.(true);
+    const shell = shellRef.current;
+    if (shell) {
+      await requestElementFullscreen(shell);
+    }
+  }, [onStageModeChange]);
+
+  const toggleStageMode = useCallback(() => {
+    if (stageModeRef.current) {
+      void exitStageMode();
+    } else {
+      void enterStageMode();
+    }
+  }, [enterStageMode, exitStageMode]);
+
+  useEffect(() => {
+    return subscribeFullscreenChange(() => {
+      if (stageModeRef.current && !getFullscreenElement()) {
+        stageModeRef.current = false;
+        setStageMode(false);
+        setChromeRevealed(false);
+        onStageModeChange?.(false);
+      }
+    });
+  }, [onStageModeChange]);
+
+  useEffect(() => {
+    return () => {
+      if (stageModeRef.current) {
+        onStageModeChange?.(false);
+        void exitBrowserFullscreen();
+      }
+    };
+  }, [onStageModeChange]);
 
   const finishPipDrag = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -213,6 +275,21 @@ export function PresentShell({
         return;
       }
 
+      if (event.key === 'f' || event.key === 'F') {
+        if (event.ctrlKey || event.metaKey || event.altKey) {
+          return;
+        }
+        event.preventDefault();
+        toggleStageMode();
+        return;
+      }
+
+      if (event.key === 'Escape' && stageModeRef.current) {
+        event.preventDefault();
+        void exitStageMode();
+        return;
+      }
+
       if (event.key === ' ' || event.code === 'Space') {
         const { playbackState } = directorQueue;
         if (playbackState === 'playing') {
@@ -240,7 +317,48 @@ export function PresentShell({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [directorQueue, slideControlsDisabled, slideDeck]);
+  }, [
+    directorQueue,
+    exitStageMode,
+    slideControlsDisabled,
+    slideDeck,
+    toggleStageMode,
+  ]);
+
+  const handleStagePointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!stageMode) {
+        return;
+      }
+      const rect = event.currentTarget.getBoundingClientRect();
+      const y = event.clientY - rect.top;
+      setChromeRevealed(y <= 56);
+    },
+    [stageMode],
+  );
+
+  const playbackControls = (
+    <PresentPlaybackControls
+      playbackState={directorQueue.playbackState}
+      playDisabled={playbackDisabled}
+      isLoading={isDeckScriptLoading}
+      onPlayDeckScript={onPlayDeckScript}
+      onPause={directorQueue.pause}
+      onResume={directorQueue.resume}
+      onSkip={directorQueue.skip}
+      onStop={directorQueue.stop}
+    />
+  );
+
+  const pageControls = (
+    <PresentControls
+      currentPage={slideDeck.currentPage}
+      pageCount={slideDeck.pageCount}
+      disabled={slideControlsDisabled}
+      onPrev={slideDeck.prevPage}
+      onNext={slideDeck.nextPage}
+    />
+  );
 
   const avatarStageClassName = [
     'present-avatar-stage',
@@ -311,59 +429,87 @@ export function PresentShell({
 
   return (
     <div
-      className={`present-shell present-layout-${presentLayout} present-pip-${pipCorner}`}
+      ref={shellRef}
+      className={[
+        'present-shell',
+        `present-layout-${presentLayout}`,
+        `present-pip-${pipCorner}`,
+        stageMode ? 'is-stage-mode' : '',
+        stageMode && chromeRevealed ? 'is-chrome-revealed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      onPointerMove={handleStagePointerMove}
+      onPointerLeave={() => {
+        if (stageMode) {
+          setChromeRevealed(false);
+        }
+      }}
     >
-      <SessionModeToolbar
-        sessionMode="present"
-        onSessionModeChange={onSessionModeChange}
-        onToggleSettings={onToggleSettings}
-        settingsAriaLabel={UI_SETTINGS.ariaLabel}
-        title={deckTitle}
-      >
-        <label className="present-toolbar-layout">
-          布局
-          <select
-            value={presentLayout}
-            onChange={(event) =>
-              onPresentLayoutChange(event.target.value as PresentLayout)
-            }
+      {!stageMode ? (
+        <SessionModeToolbar
+          sessionMode="present"
+          onSessionModeChange={onSessionModeChange}
+          onToggleSettings={onToggleSettings}
+          settingsAriaLabel={UI_SETTINGS.ariaLabel}
+          title={deckTitle}
+        >
+          <label className="present-toolbar-layout">
+            布局
+            <select
+              value={presentLayout}
+              onChange={(event) =>
+                onPresentLayoutChange(event.target.value as PresentLayout)
+              }
+            >
+              {Object.entries(PRESENT_LAYOUT_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {isPipLayout ? (
+            <PresentPipControls
+              pipCorner={pipCorner}
+              pipBorderless={pipBorderless}
+              pipSize={pipSize}
+              onPipCornerChange={onPipCornerChange}
+              onPipBorderlessChange={onPipBorderlessChange}
+              onPipSizeChange={onPipSizeChange}
+              onResetPipOffset={() => onPipOffsetChange(0, 0)}
+            />
+          ) : null}
+          {pageControls}
+          {playbackControls}
+          <button
+            type="button"
+            className="present-stage-enter"
+            onClick={() => void enterStageMode()}
+            title="演讲模式：隐藏面板并全屏（F）"
           >
-            {Object.entries(PRESENT_LAYOUT_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {isPipLayout ? (
-          <PresentPipControls
-            pipCorner={pipCorner}
-            pipBorderless={pipBorderless}
-            pipSize={pipSize}
-            onPipCornerChange={onPipCornerChange}
-            onPipBorderlessChange={onPipBorderlessChange}
-            onPipSizeChange={onPipSizeChange}
-            onResetPipOffset={() => onPipOffsetChange(0, 0)}
-          />
-        ) : null}
-        <PresentControls
-          currentPage={slideDeck.currentPage}
-          pageCount={slideDeck.pageCount}
-          disabled={slideControlsDisabled}
-          onPrev={slideDeck.prevPage}
-          onNext={slideDeck.nextPage}
-        />
-        <PresentPlaybackControls
-          playbackState={directorQueue.playbackState}
-          playDisabled={playbackDisabled}
-          isLoading={isDeckScriptLoading}
-          onPlayDeckScript={onPlayDeckScript}
-          onPause={directorQueue.pause}
-          onResume={directorQueue.resume}
-          onSkip={directorQueue.skip}
-          onStop={directorQueue.stop}
-        />
-      </SessionModeToolbar>
+            演讲模式
+          </button>
+        </SessionModeToolbar>
+      ) : (
+        <div
+          className={`present-stage-chrome${chromeRevealed ? ' is-visible' : ''}`}
+          role="toolbar"
+          aria-label="演讲模式控制"
+        >
+          <button
+            type="button"
+            className="present-stage-exit"
+            onClick={() => void exitStageMode()}
+            title="退出演讲模式（Esc / F）"
+          >
+            退出演讲
+          </button>
+          {pageControls}
+          {playbackControls}
+          <span className="present-stage-hint">移到顶部唤出 · Esc 退出</span>
+        </div>
+      )}
 
       <div className="present-body">
         <div className="present-stage">
@@ -389,12 +535,14 @@ export function PresentShell({
           )}
         </div>
 
-        <PresentScriptCue
-          playbackState={directorQueue.playbackState}
-          currentAction={currentAction ?? null}
-          currentIndex={directorQueue.currentIndex}
-          queueLength={directorQueue.queue.length}
-        />
+        {!stageMode ? (
+          <PresentScriptCue
+            playbackState={directorQueue.playbackState}
+            currentAction={currentAction ?? null}
+            currentIndex={directorQueue.currentIndex}
+            queueLength={directorQueue.queue.length}
+          />
+        ) : null}
       </div>
     </div>
   );

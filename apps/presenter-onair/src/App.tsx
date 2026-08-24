@@ -404,9 +404,16 @@ export default function App() {
   }, []);
 
   const sessionMode = settingsHook.settings.present.sessionMode;
+  const [presentStageMode, setPresentStageMode] = useState(false);
+
+  useEffect(() => {
+    if (sessionMode !== 'present') {
+      setPresentStageMode(false);
+    }
+  }, [sessionMode]);
 
   return (
-    <div className="app">
+    <div className={`app${presentStageMode ? ' is-present-stage' : ''}`}>
       {sessionMode === 'edit' ? (
         <ScriptEditorShell
           slideDeck={slideDeck}
@@ -461,6 +468,7 @@ export default function App() {
           backgroundMode={settingsHook.settings.visual.backgroundMode}
           vrmCameraFraming={settingsHook.settings.visual.vrmCameraFraming}
           onVrmCameraFramingChange={settingsHook.updateVisualVrmCameraFraming}
+          onStageModeChange={setPresentStageMode}
         />
       ) : (
         <ChatPanel
@@ -504,19 +512,21 @@ export default function App() {
         />
       )}
 
-      <DirectorPanel
-        sessionMode={sessionMode}
-        disabled={isProcessing || isSpeaking || isDirectorBusy}
-        supportsLipSync={supportsLipSync}
-        ttsEngine={directorTtsEngine}
-        queue={directorQueue}
-        deckPlayback={deckScriptPlayback}
-        onSpeak={speakDirector}
-        onApplyEmotion={emitAvatarReaction}
-        onResetEmotion={() =>
-          emitAvatarReaction({ type: 'reset', fadeMs: 280 })
-        }
-      />
+      {!presentStageMode ? (
+        <DirectorPanel
+          sessionMode={sessionMode}
+          disabled={isProcessing || isSpeaking || isDirectorBusy}
+          supportsLipSync={supportsLipSync}
+          ttsEngine={directorTtsEngine}
+          queue={directorQueue}
+          deckPlayback={deckScriptPlayback}
+          onSpeak={speakDirector}
+          onApplyEmotion={emitAvatarReaction}
+          onResetEmotion={() =>
+            emitAvatarReaction({ type: 'reset', fadeMs: 280 })
+          }
+        />
+      ) : null}
 
       {settingsOpen && (
         <div className="settings-dialog-overlay" onClick={closeSettingsDialog}>

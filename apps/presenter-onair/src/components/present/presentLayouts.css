@@ -358,3 +358,84 @@
   background: rgba(251, 191, 36, 0.18);
   color: #fcd34d;
 }
+
+.present-stage-enter {
+  border: 1px solid rgba(52, 211, 153, 0.45) !important;
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #a7f3d0 !important;
+  font-weight: 600;
+}
+
+.present-stage-enter:hover {
+  background: rgba(16, 185, 129, 0.32) !important;
+}
+
+.present-shell.is-stage-mode {
+  background: #000;
+}
+
+.present-shell.is-stage-mode:fullscreen,
+.present-shell.is-stage-mode:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+}
+
+.present-stage-chrome {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 12, 20, 0.92),
+    rgba(8, 12, 20, 0.55),
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.present-stage-chrome.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.present-stage-exit {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.22);
+  color: #fecaca;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.present-stage-exit:hover {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+.present-stage-hint {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.present-shell.is-stage-mode .present-body {
+  position: relative;
+}
+
+.present-shell.is-stage-mode .present-stage {
+  flex: 1;
+}
