@@ -4,12 +4,37 @@ type SpeechRecognitionInstance = InstanceType<typeof SpeechRecognition>;
 
 interface UseSpeechRecognitionOptions {
   lang?: string;
+  continuous?: boolean;
   onFinalTranscript?: (text: string) => void;
+  onListeningEnd?: () => void;
+}
+
+function speechErrorMessage(error: string): string {
+  switch (error) {
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return '麦克风权限被拒绝';
+    case 'network':
+      return '语音识别网络错误';
+    case 'audio-capture':
+      return '未检测到麦克风';
+    case 'aborted':
+      return '';
+    case 'no-speech':
+      return '';
+    default:
+      return `语音识别错误（${error}）`;
+  }
 }
 
 export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
-  const onFinalTranscript = options?.onFinalTranscript;
   const lang = options?.lang ?? 'ja-JP';
+  const continuous = options?.continuous ?? true;
+  const onFinalTranscriptRef = useRef(options?.onFinalTranscript);
+  const onListeningEndRef = useRef(options?.onListeningEnd);
+  onFinalTranscriptRef.current = options?.onFinalTranscript;
+  onListeningEndRef.current = options?.onListeningEnd;
+
   const supported =
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
@@ -17,6 +42,7 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
   const [listening, setListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
   const [finalTranscript, setFinalTranscript] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   useEffect(() => {
@@ -27,7 +53,7 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
     const recognition = new SpeechRecognitionCtor();
     recognition.lang = lang;
     recognition.interimResults = true;
-    recognition.continuous = true;
+    recognition.continuous = continuous;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = '';
@@ -43,12 +69,16 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
       setInterimTranscript(interim);
       if (final) {
         setFinalTranscript(final);
-        onFinalTranscript?.(final);
+        onFinalTranscriptRef.current?.(final);
       }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.warn('SpeechRecognition error:', event.error);
+      const message = speechErrorMessage(event.error);
+      if (message) {
+        setError(message);
+      }
       if (event.error !== 'no-speech') {
         setListening(false);
       }
@@ -56,6 +86,7 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
 
     recognition.onend = () => {
       setListening(false);
+      onListeningEndRef.current?.();
     };
 
     recognitionRef.current = recognition;
@@ -63,10 +94,11 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
     return () => {
       recognition.abort();
     };
-  }, [supported, onFinalTranscript, lang]);
+  }, [supported, lang, continuous]);
 
   const start = useCallback(() => {
     if (!recognitionRef.current || listening) return;
+    setError(null);
     setFinalTranscript('');
     setInterimTranscript('');
     try {
@@ -86,6 +118,7 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
   const reset = useCallback(() => {
     setFinalTranscript('');
     setInterimTranscript('');
+    setError(null);
   }, []);
 
   return {
@@ -93,6 +126,7 @@ export function useSpeechRecognition(options?: UseSpeechRecognitionOptions) {
     listening,
     interimTranscript,
     finalTranscript,
+    error,
     start,
     stop,
     reset,

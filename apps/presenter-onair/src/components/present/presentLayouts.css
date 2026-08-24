@@ -570,3 +570,72 @@
   color: #fcd34d;
   font-weight: 600;
 }
+
+.present-qa-auto-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.present-qa-auto-submit input {
+  accent-color: #3b82f6;
+}
+
+.present-stage-qa-voice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(42vw, 420px);
+  margin-left: 8px;
+}
+
+.present-stage-qa-mic {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.85);
+  color: #e2e8f0;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.present-stage-qa-mic.is-active {
+  border-color: rgba(248, 113, 113, 0.75);
+  background: rgba(127, 29, 29, 0.55);
+  color: #fecaca;
+}
+
+.present-stage-qa-mic:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.present-stage-qa-status,
+.present-stage-qa-interim,
+.present-stage-qa-last {
+  font-size: 12px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.present-stage-qa-interim {
+  opacity: 0.75;
+}
+
+.present-stage-qa-error {
+  font-size: 12px;
+  color: #fca5a5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

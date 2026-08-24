@@ -36,6 +36,7 @@ import { PresentPipControls } from './PresentPipControls';
 import { PresentPlaybackControls } from './PresentPlaybackControls';
 import { PresentScriptCue } from './PresentScriptCue';
 import { QaPanel } from './QaPanel';
+import { StageQaVoice } from './StageQaVoice';
 import { SessionModeToolbar } from './SessionModeToolbar';
 import { useBrainQa } from '../../hooks/useBrainQa';
 import type { AppSettings, ChatProviderOption } from '../../types/settings';
@@ -522,6 +523,11 @@ export function PresentShell({
           </button>
           {pageControls}
           {playbackControls}
+          <StageQaVoice
+            brainQa={brainQa}
+            directorQueue={directorQueue}
+            disabled={playbackDisabled}
+          />
           <span className="present-stage-hint">移到顶部唤出 · Esc 退出</span>
         </div>
       )}

@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from 'react';
-import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
+import { useRef, useState } from 'react';
+import { UI_QA } from '../../constants/uiZh';
 import type { useBrainQa } from '../../hooks/useBrainQa';
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
+import { useQaVoiceInput } from '../../hooks/useQaVoiceInput';
 
 type DirectorQueueApi = ReturnType<typeof useDirectorQueue>;
 type BrainQaApi = ReturnType<typeof useBrainQa>;
@@ -20,46 +21,17 @@ function formatConfidence(value: number | undefined): string {
 }
 
 export function QaPanel({ brainQa, directorQueue, disabled }: QaPanelProps) {
-  const [text, setText] = useState('');
   const [collapsed, setCollapsed] = useState(false);
   const composingRef = useRef(false);
 
-  const appendRecognizedText = useCallback((recognizedText: string) => {
-    setText((prev) => `${prev}${recognizedText}`);
-  }, []);
+  const qaInput = useQaVoiceInput({ brainQa, directorQueue, disabled });
+  const lastQa = qaInput.lastResult?.action.qa;
 
-  const speech = useSpeechRecognition({
-    lang: 'zh-CN',
-    onFinalTranscript: appendRecognizedText,
-  });
-
-  const handleAsk = useCallback(async () => {
-    const trimmed = text.trim();
-    if (!trimmed || disabled || brainQa.loading) {
-      return;
-    }
-
-    const action = await brainQa.askQuestion(trimmed);
-    if (!action) {
-      return;
-    }
-
-    setText('');
-    if (speech.listening) {
-      speech.stop();
-    }
-
-    const queued = {
-      ...action,
-      barge_in: action.barge_in ?? true,
-      priority: action.priority ?? 'high',
-    };
-
-    directorQueue.enqueueActions([queued]);
-    if (directorQueue.playbackState !== 'playing') {
-      void directorQueue.playQueue();
-    }
-  }, [brainQa, directorQueue, disabled, speech, text]);
+  const micTitle = !qaInput.speech.supported
+    ? UI_QA.micUnsupported
+    : qaInput.speech.listening
+      ? UI_QA.micStop
+      : UI_QA.micTitle;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (
@@ -68,19 +40,9 @@ export function QaPanel({ brainQa, directorQueue, disabled }: QaPanelProps) {
       !composingRef.current
     ) {
       event.preventDefault();
-      void handleAsk();
+      void qaInput.submit();
     }
   };
-
-  const toggleMic = () => {
-    if (speech.listening) {
-      speech.stop();
-    } else {
-      speech.start();
-    }
-  };
-
-  const lastQa = brainQa.lastResult?.action.qa;
 
   return (
     <section className={`present-qa-panel${collapsed ? ' is-collapsed' : ''}`}>
@@ -91,10 +53,10 @@ export function QaPanel({ brainQa, directorQueue, disabled }: QaPanelProps) {
           onClick={() => setCollapsed((value) => !value)}
           aria-expanded={!collapsed}
         >
-          评委提问
+          {UI_QA.panelTitle}
         </button>
         {!brainQa.knowledgeReady && !brainQa.knowledgeError ? (
-          <span className="present-qa-status">加载知识库…</span>
+          <span className="present-qa-status">{UI_QA.knowledgeLoading}</span>
         ) : null}
         {brainQa.knowledgeError ? (
           <span className="present-qa-status is-error">
@@ -105,11 +67,20 @@ export function QaPanel({ brainQa, directorQueue, disabled }: QaPanelProps) {
 
       {!collapsed ? (
         <div className="present-qa-body">
+          <label className="present-qa-auto-submit">
+            <input
+              type="checkbox"
+              checked={qaInput.autoSubmit}
+              onChange={(event) => qaInput.setAutoSubmit(event.target.checked)}
+            />
+            {UI_QA.autoSubmitLabel}
+          </label>
+
           <div className="present-qa-input-row">
             <textarea
               className="present-qa-input"
-              value={text}
-              onChange={(event) => setText(event.target.value)}
+              value={qaInput.text}
+              onChange={(event) => qaInput.setText(event.target.value)}
               onCompositionStart={() => {
                 composingRef.current = true;
               }}
@@ -118,52 +89,62 @@ export function QaPanel({ brainQa, directorQueue, disabled }: QaPanelProps) {
               }}
               onKeyDown={handleKeyDown}
               placeholder={
-                speech.listening
-                  ? '正在听写…'
-                  : '输入评委问题，Enter 提交'
+                qaInput.speech.listening
+                  ? UI_QA.listeningPlaceholder
+                  : UI_QA.inputPlaceholder
               }
               rows={2}
-              disabled={disabled || brainQa.loading}
+              disabled={disabled || qaInput.loading}
             />
-            {speech.supported ? (
-              <button
-                type="button"
-                className={`present-qa-mic${speech.listening ? ' is-active' : ''}`}
-                onClick={toggleMic}
-                disabled={disabled || brainQa.loading}
-                title="语音输入（Chrome / Edge）"
-              >
-                {speech.listening ? '停止' : '麦克风'}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className={`present-qa-mic${qaInput.speech.listening ? ' is-active' : ''}`}
+              onClick={qaInput.toggleMic}
+              disabled={!qaInput.speech.supported || disabled || qaInput.loading}
+              title={micTitle}
+            >
+              {qaInput.speech.listening ? UI_QA.micStop : UI_QA.micLabel}
+            </button>
             <button
               type="button"
               className="present-qa-submit"
-              onClick={() => void handleAsk()}
-              disabled={disabled || brainQa.loading || !text.trim()}
+              onClick={() => void qaInput.submit()}
+              disabled={disabled || qaInput.loading || !qaInput.canSubmit}
             >
-              {brainQa.loading ? '思考中…' : '提问'}
+              {qaInput.loading ? UI_QA.submitting : UI_QA.submit}
             </button>
           </div>
 
-          {speech.interimTranscript ? (
-            <p className="present-qa-interim">{speech.interimTranscript}</p>
+          {qaInput.speech.interimTranscript ? (
+            <p className="present-qa-interim">
+              {qaInput.speech.interimTranscript}
+            </p>
           ) : null}
 
-          {brainQa.error ? (
-            <p className="present-qa-error">{brainQa.error}</p>
+          {qaInput.speech.error ? (
+            <p className="present-qa-error">{qaInput.speech.error}</p>
+          ) : null}
+
+          {qaInput.error ? (
+            <p className="present-qa-error">{qaInput.error}</p>
           ) : null}
 
           {lastQa ? (
             <div className="present-qa-meta">
-              <span>摘要：{lastQa.question_summary}</span>
-              <span>置信度：{formatConfidence(lastQa.confidence)}</span>
+              <span>
+                {UI_QA.summaryPrefix}
+                {lastQa.question_summary}
+              </span>
+              <span>
+                {UI_QA.confidencePrefix}
+                {formatConfidence(lastQa.confidence)}
+              </span>
               {lastQa.admit_unknown ? (
-                <span className="present-qa-badge">未覆盖</span>
+                <span className="present-qa-badge">{UI_QA.admitUnknownBadge}</span>
               ) : null}
               {lastQa.sources?.length ? (
                 <span>
-                  来源：
+                  {UI_QA.sourcesPrefix}
                   {lastQa.sources
                     .map((source) => `${source.kind}:${source.ref}`)
                     .join(' · ')}

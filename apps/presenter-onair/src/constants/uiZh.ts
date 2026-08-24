@@ -62,3 +62,22 @@ export const UI_SETTINGS = {
   title: '设置',
   ariaLabel: '设置',
 };
+
+export const UI_QA = {
+  panelTitle: '评委提问',
+  inputPlaceholder: '输入评委问题，Enter 提交',
+  listeningPlaceholder: '正在听写…',
+  submit: '提问',
+  submitting: '思考中…',
+  micLabel: '麦克风',
+  micStop: '停止',
+  micUnsupported: '当前浏览器不支持语音识别（推荐 Chrome / Edge）',
+  micTitle: '语音输入（Chrome / Edge）',
+  autoSubmitLabel: '说完自动提问',
+  knowledgeLoading: '加载知识库…',
+  summaryPrefix: '摘要：',
+  confidencePrefix: '置信度：',
+  sourcesPrefix: '来源：',
+  admitUnknownBadge: '未覆盖',
+  stageMicTitle: '语音提问（说完自动提交）',
+};
