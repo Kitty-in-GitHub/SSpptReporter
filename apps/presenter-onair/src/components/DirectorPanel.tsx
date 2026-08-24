@@ -5,7 +5,7 @@ import {
 } from '@ssreporter/director';
 import sampleAction from '../fixtures/sample-action.json';
 import sampleQueue from '../fixtures/sample-queue.json';
-import { toDirectorReactionDraft } from '../lib/directorReactions';
+import { toDirectorReactionDrafts } from '../lib/directorReactions';
 import type { useDirectorQueue } from '../hooks/useDirectorQueue';
 import type { useDeckScriptPlayback } from '../hooks/useDeckScriptPlayback';
 import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
@@ -100,9 +100,12 @@ export function DirectorPanel({
     const action = result.action;
     queue.stop();
     onResetEmotion();
-    const draft = toDirectorReactionDraft(action);
-    if (draft) {
-      onApplyEmotion(draft);
+    const { gesture, emotion } = toDirectorReactionDrafts(action);
+    if (gesture) {
+      onApplyEmotion(gesture);
+    }
+    if (emotion) {
+      onApplyEmotion(emotion);
     }
 
     setStatus(`播放中：${action.action_id ?? 'fixture'} / ${action.mode}`);

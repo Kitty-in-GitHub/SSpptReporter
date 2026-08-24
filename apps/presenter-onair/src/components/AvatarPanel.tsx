@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ACESFilmicToneMapping,
   AmbientLight,
+  AnimationAction,
   AnimationClip,
   AnimationMixer,
   Box3,
@@ -34,6 +35,7 @@ import {
   pickVrmIdleMotion,
   runVrmOneShotAnimation,
 } from '../lib/vrmExpressionController';
+import { playVrmaGestureOneShot } from '../lib/vrmaGesturePlayback';
 import {
   DEFAULT_EMOTION_EFFECT_ANCHOR,
   MAX_EMOTION_EFFECT_SCALE,
@@ -525,6 +527,8 @@ export function AvatarBackground({
   const expressionControllerRef = useRef<VrmExpressionController | null>(null);
   const mouthExpressionNameRef = useRef<string | null>(null);
   const animationTokenRef = useRef(0);
+  const mixerRef = useRef<AnimationMixer | null>(null);
+  const idleActionRef = useRef<AnimationAction | null>(null);
   const idleMotionStateRef = useRef<IdleMotionState>({
     nextAt: 0,
     lockUntil: 0,
@@ -697,6 +701,24 @@ export function AvatarBackground({
     if (reaction.type === 'gesture') {
       controller.reset(160);
       controller.gesture(reaction.parts, reaction.fadeMs, reaction.holdMs);
+
+      const vrmaUrl = reaction.vrmaUrl;
+      const mixer = mixerRef.current;
+      const vrm = vrmRef.current;
+      if (vrmaUrl && mixer && vrm) {
+        const token = animationTokenRef.current + 1;
+        animationTokenRef.current = token;
+        void playVrmaGestureOneShot(
+          mixer,
+          idleActionRef.current,
+          vrm,
+          vrmaUrl,
+        ).then((played) => {
+          if (!played && expressionControllerRef.current === controller) {
+            controller.gesture(reaction.parts, reaction.fadeMs, reaction.holdMs);
+          }
+        });
+      }
       return;
     }
 
@@ -962,9 +984,11 @@ export function AvatarBackground({
               stabilizedTracks,
             );
             mixer = new AnimationMixer(vrm.scene);
+            mixerRef.current = mixer;
             const action = mixer.clipAction(stabilizedClip);
             action.setLoop(LoopRepeat, Infinity);
             action.play();
+            idleActionRef.current = action;
           },
           undefined,
           (error) => {
@@ -1081,6 +1105,8 @@ export function AvatarBackground({
         }
         mixer = null;
       }
+      mixerRef.current = null;
+      idleActionRef.current = null;
       vrmRef.current = null;
       expressionControllerRef.current = null;
       mouthExpressionNameRef.current = null;

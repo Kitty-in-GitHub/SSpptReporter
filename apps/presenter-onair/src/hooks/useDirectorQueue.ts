@@ -7,7 +7,7 @@ import {
   type SlideAction,
 } from '@ssreporter/director';
 import { useCallback, useRef, useState } from 'react';
-import { toDirectorReactionDraft } from '../lib/directorReactions';
+import { toDirectorReactionDrafts } from '../lib/directorReactions';
 import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
 
 export interface UseDirectorQueueOptions {
@@ -90,9 +90,12 @@ export function useDirectorQueue({
           }
 
           onResetEmotion();
-          const draft = toDirectorReactionDraft(action);
-          if (draft) {
-            onApplyEmotion(draft);
+          const { gesture, emotion } = toDirectorReactionDrafts(action);
+          if (gesture) {
+            onApplyEmotion(gesture);
+          }
+          if (emotion) {
+            onApplyEmotion(emotion);
           }
 
           const utterance = action.utterance.trim();

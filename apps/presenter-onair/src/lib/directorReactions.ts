@@ -2,6 +2,7 @@ import {
   emotionToVrmExpression,
   type DirectorAction,
 } from '@ssreporter/director';
+import { gestureToVrmReactionDraft } from './gestureToVrmReaction';
 import {
   createVrmReactionFromEffect,
   createVrmReactionFromScreenplay,
@@ -19,7 +20,18 @@ const VRM_EMOTION_SET = new Set<string>([
   'neutral',
 ]);
 
-export function toDirectorReactionDraft(
+export interface DirectorReactionDrafts {
+  gesture: VrmAvatarReactionDraft | null;
+  emotion: VrmAvatarReactionDraft | null;
+}
+
+export function toDirectorGestureDraft(
+  action: DirectorAction,
+): VrmAvatarReactionDraft | null {
+  return gestureToVrmReactionDraft(action.gesture);
+}
+
+export function toDirectorEmotionDraft(
   action: DirectorAction,
 ): VrmAvatarReactionDraft | null {
   const mapped =
@@ -37,4 +49,20 @@ export function toDirectorReactionDraft(
   }
 
   return createVrmReactionFromEffect(mapped as VrmEmotionEffect, action.utterance);
+}
+
+export function toDirectorReactionDrafts(
+  action: DirectorAction,
+): DirectorReactionDrafts {
+  return {
+    gesture: toDirectorGestureDraft(action),
+    emotion: toDirectorEmotionDraft(action),
+  };
+}
+
+/** @deprecated Prefer {@link toDirectorReactionDrafts} for gesture + emotion. */
+export function toDirectorReactionDraft(
+  action: DirectorAction,
+): VrmAvatarReactionDraft | null {
+  return toDirectorEmotionDraft(action);
 }

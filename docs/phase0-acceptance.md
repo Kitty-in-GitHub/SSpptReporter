@@ -61,8 +61,8 @@ npm run test
 
 ## 已知限制（Phase 0 非目标）
 
-- `gesture: bow` 等手势未执行
-- 无 LLM Brain、无 Director 队列、无 `barge_in`
-- 无 PPT 双栏
+- `gesture: bow` 等手势：Phase 0 不验收；Phase 1 见 [`phase1-acceptance.md`](./phase1-acceptance.md)
+- 无 LLM Brain、无 Director 队列、无 `barge_in`（Phase 0 当时状态；队列已在 Phase 1 实现）
+- 无 PPT 双栏（Phase 1 Present 模式已覆盖）
 
 Phase 0 已完成（2026-08-22 验收通过）。进入 Phase 1：知识库 + Present 模式 + Director 队列。

@@ -11,12 +11,12 @@
 - **Q&A**：评委提问短答
 - LLM **只输出** `DirectorAction` JSON，不直接控骨骼
 
-## 当前阶段（截至 2026-08-22）
+## 当前阶段（截至 2026-08-24）
 
 | 项 | 状态 |
 |----|------|
 | Phase 0 | **已通过本机验收**（见 `docs/phase0-acceptance.md`） |
-| Phase 1 | **进行中**：Director 队列 ✅、Present+PDF ✅、content/decks 讲稿入队 ✅ |
+| Phase 1 | **功能完成、待正式验收**：Director 队列 ✅、Present+PDF ✅、讲稿编译入队 ✅、gesture Expression ✅ |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
 | Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试 + 队列） |
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
@@ -90,9 +90,9 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 
 ## 建议的下一步（优先级）
 
-1. **本机验收 Step 2**：改 `slides/*.md` → `npm run compile:deck` → 播放本场讲稿
+1. **Phase 1 正式验收**：按 `docs/phase1-acceptance.md` 打勾（demo 或 `content-private` 真材料）
 2. **Phase 2 Q&A**：`content/persona`、`content/faq` + Brain RAG
-3. **Director 队列**（已完成）：`sample-queue.json` / content 讲稿试播
+3. （可选）VRMA 手势片段：放入 `public/avatar/gestures/` 增强骨骼动效
 4. （可选）备选 TTS：VOICEVOX / 云端 Gemini 口型复测
 
 每完成一项，**在 `docs/dev-log.md` 顶部追加一条日志**（见该文件模板）。
@@ -113,4 +113,5 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | `docs/virtual-host-presenter-path.md` | 总技术路径 |
 | `docs/director-json-schema.md` | Director 协议说明 |
 | `docs/phase0-acceptance.md` | Phase 0 手动验收步骤 |
+| `docs/phase1-acceptance.md` | Phase 1 Present 闭环验收 |
 | `docs/tts-selection.md` | TTS 选型（云端 / 本机 / 核显兜底） |

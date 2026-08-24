@@ -20,6 +20,18 @@
 
 ---
 
+### 2026-08-24 · Phase 1 抛光：gesture 执行 + 验收文档 + compile CLI
+
+- **做了什么**：
+  - `gestureToVrmReaction.ts`：Director gesture → Expression 近似手势；可选 VRMA URL
+  - `directorReactions.ts`：拆分 gesture / emotion；队列与 DirectorPanel 先手势后表情
+  - `vrmaGesturePlayback.ts` + `AvatarPanel`：VRMA one-shot 播放，缺失文件时 Expression fallback
+  - `docs/phase1-acceptance.md`；更新 `phase0-acceptance.md`、`AGENTS.md`
+  - `packages/director/scripts/compile-deck-cli.mjs`：`npm run compile:deck` Windows 可见输出
+  - 单测：`directorReactions.test.ts`（10 项）
+- **验证**：`npm run test` → director 23 + onair 21 passed；`npm run compile:deck` → 6 actions
+- **相关文件**：`gestureToVrmReaction.ts`、`directorReactions.ts`、`AvatarPanel.tsx`、`phase1-acceptance.md`
+
 ### 2026-08-24 · demo 彩排闭环：6 页 PDF + 讲稿替换
 
 - **做了什么**：

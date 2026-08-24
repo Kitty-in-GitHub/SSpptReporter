@@ -63,6 +63,8 @@ export type VrmAvatarReactionDraft =
       parts: readonly VrmExpressionPart[];
       fadeMs?: number;
       holdMs?: number;
+      /** Optional skeletal clip; Expression `parts` are fallback when load fails. */
+      vrmaUrl?: string;
     }
   | {
       type: 'animation';

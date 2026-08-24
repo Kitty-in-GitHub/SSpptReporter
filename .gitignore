@@ -17,6 +17,7 @@ token
 assets/avatars/*
 !assets/avatars/README.md
 apps/presenter-onair/public/avatar/*.vrm
+apps/presenter-onair/public/avatar/gestures/*.vrma
 apps/presenter-web/public/avatars/*.vrm
 
 # Optional local media / large binaries
