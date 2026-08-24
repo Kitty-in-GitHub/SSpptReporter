@@ -1,7 +1,11 @@
 import type { Plugin } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {
+  PRIVATE_CONTENT_DIR,
+  PUBLIC_CONTENT_DIR,
+  resolveContentFile,
+} from './content-roots';
 
 const CONTENT_MIME: Record<string, string> = {
   '.json': 'application/json',
@@ -10,12 +14,16 @@ const CONTENT_MIME: Record<string, string> = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
-export function serveMonorepoContent(): Plugin {
-  const contentDir = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '../../content',
+function isUnderContentRoot(filePath: string): boolean {
+  return (
+    filePath.startsWith(PUBLIC_CONTENT_DIR + path.sep) ||
+    filePath === PUBLIC_CONTENT_DIR ||
+    filePath.startsWith(PRIVATE_CONTENT_DIR + path.sep) ||
+    filePath === PRIVATE_CONTENT_DIR
   );
+}
 
+export function serveMonorepoContent(): Plugin {
   return {
     name: 'serve-monorepo-content',
     configureServer(server) {
@@ -27,10 +35,14 @@ export function serveMonorepoContent(): Plugin {
         }
 
         const relativePath = decodeURIComponent(url.slice('/content/'.length));
-        const filePath = path.resolve(contentDir, relativePath);
-        if (!filePath.startsWith(contentDir)) {
-          res.statusCode = 403;
-          res.end('Forbidden');
+        const filePath = resolveContentFile(relativePath);
+        if (!filePath || !isUnderContentRoot(filePath)) {
+          if (filePath && !isUnderContentRoot(filePath)) {
+            res.statusCode = 403;
+            res.end('Forbidden');
+            return;
+          }
+          next();
           return;
         }
 

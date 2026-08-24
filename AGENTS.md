@@ -22,7 +22,7 @@
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
 | Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
 | 编辑讲稿 | `ScriptEditorShell`（见 `docs/content-decks.md`） |
-| 知识库 `content/` | `content/decks/` MD 讲稿 + 编译入队（见 `docs/content-decks.md`） |
+| 知识库 | `content/` 示例 + `content-private/` 私有（见 `docs/content-decks.md`） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 
 ## 仓库结构（必记）
@@ -33,7 +33,8 @@ SSreporter/
 ├── apps/presenter-onair/     ← 主应用（AITuber OnAir VRM 模板 + 我们的补丁）
 ├── apps/tts-gateway/         ← 本机 Edge-TTS 网关（npm run dev 一并启动）
 ├── packages/director/        ← DirectorAction 类型与校验
-├── content/                  ← 知识库（进 Git）
+├── content/                  ← 示例知识库（可公开）
+├── content-private/          ← 私有知识库（不进 Git）
 ├── assets/avatars/           ← VRM 本地归档（不进 Git）
 ├── schemas/director-action.schema.json
 └── docs/                     ← 设计与跨设备文档
@@ -45,10 +46,12 @@ SSreporter/
 
 1. **`.vrm` 不进 Git** — 换机需手动复制到 `apps/presenter-onair/public/avatar/`。
 2. **密钥不进 Git** — `.env`、`token` 已 ignore；LLM/TTS Key 只放本机。
-3. **Windows 上勿用** `conda run -n ssreporter -- npm …`（GBK 编码会炸）；先 `conda activate ssreporter`。
-4. **npm workspaces** — `three` 在根 `node_modules`；`vite.config.ts` 已 alias 到 `../../node_modules/three`。
-5. **最小改动** — 不整仓吞 AITuberKit；参考 UX，身体底座保持 OnAir。
-6. **Director 协议单一来源** — `schemas/director-action.schema.json`；改协议先改 schema 再改 `packages/director`。
+3. **真实答辩材料走 `content-private/`** — 只有 `content/decks/demo` 与示例 PDF 进公开仓。
+4. **Windows 上勿用** `conda run -n ssreporter -- npm …`（GBK 编码会炸）；先 `conda activate ssreporter`。
+5. **npm workspaces** — `three` 在根 `node_modules`；`vite.config.ts` 已 alias 到 `../../node_modules/three`。
+6. **最小改动** — 不整仓吞 AITuberKit；参考 UX，身体底座保持 OnAir。
+7. **Director 协议单一来源** — `schemas/director-action.schema.json`；改协议先改 schema 再改 `packages/director`。
+8. **上游致谢** — MIT / NOTICE；fork 策略见 `docs/upstream-fork.md`。
 
 ## 5 分钟跑起来
 

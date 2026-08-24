@@ -24,6 +24,15 @@ apps/presenter-web/public/avatars/*.vrm
 *.mp3
 *.mp4
 
+# Private knowledge base (real defense materials — never commit)
+content-private/**
+!content-private/README.md
+
+# Only example deck PDF is public; other public/decks/* stay local
+apps/presenter-onair/public/decks/*
+!apps/presenter-onair/public/decks/demo/
+!apps/presenter-onair/public/decks/demo/**
+
 # Python (tts-gateway)
 __pycache__/
 *.py[cod]

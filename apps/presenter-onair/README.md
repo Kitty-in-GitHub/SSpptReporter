@@ -1,3 +1,12 @@
+# VRM Chat（SSreporter · presenter-onair）
+
+本目录是 **SSreporter** 的主应用壳，源自 [AITuber OnAir](https://github.com/shinshin86/aituber-onair) VRM 示例模板（MIT），并叠加 Director / Present / 讲稿编辑等能力。  
+仓库级许可证与致谢：根目录 [`LICENSE`](../../LICENSE)、[`NOTICE`](../../NOTICE)。Miko 资产条款见 [MIKO_ASSET_TERMS.md](./MIKO_ASSET_TERMS.md)。
+
+以下保留上游英文 README，便于对照模板能力。
+
+---
+
 # VRM Chat
 
 Web Speech API TTS is available with browser voice selection and rate, pitch,

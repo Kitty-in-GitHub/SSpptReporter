@@ -30,9 +30,21 @@
 ## ADR-004 · 仓库与资产策略
 
 - **日期**：2026-08-22
-- **状态**：accepted
+- **状态**：superseded by ADR-008
 - **决策**：GitHub **私仓**；`content/` 知识库进 Git；**所有 `.vrm` 不进 Git**（含示例 miko）；密钥不进 Git。
 - **理由**：答辩材料需版本管理；模型体积大且可能涉及授权；密钥安全。
+
+## ADR-008 · 公开仓与双知识库
+
+- **日期**：2026-08-23
+- **状态**：accepted
+- **决策**：
+  - 代码仓可公开；根目录 MIT（`LICENSE` + `NOTICE`，致谢 AITuber OnAir）
+  - **示例知识库** `content/` + `public/decks/demo/` 进公开仓
+  - **私有知识库** `content-private/` 与非 demo 的 `public/decks/*` 不进 Git
+  - `.vrm` / 密钥仍不进 Git
+  - GitHub fork 血缘见 `docs/upstream-fork.md`（推荐产品仓 + 上游 fork 双仓）
+- **理由**：真实答辩材料与示例分离；合规再分发；fork 元数据无法事后挂到已有独立仓。
 
 ## ADR-005 · 当前运行时模型
 

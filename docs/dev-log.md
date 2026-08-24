@@ -20,6 +20,18 @@
 
 ---
 
+### 2026-08-23 · 公开准备：LICENSE + 双知识库 + 上游 fork 说明
+
+- **做了什么**：
+  - 根目录 `LICENSE`（MIT，保留 Yuki Shindo + SSreporter）与 `NOTICE`
+  - `content/` 示例 vs `content-private/` 私有；Vite 优先读私有；非 demo PDF ignore
+  - `docs/upstream-fork.md`：GitHub 无法事后挂 fork；推荐产品仓 + 上游 fork 双仓
+  - ADR-008；更新 README / AGENTS / content-decks
+- **未做 / 阻塞**：尚未在 GitHub 上实际创建 OnAir fork（需用户操作）
+- **下一台机器应优先**：公开前审计密钥；按需 `gh repo fork shinshin86/aituber-onair`
+- **相关文件**：`LICENSE`、`NOTICE`、`content-roots.ts`、`.gitignore`、`docs/upstream-fork.md`
+- **验证方式**：`npm run compile:deck`；`npm run dev` 仍能播 demo
+
 ### 2026-08-22 · Phase 1.5：应用内编辑讲稿（A+C）
 
 - **做了什么**：

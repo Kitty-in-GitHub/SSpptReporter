@@ -2,6 +2,19 @@
 
 Phase 1 Step 2：用 **Markdown 写讲稿**，编译为 `DirectorAction` 队列，驱动 Present 模式播放 + PDF 翻页。
 
+## 示例 vs 私有
+
+| 根目录 | Git | 用途 |
+|--------|-----|------|
+| `content/` | ✅ | 公开示例（当前：`demo`） |
+| `content-private/` | ❌ | 真实答辩；布局与 `content/` 相同 |
+| `public/decks/demo/` | ✅ | 示例 PDF |
+| `public/decks/<其他>/` | ❌ | 私有 PDF |
+
+运行时 `/content/…`：**先私有、后示例**。编辑/编译 API：已有私有场次写私有；仅有示例场次写示例；全新 `deckId` 默认写 **`content-private/`**。
+
+详见 [`content/README.md`](../content/README.md)、[`content-private/README.md`](../content-private/README.md)。
+
 ## 工作流
 
 1. 准备 PDF → `apps/presenter-onair/public/decks/<deckId>/slides.pdf`
@@ -92,15 +105,18 @@ cd packages/director && DECK_ID=my-deck npm run compile:deck
 
 `activeDeckId` 来自设置 `present.activeDeckId`（默认 `demo`）。
 
-## 新建一场答辩
+## 新建一场答辩（私有，推荐）
 
 ```bash
-mkdir -p content/decks/my-defense/slides
+mkdir -p content-private/decks/my-defense/slides
 # 编写 deck.json、slides/01.md …
+mkdir -p apps/presenter-onair/public/decks/my-defense
 # 复制 PDF 到 public/decks/my-defense/slides.pdf
-npm run compile:deck
+# 应用内保存并编译，或按场次编译 demo 以外的根目录
 # 在应用中把 activeDeckId 设为 my-defense（后续可在 UI 选择）
 ```
+
+仅改公开示例时，继续编辑 `content/decks/demo/`。
 
 ## 应用内编辑（Phase 1.5）
 
@@ -108,7 +124,7 @@ npm run compile:deck
 
 - 左侧：PDF 当前页预览
 - 右侧：朗读文本、`emotion` / `gesture` / 翻页动作表单
-- **保存本页**：写回 `content/decks/<id>/slides/NN.md`（仅 dev API）
+- **保存本页**：写回对应根下 `decks/<id>/slides/NN.md`（仅 dev API）
 - **保存并编译**：写盘 + 生成 `script.jsonl`
 - 未保存修改自动写入 `localStorage` 草稿；可点「放弃草稿」恢复磁盘版本
 
@@ -120,6 +136,7 @@ npm run compile:deck
 |------|------|
 | 编译器 | `packages/director/src/compile-deck-script.ts` |
 | 编译 CLI | `packages/director/src/compile-deck-cli.test.ts` |
+| 内容根解析 | `apps/presenter-onair/content-roots.ts` |
 | 运行时加载讲稿 | `apps/presenter-onair/src/lib/content/loadDeckScript.ts` |
 | deck 加载 | `apps/presenter-onair/src/lib/present/loadDeck.ts` |
 | Director 面板 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |

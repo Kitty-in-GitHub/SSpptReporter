@@ -1,0 +1,15 @@
+SSreporter
+Copyright (c) 2026 SSreporter contributors
+
+This product includes software derived from AITuber OnAir
+(https://github.com/shinshin86/aituber-onair), Copyright (c) 2025 Yuki Shindo,
+licensed under the MIT License.
+
+The default application shell under `apps/presenter-onair` started from the
+AITuber OnAir VRM example template and continues to depend on
+`@aituber-onair/*` packages published from that project.
+
+Character / VRM assets (including Miko) are NOT covered by the MIT License.
+See `apps/presenter-onair/MIKO_ASSET_TERMS.md` and the upstream Miko Character
+Usage Guidelines. Custom skins such as StarString are local-only and are not
+distributed via Git.

@@ -2,6 +2,8 @@
 
 虚拟主播答辩助手：VRoid→VRM 身体 + Director + 知识库（建设中）。
 
+基于 [AITuber OnAir](https://github.com/shinshin86/aituber-onair)（MIT，© Yuki Shindo）的 VRM 模板演进；许可证见 [`LICENSE`](./LICENSE) 与 [`NOTICE`](./NOTICE)。上游血缘 / 如何补 fork 见 [`docs/upstream-fork.md`](./docs/upstream-fork.md)。
+
 ## 环境
 
 ```bash
@@ -40,9 +42,16 @@ npm run dev         # 页面 + 本机 TTS 网关（:5050）一并启动
 
 换机：复制 `StarString1.0.vrm` 到 `public/avatar/`。要换回默认示例，改 `AvatarPanel.tsx` 中的 `VRM_FILE_URL` 并恢复 `miko.vrm`。
 
-### 知识库
+### 知识库（示例公开 / 私有本地）
 
-讲稿 / FAQ / persona 放在 `content/`，随**私有**仓库同步（勿公开仓）。
+| 位置 | 是否进公开仓 | 说明 |
+|------|--------------|------|
+| `content/`（如 `decks/demo`） | ✅ | 示例讲稿 |
+| `apps/presenter-onair/public/decks/demo/` | ✅ | 示例 PDF |
+| `content-private/` | ❌ | 真实答辩 / persona / FAQ |
+| `public/decks/<非 demo>/` | ❌ | 私有 PDF |
+
+详见 [`content/README.md`](./content/README.md)、[`content-private/README.md`](./content-private/README.md)。
 
 ## 跨设备开发（给其他 AI / 换机）
 
@@ -54,8 +63,9 @@ npm run dev         # 页面 + 本机 TTS 网关（:5050）一并启动
 | [`docs/decisions.md`](./docs/decisions.md) | 架构决策（ADR，避免重复争论） |
 | [`docs/phase0-acceptance.md`](./docs/phase0-acceptance.md) | Phase 0 手动验收 |
 | [`docs/tts-selection.md`](./docs/tts-selection.md) | TTS 选型（云端 / 本机 / 低配置） |
+| [`docs/upstream-fork.md`](./docs/upstream-fork.md) | OnAir 血缘、fork / 向上游 PR |
 
-私仓：`https://github.com/Kitty-in-GitHub/SSpptReporter.git`
+远程：`https://github.com/Kitty-in-GitHub/SSpptReporter.git`
 
 ## 架构文档
 

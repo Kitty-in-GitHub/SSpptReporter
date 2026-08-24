@@ -1,12 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { Plugin } from 'vite';
 import {
   compileDeckDir,
   writeSlideMarkdown,
 } from '../../packages/director/src/compile-deck-dir.ts';
+import { resolveDeckContentRoot } from './content-roots';
 
 function readJsonBody<T>(req: IncomingMessage): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -31,11 +29,6 @@ function sendJson(res: ServerResponse, status: number, payload: unknown) {
 }
 
 export function contentDeckApi(): Plugin {
-  const contentDir = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '../../content',
-  );
-
   return {
     name: 'content-deck-api',
     configureServer(server) {
@@ -57,6 +50,7 @@ export function contentDeckApi(): Plugin {
         const deckId = decodeURIComponent(match[1]);
         const pageRaw = match[2];
         const isCompile = url.endsWith('/compile');
+        const contentDir = resolveDeckContentRoot(deckId);
 
         try {
           if (isCompile && req.method === 'POST') {

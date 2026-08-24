@@ -2,6 +2,7 @@
   "name": "ssreporter",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Virtual presenter: VRM body + Director + knowledge brain",
   "scripts": {
     "dev:stop": "node scripts/dev-stop.mjs",
