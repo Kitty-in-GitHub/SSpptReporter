@@ -3,8 +3,10 @@ import {
   answerQuestion,
   type AnswerQuestionResult,
   type BrainKnowledge,
+  type BrainVectorIndex,
 } from '@ssreporter/brain';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createBrainEmbedder } from '../lib/brain/createBrainEmbedder';
 import { createBrainLlmClient } from '../lib/brain/createBrainLlmClient';
 import { loadBrainKnowledgeForDeck } from '../lib/content/loadBrainKnowledge';
 import type { AppSettings, ChatProviderOption } from '../types/settings';
@@ -31,17 +33,20 @@ export function useBrainQa({
   );
 
   const knowledgeRef = useRef<BrainKnowledge | null>(null);
+  const vectorIndexRef = useRef<BrainVectorIndex | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setKnowledgeReady(false);
     setKnowledgeError(null);
     knowledgeRef.current = null;
+    vectorIndexRef.current = null;
 
     void loadBrainKnowledgeForDeck(deckId)
-      .then((knowledge) => {
+      .then(({ knowledge, vectorIndex }) => {
         if (!cancelled) {
           knowledgeRef.current = knowledge;
+          vectorIndexRef.current = vectorIndex;
           setKnowledgeReady(true);
         }
       })
@@ -78,6 +83,8 @@ export function useBrainQa({
         return null;
       }
 
+      const embedder = createBrainEmbedder(llmSettings, getApiKeyForProvider);
+
       setLoading(true);
       setError(null);
 
@@ -88,7 +95,12 @@ export function useBrainQa({
           deckId,
           knowledge: knowledgeRef.current,
           llm,
+          embedder: embedder ?? undefined,
+          vectorIndex: vectorIndexRef.current,
         });
+        if (result.vectorIndex) {
+          vectorIndexRef.current = result.vectorIndex;
+        }
         setLastResult(result);
         return result.action;
       } catch (askError) {

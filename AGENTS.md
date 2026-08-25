@@ -82,6 +82,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | Q&A 面板 | `apps/presenter-onair/src/components/present/QaPanel.tsx` |
 | 场次切换 | `PresentDeckSelect` · `GET /api/content/decks` |
 | Brain Q&A | `packages/brain` · `apps/presenter-onair/src/hooks/useBrainQa.ts` |
+| Embedding | `createBrainEmbedder.ts` · `docs/brain-retrieval.md` |
 | PDF 幻灯 | `apps/presenter-onair/src/components/present/PdfSlideViewer.tsx` |
 | deck 规范 | `docs/present-deck.md` |
 | 讲稿内容包 | `docs/content-decks.md` |
@@ -95,8 +96,8 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 
 ## 建议的下一步（优先级）
 
-1. **Phase 2 正式验收**：按 `docs/phase2-acceptance.md` 打勾（含 ASR 三引擎，见 `docs/phase2-5-asr.md`）
-2. Phase 2 增强：向量 RAG（单独计划；ASR 已落地）
+1. **Phase 2 正式验收**：按 `docs/phase2-acceptance.md` 打勾（含 ASR；Hybrid 检索见 `docs/brain-retrieval.md`）
+2. （可选）预生成 demo 向量缓存：`npm run build:brain-vectors -- --deck demo`；手测问法与材料措辞不完全一致时的命中
 3. （可选）自制 / 替换 VRMA：见 [`docs/vrma-authoring.md`](docs/vrma-authoring.md)；或 `npm run setup:gestures` 下载开源占位
 4. （可选）备选 TTS：VOICEVOX / 云端 Gemini 口型复测
 
@@ -122,5 +123,6 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | `docs/phase2-acceptance.md` | Phase 2 Q&A 验收 |
 | `docs/phase2-5-asr.md` | Phase 2.5 ASR（语音转文字）三引擎 |
 | `docs/content-qa.md` | persona / FAQ 知识库规范 |
+| `docs/brain-retrieval.md` | Hybrid 检索 + brain-vectors 缓存 |
 | `docs/vrma-authoring.md` | 自制 VRMA（Blender / Unity）下载与教程 |
 | `docs/tts-selection.md` | TTS 选型（云端 / 本机 / 核显兜底） |

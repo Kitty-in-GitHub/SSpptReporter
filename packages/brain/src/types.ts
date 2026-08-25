@@ -1,4 +1,5 @@
 import type { DirectorAction } from "@ssreporter/director";
+import type { BrainEmbedder, BrainVectorIndex } from "./embedTypes.js";
 
 export type KnowledgeChunkKind = "persona" | "faq" | "slide";
 
@@ -34,6 +35,10 @@ export interface AnswerQuestionInput {
   deckId: string;
   knowledge: BrainKnowledge;
   llm: BrainLlmClient;
+  /** When set, hybrid retrieval (vector + TF + RRF); otherwise TF only */
+  embedder?: BrainEmbedder;
+  /** Optional precomputed / cached embeddings for the knowledge pool */
+  vectorIndex?: BrainVectorIndex | null;
 }
 
 export interface AnswerQuestionResult {
@@ -41,4 +46,8 @@ export interface AnswerQuestionResult {
   /** Raw LLM text when fallback was used */
   usedFallback: boolean;
   retrieved: KnowledgeChunk[];
+  /** True when vector similarity participated in retrieval */
+  usedVector?: boolean;
+  /** Index used or built during this call (caller may keep in memory) */
+  vectorIndex?: BrainVectorIndex | null;
 }

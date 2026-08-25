@@ -14,7 +14,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:brain-vectors": "node scripts/build-brain-vectors.mjs"
   },
   "dependencies": {
     "@ssreporter/director": "*"

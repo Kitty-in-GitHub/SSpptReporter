@@ -40,7 +40,7 @@ Brain 将整份 persona 作为 system prompt 的一部分。
 这里是参考答案正文，可含页码提示（见第 3 页）。
 ```
 
-Brain 按问题关键词对 chunk 打分检索，取 top-K 片段注入 prompt。
+Brain 按 **关键词 TF** 与（可选）**云端 embedding 向量相似度** 做 Hybrid 检索，再经 RRF 融合取 top-K 注入 prompt。无 Embedding Key 时退回纯关键词。详见 [`brain-retrieval.md`](./brain-retrieval.md)。
 
 说「请重复」「再说一遍」等口令时，应用层直接复述上一轮回答，不调用 LLM。
 
@@ -69,6 +69,7 @@ Brain **只输出** [`DirectorAction`](../schemas/director-action.schema.json)�
 
 ## 相关文档
 
+- [`docs/brain-retrieval.md`](./brain-retrieval.md) — 向量缓存与 Hybrid 检索
 - [`docs/director-json-schema.md`](./director-json-schema.md) — Q&A JSON 示例
 - [`docs/content-decks.md`](./content-decks.md) — 讲稿编译
 - [`docs/phase2-acceptance.md`](./phase2-acceptance.md) — 验收清单

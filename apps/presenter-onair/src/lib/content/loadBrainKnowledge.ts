@@ -1,7 +1,9 @@
 import {
   buildBrainKnowledge,
   buildSlideIndex,
+  parseBrainVectorIndex,
   type BrainKnowledge,
+  type BrainVectorIndex,
   type SlideMarkdownFile,
 } from '@ssreporter/brain';
 
@@ -11,6 +13,18 @@ async function fetchText(url: string): Promise<string | null> {
     return null;
   }
   return response.text();
+}
+
+async function fetchJson(url: string): Promise<unknown | null> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    return null;
+  }
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
 }
 
 async function loadSlideFiles(deckId: string): Promise<SlideMarkdownFile[]> {
@@ -28,9 +42,15 @@ async function loadSlideFiles(deckId: string): Promise<SlideMarkdownFile[]> {
   return files;
 }
 
+export interface LoadedBrainKnowledge {
+  knowledge: BrainKnowledge;
+  /** Optional cache from content/decks/<id>/brain-vectors.json */
+  vectorIndex: BrainVectorIndex | null;
+}
+
 export async function loadBrainKnowledgeForDeck(
   deckId: string,
-): Promise<BrainKnowledge> {
+): Promise<LoadedBrainKnowledge> {
   const personaText = (await fetchText('/content/persona/presenter.md')) ?? '';
   const deckFaq = await fetchText(`/content/faq/${deckId}.md`);
   const faqMarkdown =
@@ -38,7 +58,7 @@ export async function loadBrainKnowledgeForDeck(
   const slideFiles = await loadSlideFiles(deckId);
   const slideIndex = buildSlideIndex(deckId, slideFiles);
 
-  return buildBrainKnowledge({
+  const knowledge = buildBrainKnowledge({
     personaText,
     faqMarkdown,
     faqId: deckId,
@@ -48,4 +68,11 @@ export async function loadBrainKnowledgeForDeck(
       body: entry.body,
     })),
   });
+
+  const rawVectors = await fetchJson(
+    `/content/decks/${encodeURIComponent(deckId)}/brain-vectors.json`,
+  );
+  const vectorIndex = parseBrainVectorIndex(rawVectors);
+
+  return { knowledge, vectorIndex };
 }

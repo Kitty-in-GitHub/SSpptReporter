@@ -79,4 +79,16 @@
   - 选 `gateway` 且健康检查 `asr: false` 时弹出安装指引（不可在浏览器内静默 pip install）
   - `browserWhisper` 使用 `@huggingface/transformers` + `Xenova/whisper-base`（q8），进度展示在听写状态行
 - **理由**：免终端用户可用 WASM；愿意装 Python 的用网关；云端作备选。
-- **不做（本期）**：向量 RAG、流式逐字 ASR、把 Whisper 模型 commit 进 Git
+- **不做（本期）**：流式逐字 ASR、把 Whisper 模型 commit 进 Git
+
+## ADR-010 · Brain Hybrid 检索（薄 RAG）
+
+- **日期**：2026-08-24
+- **状态**：accepted
+- **决策**：
+  - 检索 = **关键词 TF + 云端 Embedding 余弦相似度**，再用 **RRF** 融合；无 Key / 失败时纯 TF
+  - Embedding 复用 Settings 的 OpenAI / openai-compatible（默认 `text-embedding-3-small`）；可选 `brain-vectors.json` 缓存
+  - 向量存内存 `number[]`，**不**引入独立向量库或 LangChain / LlamaIndex / Dify
+  - 聊天 LLM 与 `DirectorAction` 协议不变
+- **理由**：材料规模小；检索是固定 LLM 下最值得投资的一层；少自维护基础设施
+- **文档**：[`brain-retrieval.md`](./brain-retrieval.md)

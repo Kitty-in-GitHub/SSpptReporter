@@ -3,7 +3,7 @@ import {
   createFallbackQaAction,
   parseDirectorActionFromLlm,
 } from "./parseLlmResponse.js";
-import { mergeKnowledgePools, retrieveChunks } from "./retrieve.js";
+import { retrieveHybrid } from "./retrieveHybrid.js";
 import type { AnswerQuestionInput, AnswerQuestionResult } from "./types.js";
 
 function ensureQaActionFields(
@@ -32,11 +32,12 @@ export async function answerQuestion(
     throw new Error("问题不能为空");
   }
 
-  const pool = mergeKnowledgePools(
-    input.knowledge.faqChunks,
-    input.knowledge.slideChunks,
-  );
-  const retrieved = retrieveChunks(question, pool, { topK: 4, minScore: 1 });
+  const hybrid = await retrieveHybrid(question, input.knowledge, {
+    topK: 4,
+    embedder: input.embedder,
+    vectorIndex: input.vectorIndex,
+  });
+  const retrieved = hybrid.chunks;
 
   const systemPrompt = buildQaSystemPrompt(
     input.knowledge.personaText,
@@ -53,7 +54,13 @@ export async function answerQuestion(
       parseDirectorActionFromLlm(raw),
       question,
     );
-    return { action, usedFallback: false, retrieved };
+    return {
+      action,
+      usedFallback: false,
+      retrieved,
+      usedVector: hybrid.usedVector,
+      vectorIndex: hybrid.vectorIndex,
+    };
   } catch (firstError) {
     try {
       raw = await input.llm.complete(
@@ -64,7 +71,13 @@ export async function answerQuestion(
         parseDirectorActionFromLlm(raw),
         question,
       );
-      return { action, usedFallback: false, retrieved };
+      return {
+        action,
+        usedFallback: false,
+        retrieved,
+        usedVector: hybrid.usedVector,
+        vectorIndex: hybrid.vectorIndex,
+      };
     } catch {
       const utterance =
         typeof firstError === "object" &&
@@ -80,6 +93,8 @@ export async function answerQuestion(
         action: createFallbackQaAction(question, utterance),
         usedFallback: true,
         retrieved,
+        usedVector: hybrid.usedVector,
+        vectorIndex: hybrid.vectorIndex,
       };
     }
   }

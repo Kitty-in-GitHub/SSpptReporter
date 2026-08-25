@@ -58,7 +58,7 @@ npm run test
 ## 已知限制（MVP）
 
 - ASR：Web Speech / 本机 Whisper / 云端 Whisper（见 [`phase2-5-asr.md`](./phase2-5-asr.md)）
-- RAG 为关键词 TF 匹配，无向量 embedding（后续单独增强）
+- RAG：关键词 TF + 可选云端 embedding Hybrid（见 [`brain-retrieval.md`](./brain-retrieval.md)）；无 Key 时纯 TF
 - 无独立顶栏 `sessionMode: qa`；Q&A 嵌在汇报模式底部面板
 - 讲稿被打断后默认不续播；可在 Q&A 面板勾选「问答打断后自动续播讲稿」
 - 说「请重复一下」等口令会复述上一轮回答（不调用 LLM）

@@ -26,6 +26,20 @@
 
 ---
 
+---
+
+### 2026-08-24 · Brain Hybrid 检索（向量 + TF + RRF）
+
+- **做了什么**：
+  - `packages/brain`：云端 Embedding 客户端、余弦检索、RRF、`retrieveHybrid`；`answerQuestion` 可选 embedder
+  - 可选缓存 `brain-vectors.json` + `npm run build:brain-vectors -- --deck demo`
+  - 应用：`createBrainEmbedder`、`loadBrainKnowledge` / `useBrainQa` 接线；无 Key 退回 TF
+  - 文档：`docs/brain-retrieval.md`、ADR-010
+- **未做 / 阻塞**：未提交真实 `brain-vectors.json`（需本机 Key 生成）；手测命中率对比待验收
+- **下一台机器应优先**：有 OpenAI Key 时 `build:brain-vectors`；无 Key 确认 Q&A 仍走 TF
+- **相关文件**：`packages/brain/src/{embedClient,vectorRetrieve,retrieveHybrid,vectorIndex}.ts`、`createBrainEmbedder.ts`
+- **验证方式**：`npm run test -w @ssreporter/brain`
+
 ### 2026-08-24 · ASR：安装指引弹窗 + 浏览器内 Whisper（WASM）
 
 - **做了什么**：
