@@ -4,7 +4,7 @@ import {
   compileDeckDir,
   writeSlideMarkdown,
 } from '../../packages/director/src/compile-deck-dir.ts';
-import { resolveDeckContentRoot } from './content-roots';
+import { resolveDeckContentRoot, listDeckCatalog } from './content-roots';
 
 function readJsonBody<T>(req: IncomingMessage): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -34,6 +34,12 @@ export function contentDeckApi(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split('?')[0];
+
+        if (url === '/api/content/decks' && req.method === 'GET') {
+          sendJson(res, 200, { ok: true, decks: listDeckCatalog() });
+          return;
+        }
+
         if (!url?.startsWith('/api/content/decks/')) {
           next();
           return;

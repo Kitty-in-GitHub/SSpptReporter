@@ -1,5 +1,9 @@
 import type { DirectorAction } from '@ssreporter/director';
 import { useCallback, useRef, useState } from 'react';
+import {
+  createRepeatRequestAction,
+  isRepeatRequest,
+} from '../lib/brain/qaRepeatAction';
 import type { useBrainQa } from './useBrainQa';
 import type { useDirectorQueue } from './useDirectorQueue';
 import {
@@ -90,7 +94,13 @@ export function useQaVoiceInput({
         return false;
       }
 
-      const action = await brainQa.askQuestion(trimmed);
+      let action: DirectorAction | null = null;
+      if (isRepeatRequest(trimmed)) {
+        action = createRepeatRequestAction(brainQa.lastResult?.action);
+      } else {
+        action = await brainQa.askQuestion(trimmed);
+      }
+
       if (!action) {
         return false;
       }

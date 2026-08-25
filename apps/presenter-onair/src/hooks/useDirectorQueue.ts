@@ -7,6 +7,7 @@ import {
   type SlideAction,
 } from '@ssreporter/director';
 import { useCallback, useRef, useState } from 'react';
+import { mergePreemptiveDuringPlayback } from '../lib/directorQueueMerge';
 import { toDirectorReactionDrafts } from '../lib/directorReactions';
 import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
 
@@ -16,6 +17,8 @@ export interface UseDirectorQueueOptions {
   onApplyEmotion: (draft: VrmAvatarReactionDraft) => void;
   onResetEmotion: () => void;
   onSlideAction?: (slideAction: SlideAction) => void | Promise<void>;
+  /** 讲稿播放中被 Q&A 打断后是否续播剩余讲稿 */
+  resumeDeckAfterQaInterrupt?: () => boolean;
 }
 
 export function useDirectorQueue({
@@ -24,6 +27,7 @@ export function useDirectorQueue({
   onApplyEmotion,
   onResetEmotion,
   onSlideAction,
+  resumeDeckAfterQaInterrupt,
 }: UseDirectorQueueOptions) {
   const [playbackState, setPlaybackState] =
     useState<DirectorQueuePlaybackState>('idle');
@@ -36,6 +40,9 @@ export function useDirectorQueue({
   const runIdRef = useRef(0);
   const pausedRef = useRef(false);
   const pauseResolversRef = useRef<(() => void)[]>([]);
+  const currentIndexRef = useRef(-1);
+  const resumeDeckAfterQaRef = useRef(resumeDeckAfterQaInterrupt);
+  resumeDeckAfterQaRef.current = resumeDeckAfterQaInterrupt;
 
   const syncQueue = useCallback((items: DirectorAction[]) => {
     queueRef.current = items;
@@ -78,6 +85,7 @@ export function useDirectorQueue({
         }
 
         const action = queueRef.current[index];
+        currentIndexRef.current = index;
         setCurrentIndex(index);
 
         try {
@@ -116,6 +124,7 @@ export function useDirectorQueue({
 
       onResetEmotion();
       syncQueue([]);
+      currentIndexRef.current = -1;
       setCurrentIndex(-1);
       setPlayback('idle');
     },
@@ -145,11 +154,17 @@ export function useDirectorQueue({
       }
 
       const isPlaying = playbackStateRef.current === 'playing';
-      const merged = mergeQueueItems(queueRef.current, accepted, {
-        isPlaying,
-      });
+      const hasPreemptive = isPlaying && accepted.some(isPreemptiveAction);
+      const merged = hasPreemptive
+        ? mergePreemptiveDuringPlayback(
+            queueRef.current,
+            currentIndexRef.current,
+            accepted,
+            resumeDeckAfterQaRef.current?.() ?? false,
+          )
+        : mergeQueueItems(queueRef.current, accepted, { isPlaying });
 
-      if (isPlaying && accepted.some(isPreemptiveAction)) {
+      if (hasPreemptive) {
         runIdRef.current += 1;
         stopSpeech();
         const nextRunId = runIdRef.current;
@@ -227,6 +242,7 @@ export function useDirectorQueue({
     if (nextIndex < 0 || nextIndex >= queueRef.current.length) {
       onResetEmotion();
       syncQueue([]);
+      currentIndexRef.current = -1;
       setCurrentIndex(-1);
       setPlayback('idle');
       return;
@@ -252,6 +268,7 @@ export function useDirectorQueue({
     stopSpeech();
     onResetEmotion();
     syncQueue([]);
+    currentIndexRef.current = -1;
     setCurrentIndex(-1);
     setPlayback('idle');
   }, [onResetEmotion, resumePausedWaiters, setPlayback, stopSpeech, syncQueue]);

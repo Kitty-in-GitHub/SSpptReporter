@@ -81,3 +81,9 @@ export const UI_QA = {
   admitUnknownBadge: '未覆盖',
   stageMicTitle: '语音提问（说完自动提交）',
 };
+
+export const UI_PRESENT = {
+  deckLabel: '场次',
+  deckPrivateSuffix: '（私有）',
+  resumeDeckAfterQa: '问答打断后自动续播讲稿',
+};

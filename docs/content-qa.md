@@ -42,6 +42,8 @@ Brain 将整份 persona 作为 system prompt 的一部分。
 
 Brain 按问题关键词对 chunk 打分检索，取 top-K 片段注入 prompt。
 
+说「请重复」「再说一遍」等口令时，应用层直接复述上一轮回答，不调用 LLM。
+
 ## slide 索引
 
 当前场次的 `content/decks/<deckId>/slides/NN.md` 正文（去掉 frontmatter）参与检索；页码来自文件名 `01` → 第 1 页。

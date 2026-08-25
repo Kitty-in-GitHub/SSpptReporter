@@ -31,6 +31,7 @@ import type {
 } from '../../lib/vrmReactions';
 import { AvatarBackground } from '../AvatarPanel';
 import { PdfSlideViewer } from './PdfSlideViewer';
+import { PresentDeckSelect } from './PresentDeckSelect';
 import { PresentControls } from './PresentControls';
 import { PresentPipControls } from './PresentPipControls';
 import { PresentPlaybackControls } from './PresentPlaybackControls';
@@ -79,6 +80,9 @@ interface PresentShellProps {
   vrmCameraFraming: VrmCameraFraming;
   onVrmCameraFramingChange?: (framing: VrmCameraFraming) => void;
   activeDeckId: string;
+  onDeckChange: (deckId: string) => void;
+  resumeDeckAfterQaInterrupt: boolean;
+  onResumeDeckAfterQaInterruptChange: (value: boolean) => void;
   llmSettings: AppSettings['llm'];
   getApiKeyForProvider: (provider: ChatProviderOption) => string;
 }
@@ -150,6 +154,9 @@ export function PresentShell({
   vrmCameraFraming,
   onVrmCameraFramingChange,
   activeDeckId,
+  onDeckChange,
+  resumeDeckAfterQaInterrupt,
+  onResumeDeckAfterQaInterruptChange,
   llmSettings,
   getApiKeyForProvider,
 }: PresentShellProps) {
@@ -159,6 +166,14 @@ export function PresentShell({
     llmSettings,
     getApiKeyForProvider,
   });
+
+  const prevDeckIdRef = useRef(activeDeckId);
+  useEffect(() => {
+    if (prevDeckIdRef.current !== activeDeckId) {
+      prevDeckIdRef.current = activeDeckId;
+      directorQueue.stop();
+    }
+  }, [activeDeckId, directorQueue]);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [stageMode, setStageMode] = useState(false);
   const [chromeRevealed, setChromeRevealed] = useState(false);
@@ -470,6 +485,11 @@ export function PresentShell({
           settingsAriaLabel={UI_SETTINGS.ariaLabel}
           title={deckTitle}
         >
+          <PresentDeckSelect
+            activeDeckId={activeDeckId}
+            onDeckChange={onDeckChange}
+            disabled={playbackDisabled}
+          />
           <label className="present-toolbar-layout">
             布局
             <select
@@ -568,6 +588,10 @@ export function PresentShell({
               brainQa={brainQa}
               directorQueue={directorQueue}
               disabled={playbackDisabled}
+              resumeDeckAfterQaInterrupt={resumeDeckAfterQaInterrupt}
+              onResumeDeckAfterQaInterruptChange={
+                onResumeDeckAfterQaInterruptChange
+              }
             />
           </>
         ) : null}

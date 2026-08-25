@@ -36,6 +36,8 @@ export interface PresentSettings {
   pipOffsetY: number;
   /** 1 = 默认画中画窗口大小 */
   pipSize: number;
+  /** 讲稿播放中被 Q&A 打断后，是否自动续播剩余讲稿（默认关：问答多在演讲结束后） */
+  resumeDeckAfterQaInterrupt: boolean;
 }
 
 export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
@@ -47,6 +49,7 @@ export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
   pipOffsetX: 0,
   pipOffsetY: 0,
   pipSize: 1,
+  resumeDeckAfterQaInterrupt: false,
 };
 
 export const MIN_PIP_SIZE = 0.6;
@@ -85,6 +88,9 @@ export function normalizePresentSettings(
       MAX_PIP_SIZE,
       DEFAULT_PIP_SIZE,
     ),
+    resumeDeckAfterQaInterrupt:
+      partial?.resumeDeckAfterQaInterrupt ??
+      DEFAULT_PRESENT_SETTINGS.resumeDeckAfterQaInterrupt,
   };
 }
 

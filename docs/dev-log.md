@@ -22,6 +22,18 @@
 
 ---
 
+---
+
+### 2026-08-24 · Q&A 增强：场次切换、可续播打断、「请重复」
+
+- **做了什么**：
+  - 汇报工具栏 **场次** 下拉（`/api/content/decks` 列举私有 + 公开 deck）
+  - Q&A 面板「问答打断后自动续播讲稿」开关（默认关，写入 settings）
+  - 「请重复一下」等口令 → 复述上一轮 utterance，不走 LLM
+  - 补充 `content/faq` 示例条目与 README
+- **相关文件**：`PresentDeckSelect.tsx`、`directorQueueMerge.ts`、`qaRepeatAction.ts`
+- **验证方式**：`npm run test` · 汇报模式切换场次 · 讲稿播放中提问（开/关续播）
+
 ### 2026-08-24 · Phase 2 MVP：Brain + 汇报模式 Q&A 面板
 
 - **做了什么**：

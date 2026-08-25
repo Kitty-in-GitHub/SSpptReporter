@@ -1051,6 +1051,19 @@ export function useSettings() {
     }));
   }, []);
 
+  const updatePresentResumeDeckAfterQaInterrupt = useCallback(
+    (resumeDeckAfterQaInterrupt: boolean) => {
+      setSettings((prev) => ({
+        ...prev,
+        present: normalizePresentSettings({
+          ...prev.present,
+          resumeDeckAfterQaInterrupt,
+        }),
+      }));
+    },
+    [],
+  );
+
   const updateVisualVrmCameraFraming = useCallback(
     (partial: Partial<VrmCameraFraming>) => {
       setSettings((prev) => ({
@@ -1515,6 +1528,7 @@ export function useSettings() {
     updatePresentPipBorderless,
     updatePresentPipOffset,
     updatePresentPipSize,
+    updatePresentResumeDeckAfterQaInterrupt,
     updateVisualVrmCameraFraming,
     resetVisualVrmCameraFraming,
     updateVisualShowInputInBroadcast,

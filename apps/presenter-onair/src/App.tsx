@@ -182,6 +182,12 @@ export default function App() {
     slideDeck.pageCount,
   );
 
+  const resumeDeckAfterQaRef = useRef(
+    settingsHook.settings.present.resumeDeckAfterQaInterrupt,
+  );
+  resumeDeckAfterQaRef.current =
+    settingsHook.settings.present.resumeDeckAfterQaInterrupt;
+
   const directorQueue = useDirectorQueue({
     speak: speakDirector,
     stopSpeech: stop,
@@ -189,6 +195,7 @@ export default function App() {
     onResetEmotion: () =>
       emitAvatarReaction({ type: 'reset', fadeMs: 280 }),
     onSlideAction: slideDeck.applyDirectorSlideAction,
+    resumeDeckAfterQaInterrupt: () => resumeDeckAfterQaRef.current,
   });
 
   const deckScriptPlayback = useDeckScriptPlayback({
@@ -470,6 +477,13 @@ export default function App() {
           onVrmCameraFramingChange={settingsHook.updateVisualVrmCameraFraming}
           onStageModeChange={setPresentStageMode}
           activeDeckId={settingsHook.settings.present.activeDeckId}
+          onDeckChange={settingsHook.updatePresentActiveDeckId}
+          resumeDeckAfterQaInterrupt={
+            settingsHook.settings.present.resumeDeckAfterQaInterrupt
+          }
+          onResumeDeckAfterQaInterruptChange={
+            settingsHook.updatePresentResumeDeckAfterQaInterrupt
+          }
           llmSettings={settingsHook.settings.llm}
           getApiKeyForProvider={settingsHook.getApiKeyForProvider}
         />

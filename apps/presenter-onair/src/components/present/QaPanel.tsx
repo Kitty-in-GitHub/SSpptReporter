@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { UI_QA } from '../../constants/uiZh';
+import { UI_PRESENT, UI_QA } from '../../constants/uiZh';
 import type { useBrainQa } from '../../hooks/useBrainQa';
 import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
 import { useQaVoiceInput } from '../../hooks/useQaVoiceInput';
@@ -11,6 +11,8 @@ interface QaPanelProps {
   brainQa: BrainQaApi;
   directorQueue: DirectorQueueApi;
   disabled?: boolean;
+  resumeDeckAfterQaInterrupt: boolean;
+  onResumeDeckAfterQaInterruptChange: (value: boolean) => void;
 }
 
 function formatConfidence(value: number | undefined): string {
@@ -20,7 +22,13 @@ function formatConfidence(value: number | undefined): string {
   return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
 }
 
-export function QaPanel({ brainQa, directorQueue, disabled }: QaPanelProps) {
+export function QaPanel({
+  brainQa,
+  directorQueue,
+  disabled,
+  resumeDeckAfterQaInterrupt,
+  onResumeDeckAfterQaInterruptChange,
+}: QaPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const composingRef = useRef(false);
 
@@ -67,14 +75,26 @@ export function QaPanel({ brainQa, directorQueue, disabled }: QaPanelProps) {
 
       {!collapsed ? (
         <div className="present-qa-body">
-          <label className="present-qa-auto-submit">
-            <input
-              type="checkbox"
-              checked={qaInput.autoSubmit}
-              onChange={(event) => qaInput.setAutoSubmit(event.target.checked)}
-            />
-            {UI_QA.autoSubmitLabel}
-          </label>
+          <div className="present-qa-options">
+            <label className="present-qa-auto-submit">
+              <input
+                type="checkbox"
+                checked={qaInput.autoSubmit}
+                onChange={(event) => qaInput.setAutoSubmit(event.target.checked)}
+              />
+              {UI_QA.autoSubmitLabel}
+            </label>
+            <label className="present-qa-auto-submit">
+              <input
+                type="checkbox"
+                checked={resumeDeckAfterQaInterrupt}
+                onChange={(event) =>
+                  onResumeDeckAfterQaInterruptChange(event.target.checked)
+                }
+              />
+              {UI_PRESENT.resumeDeckAfterQa}
+            </label>
+          </div>
 
           <div className="present-qa-input-row">
             <textarea

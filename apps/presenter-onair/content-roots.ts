@@ -50,3 +50,57 @@ export function resolveContentFile(relativePath: string): string | null {
   }
   return null;
 }
+
+export interface DeckCatalogEntry {
+  id: string;
+  title: string;
+  isPrivate: boolean;
+}
+
+function readDeckTitle(deckJsonPath: string, deckId: string): string {
+  try {
+    const raw = fs.readFileSync(deckJsonPath, 'utf8');
+    const manifest = JSON.parse(raw) as { title?: string };
+    return manifest.title?.trim() || deckId;
+  } catch {
+    return deckId;
+  }
+}
+
+/** List decks from private + public content roots (private id wins). */
+export function listDeckCatalog(): DeckCatalogEntry[] {
+  const entries = new Map<string, DeckCatalogEntry>();
+
+  for (const [root, isPrivate] of [
+    [PRIVATE_CONTENT_DIR, true],
+    [PUBLIC_CONTENT_DIR, false],
+  ] as const) {
+    const decksDir = path.join(root, 'decks');
+    if (!fs.existsSync(decksDir)) {
+      continue;
+    }
+
+    for (const dirent of fs.readdirSync(decksDir, { withFileTypes: true })) {
+      if (!dirent.isDirectory()) {
+        continue;
+      }
+      const deckId = dirent.name;
+      if (entries.has(deckId)) {
+        continue;
+      }
+      const deckJsonPath = path.join(decksDir, deckId, 'deck.json');
+      if (!fs.existsSync(deckJsonPath)) {
+        continue;
+      }
+      entries.set(deckId, {
+        id: deckId,
+        title: readDeckTitle(deckJsonPath, deckId),
+        isPrivate,
+      });
+    }
+  }
+
+  return Array.from(entries.values()).sort((a, b) =>
+    a.id.localeCompare(b.id, 'zh-CN'),
+  );
+}

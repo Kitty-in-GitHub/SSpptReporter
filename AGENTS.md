@@ -80,6 +80,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |
 | Present 汇报 | `apps/presenter-onair/src/components/present/PresentShell.tsx` |
 | Q&A 面板 | `apps/presenter-onair/src/components/present/QaPanel.tsx` |
+| 场次切换 | `PresentDeckSelect` · `GET /api/content/decks` |
 | Brain Q&A | `packages/brain` · `apps/presenter-onair/src/hooks/useBrainQa.ts` |
 | PDF 幻灯 | `apps/presenter-onair/src/components/present/PdfSlideViewer.tsx` |
 | deck 规范 | `docs/present-deck.md` |

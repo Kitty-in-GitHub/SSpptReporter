@@ -19,3 +19,15 @@ Phase 1 验证 Present 闭环：PDF 汇报、讲稿编译入队、Director 队�
 ## Q: 真实答辩材料放哪里？
 
 放在 content-private/decks/ 与 content-private/persona、faq，不进公开 Git 仓库。
+
+## Q: 本项目的三层架构是什么？
+
+Director 负责表演调度，Brain 负责 LLM 与知识库检索，VRM 身体负责口型与表情。详见 demo 场次第 2 页讲稿。
+
+## Q: 如果问题不在材料里怎么办？
+
+应诚实说明不在本次提交材料范围内，设置 admit_unknown，不编造数据。可回答：「这个问题需要对照正式材料确认，目前无法从已提交内容给出准确回答。」
+
+## Q: 请重复一下刚才的回答？
+
+（此条供 Brain 检索参考；系统也会识别「请重复」类口令并直接复述上一轮回答，无需 LLM。）
