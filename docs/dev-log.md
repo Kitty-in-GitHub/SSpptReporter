@@ -28,6 +28,20 @@
 
 ---
 
+---
+
+### 2026-08-24 · 本机 CPU Embedding（无显卡）
+
+- **做了什么**：
+  - `tts-gateway`：`POST /v1/embeddings`（fastembed + ONNX CPU，默认 `BAAI/bge-small-zh-v1.5`）
+  - `npm run setup:embed`；`GET /health` 增加 `embedding` / `embed_model`
+  - 应用：`resolveBrainEmbedder` 本机优先；Vite `/api/embed` 代理
+  - 文档：`brain-retrieval.md`、ADR-011
+- **未做 / 阻塞**：未在本机跑通 `setup:embed` 下载模型（需用户环境 pip）
+- **下一台机器应优先**：`setup:embed` → 重启 dev → 问法与材料措辞不一致时对比 TF
+- **相关文件**：`apps/tts-gateway/server.py`、`createBrainEmbedder.ts`、`gatewayEmbedHealth.ts`
+- **验证方式**：`GET http://127.0.0.1:5050/health` 含 `embedding: true`；`npm run test -w @ssreporter/brain`
+
 ### 2026-08-24 · Brain Hybrid 检索（向量 + TF + RRF）
 
 - **做了什么**：

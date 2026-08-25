@@ -2,11 +2,12 @@ import type { DirectorAction } from '@ssreporter/director';
 import {
   answerQuestion,
   type AnswerQuestionResult,
+  type BrainEmbedder,
   type BrainKnowledge,
   type BrainVectorIndex,
 } from '@ssreporter/brain';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createBrainEmbedder } from '../lib/brain/createBrainEmbedder';
+import { resolveBrainEmbedder } from '../lib/brain/createBrainEmbedder';
 import { createBrainLlmClient } from '../lib/brain/createBrainLlmClient';
 import { loadBrainKnowledgeForDeck } from '../lib/content/loadBrainKnowledge';
 import type { AppSettings, ChatProviderOption } from '../types/settings';
@@ -34,6 +35,7 @@ export function useBrainQa({
 
   const knowledgeRef = useRef<BrainKnowledge | null>(null);
   const vectorIndexRef = useRef<BrainVectorIndex | null>(null);
+  const embedderRef = useRef<BrainEmbedder | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,12 +43,17 @@ export function useBrainQa({
     setKnowledgeError(null);
     knowledgeRef.current = null;
     vectorIndexRef.current = null;
+    embedderRef.current = null;
 
-    void loadBrainKnowledgeForDeck(deckId)
-      .then(({ knowledge, vectorIndex }) => {
+    void Promise.all([
+      loadBrainKnowledgeForDeck(deckId),
+      resolveBrainEmbedder(llmSettings, getApiKeyForProvider),
+    ])
+      .then(([{ knowledge, vectorIndex }, embedder]) => {
         if (!cancelled) {
           knowledgeRef.current = knowledge;
           vectorIndexRef.current = vectorIndex;
+          embedderRef.current = embedder;
           setKnowledgeReady(true);
         }
       })
@@ -63,7 +70,7 @@ export function useBrainQa({
     return () => {
       cancelled = true;
     };
-  }, [deckId]);
+  }, [deckId, getApiKeyForProvider, llmSettings]);
 
   const askQuestion = useCallback(
     async (question: string): Promise<DirectorAction | null> => {
@@ -83,7 +90,11 @@ export function useBrainQa({
         return null;
       }
 
-      const embedder = createBrainEmbedder(llmSettings, getApiKeyForProvider);
+      let embedder = embedderRef.current;
+      if (!embedder) {
+        embedder = await resolveBrainEmbedder(llmSettings, getApiKeyForProvider);
+        embedderRef.current = embedder;
+      }
 
       setLoading(true);
       setError(null);

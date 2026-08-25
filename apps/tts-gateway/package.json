@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node scripts/start.mjs",
     "setup": "node scripts/setup.mjs",
-    "setup:asr": "node scripts/setup-asr.mjs"
+    "setup:asr": "node scripts/setup-asr.mjs",
+    "setup:embed": "node scripts/setup-embed.mjs"
   }
 }

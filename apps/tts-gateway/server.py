@@ -1,15 +1,18 @@
 """
-OpenAI-compatible TTS + optional ASR gateway for SSreporter.
+OpenAI-compatible TTS + optional ASR + optional Embedding gateway for SSreporter.
 
 TTS: Edge-TTS (CPU). ASR: Faster-Whisper when installed (optional).
+Embedding: fastembed + ONNX CPU when installed (optional, no GPU required).
 Listens on PORT (default 5050). No API key required by default.
 """
 
 from __future__ import annotations
 
+import asyncio
 import os
 import tempfile
-from typing import Any, Literal
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Literal, Union
 
 import edge_tts
 from fastapi import FastAPI, File, Form, UploadFile
@@ -22,8 +25,9 @@ PORT = int(os.environ.get("PORT", "5050"))
 DEFAULT_VOICE = os.environ.get("DEFAULT_VOICE", "zh-CN-XiaoxiaoNeural")
 DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "tts-1")
 WHISPER_MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")
+EMBED_MODEL_NAME = os.environ.get("EMBED_MODEL", "BAAI/bge-small-zh-v1.5")
 
-app = FastAPI(title="SSreporter Voice Gateway", version="0.2.0")
+app = FastAPI(title="SSreporter Voice Gateway", version="0.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,6 +44,9 @@ app.add_middleware(
 
 _whisper_model: Any | None = None
 _whisper_load_error: str | None = None
+_embed_model: Any | None = None
+_embed_load_error: str | None = None
+_embed_executor = ThreadPoolExecutor(max_workers=1)
 
 
 class SpeechRequest(BaseModel):
@@ -48,6 +55,11 @@ class SpeechRequest(BaseModel):
     voice: str | None = None
     response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "mp3"
     speed: float = Field(default=1.0, ge=0.25, le=4.0)
+
+
+class EmbeddingRequest(BaseModel):
+    model: str | None = None
+    input: Union[str, list[str]]
 
 
 def speed_to_rate(speed: float) -> str:
@@ -59,6 +71,15 @@ def speed_to_rate(speed: float) -> str:
 def whisper_available() -> bool:
     try:
         import faster_whisper  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def embed_available() -> bool:
+    try:
+        import fastembed  # noqa: F401
 
         return True
     except ImportError:
@@ -86,6 +107,34 @@ def get_whisper_model() -> Any:
         raise RuntimeError(_whisper_load_error) from error
 
 
+def get_embed_model() -> Any:
+    global _embed_model, _embed_load_error
+    if _embed_model is not None:
+        return _embed_model
+    if _embed_load_error is not None:
+        raise RuntimeError(_embed_load_error)
+
+    try:
+        from fastembed import TextEmbedding
+
+        _embed_model = TextEmbedding(model_name=EMBED_MODEL_NAME)
+        return _embed_model
+    except Exception as error:  # noqa: BLE001
+        _embed_load_error = str(error)
+        raise RuntimeError(_embed_load_error) from error
+
+
+def embed_texts_sync(texts: list[str]) -> list[list[float]]:
+    model = get_embed_model()
+    vectors: list[list[float]] = []
+    for vector in model.embed(texts):
+        if hasattr(vector, "tolist"):
+            vectors.append(vector.tolist())
+        else:
+            vectors.append([float(value) for value in vector])
+    return vectors
+
+
 @app.get("/health")
 async def health() -> dict[str, str | bool]:
     return {
@@ -93,6 +142,8 @@ async def health() -> dict[str, str | bool]:
         "engine": "edge-tts",
         "asr": whisper_available(),
         "whisper_model": WHISPER_MODEL_SIZE if whisper_available() else "",
+        "embedding": embed_available(),
+        "embed_model": EMBED_MODEL_NAME if embed_available() else "",
     }
 
 
@@ -105,6 +156,10 @@ async def list_models() -> dict:
     if whisper_available():
         data.append(
             {"id": "whisper-1", "object": "model", "owned_by": "ssreporter"},
+        )
+    if embed_available():
+        data.append(
+            {"id": EMBED_MODEL_NAME, "object": "model", "owned_by": "ssreporter"},
         )
     return {"object": "list", "data": data}
 
@@ -193,6 +248,73 @@ async def create_transcription(
                 os.unlink(tmp_path)
             except OSError:
                 pass
+
+
+@app.post("/v1/embeddings")
+async def create_embeddings(body: EmbeddingRequest) -> JSONResponse:
+    if not embed_available():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": {
+                    "message": (
+                        "本机 Embedding 未安装。请运行 npm run setup:embed "
+                        "（或 pip install -r apps/tts-gateway/requirements-embed.txt）后重启网关。"
+                    ),
+                    "type": "embed_not_installed",
+                }
+            },
+        )
+
+    if isinstance(body.input, str):
+        texts = [body.input.strip()]
+    else:
+        texts = [text.strip() for text in body.input if text.strip()]
+
+    if not texts:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "message": "input 不能为空",
+                    "type": "invalid_request_error",
+                }
+            },
+        )
+
+    try:
+        loop = asyncio.get_running_loop()
+        vectors = await loop.run_in_executor(
+            _embed_executor,
+            embed_texts_sync,
+            texts,
+        )
+    except Exception as error:  # noqa: BLE001
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": {
+                    "message": f"Embedding 失败：{error}",
+                    "type": "embed_error",
+                }
+            },
+        )
+
+    model_name = (body.model or EMBED_MODEL_NAME).strip() or EMBED_MODEL_NAME
+    return JSONResponse(
+        content={
+            "object": "list",
+            "model": model_name,
+            "data": [
+                {
+                    "object": "embedding",
+                    "index": index,
+                    "embedding": vector,
+                }
+                for index, vector in enumerate(vectors)
+            ],
+        }
+    )
 
 
 def main() -> None:

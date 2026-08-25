@@ -12,6 +12,7 @@
     "dev:tts": "npm run start -w @ssreporter/tts-gateway",
     "setup:tts": "npm run setup -w @ssreporter/tts-gateway",
     "setup:asr": "npm run setup:asr -w @ssreporter/tts-gateway",
+    "setup:embed": "npm run setup:embed -w @ssreporter/tts-gateway",
     "setup:gestures": "node apps/presenter-onair/scripts/setup-gesture-vrma.mjs",
     "build": "npm run build -w @ssreporter/presenter-onair",
     "typecheck": "npm run typecheck -w @ssreporter/director && npm run typecheck -w @ssreporter/brain && npm run typecheck -w @ssreporter/presenter-onair",

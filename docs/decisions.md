@@ -92,3 +92,16 @@
   - 聊天 LLM 与 `DirectorAction` 协议不变
 - **理由**：材料规模小；检索是固定 LLM 下最值得投资的一层；少自维护基础设施
 - **文档**：[`brain-retrieval.md`](./brain-retrieval.md)
+
+## ADR-011 · 本机 CPU Embedding
+
+- **日期**：2026-08-24
+- **状态**：accepted
+- **决策**：
+  - 在现有 `tts-gateway`（:5050）增加可选 `POST /v1/embeddings`；**fastembed + ONNX CPU**，默认 `BAAI/bge-small-zh-v1.5`
+  - **无显卡**可运行；不引入 PyTorch CUDA / 浏览器 WASM embedding
+  - 应用优先级：**本机 embedding 就绪 → 云端 OpenAI 兼容 → 纯 TF**
+  - 聊天 LLM（如 DeepSeek）与 embedding 提供商分离
+  - 可选安装：`npm run setup:embed`（未装不阻塞 Q&A）
+- **理由**：省 embedding token 费；答辩材料规模小，CPU 小模型足够；与 TTS/ASR 网关一致、少维护
+- **文档**：[`brain-retrieval.md`](./brain-retrieval.md)
