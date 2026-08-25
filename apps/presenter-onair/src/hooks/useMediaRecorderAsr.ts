@@ -4,11 +4,15 @@ import {
   type QaAsrEngine,
 } from '../lib/voice/transcribeAudio';
 
+type RecorderEngine = Exclude<QaAsrEngine, 'webSpeech'>;
+
 interface UseMediaRecorderAsrOptions {
-  engine: Exclude<QaAsrEngine, 'webSpeech'>;
+  engine: RecorderEngine;
   getApiKey?: () => string;
   onFinalTranscript?: (text: string) => void;
   onListeningEnd?: () => void;
+  /** Called when gateway reports ASR not installed */
+  onGatewayAsrUnavailable?: (message: string) => void;
 }
 
 function pickRecorderMimeType(): string | undefined {
@@ -31,6 +35,8 @@ export function useMediaRecorderAsr(options: UseMediaRecorderAsrOptions) {
   onFinalTranscriptRef.current = options.onFinalTranscript;
   const onListeningEndRef = useRef(options.onListeningEnd);
   onListeningEndRef.current = options.onListeningEnd;
+  const onGatewayAsrUnavailableRef = useRef(options.onGatewayAsrUnavailable);
+  onGatewayAsrUnavailableRef.current = options.onGatewayAsrUnavailable;
 
   const [listening, setListening] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
@@ -111,6 +117,7 @@ export function useMediaRecorderAsr(options: UseMediaRecorderAsrOptions) {
               filename: 'recording.webm',
               language: 'zh',
               apiKey: getApiKeyRef.current?.(),
+              onProgress: (message) => setInterimTranscript(message),
             });
             setFinalTranscript(text);
             setInterimTranscript('');
@@ -121,11 +128,19 @@ export function useMediaRecorderAsr(options: UseMediaRecorderAsrOptions) {
             }
           } catch (asrError) {
             setInterimTranscript('');
-            setError(
+            const message =
               asrError instanceof Error
                 ? asrError.message
-                : '语音转写失败',
-            );
+                : '语音转写失败';
+            setError(message);
+            if (
+              engine === 'gateway' &&
+              (message.includes('setup:asr') ||
+                message.includes('ASR 未安装') ||
+                message.includes('asr_not_installed'))
+            ) {
+              onGatewayAsrUnavailableRef.current?.(message);
+            }
           } finally {
             setTranscribing(false);
             onListeningEndRef.current?.();

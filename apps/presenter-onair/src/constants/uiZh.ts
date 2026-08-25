@@ -82,8 +82,20 @@ export const UI_QA = {
   stageMicTitle: '语音提问（说完自动提交）',
   asrEngineLabel: '语音引擎',
   asrTranscribing: '识别中…',
-  asrGatewayHint: '本机 Whisper 需 npm run setup:asr 后重启 npm run dev',
+  asrGatewayHint:
+    '本机网关 Whisper：需 npm run setup:asr 后重启 npm run dev；未安装会弹出指引',
+  asrBrowserHint:
+    '浏览器内 Whisper：首次使用需联网下载模型（约 75MB），之后可离线转写',
   asrCloudHint: '云端 Whisper 使用 Settings 中的 OpenAI API Key',
+  gatewaySetupTitle: '本机 Whisper 尚未就绪',
+  gatewaySetupLead:
+    '「本机 Whisper（网关）」需要先安装 Faster-Whisper，浏览器无法自动替你安装。',
+  gatewaySetupNote:
+    '若不想装 Python 依赖，可改用「浏览器内 Whisper（免安装）」：首次下载模型后即可本机转写。',
+  gatewaySetupDismiss: '知道了',
+  copyCommand: '复制命令',
+  switchToBrowserWhisper: '改用浏览器内 Whisper',
+  switchToWebSpeech: '改用 Web Speech',
 };
 
 export const UI_PRESENT = {

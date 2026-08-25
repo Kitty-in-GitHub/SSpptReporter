@@ -609,6 +609,113 @@
   color: #64748b;
 }
 
+.present-asr-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.present-asr-dialog {
+  width: min(520px, 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 20px 22px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.present-asr-dialog h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #f8fafc;
+}
+
+.present-asr-dialog-lead {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.present-asr-dialog-steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.present-asr-dialog-cmd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.present-asr-dialog-cmd-row code,
+.present-asr-dialog-steps code {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #93c5fd;
+  font-size: 12px;
+}
+
+.present-asr-dialog-cmd-row button {
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.95);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.present-asr-dialog-note {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.present-asr-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.present-asr-dialog-primary,
+.present-asr-dialog-secondary {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.present-asr-dialog-primary {
+  border: 1px solid rgba(59, 130, 246, 0.55);
+  background: rgba(37, 99, 235, 0.4);
+  color: #dbeafe;
+  font-weight: 600;
+}
+
+.present-asr-dialog-secondary {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+}
+
+
 .present-qa-options {
   display: flex;
   flex-wrap: wrap;

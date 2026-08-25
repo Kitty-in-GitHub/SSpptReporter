@@ -1,4 +1,5 @@
 import type { QaAsrEngine } from '../../types/present';
+import { transcribeWithBrowserWhisper } from './browserWhisperAsr';
 
 export type { QaAsrEngine };
 
@@ -10,11 +11,28 @@ export interface TranscribeAudioOptions {
   /** Required when engine === 'cloud' */
   apiKey?: string;
   cloudEndpoint?: string;
+  onProgress?: (message: string) => void;
 }
 
 export async function transcribeAudio(
   options: TranscribeAudioOptions,
 ): Promise<string> {
+  if (options.engine === 'browserWhisper') {
+    return transcribeWithBrowserWhisper(options.blob, (info) => {
+      if (info.status === 'transcribing') {
+        options.onProgress?.('识别中…');
+        return;
+      }
+      if (typeof info.progress === 'number') {
+        options.onProgress?.(
+          `下载模型 ${info.progress}%${info.file ? `（${info.file}）` : ''}`,
+        );
+        return;
+      }
+      options.onProgress?.(`准备模型：${info.status}`);
+    });
+  }
+
   const form = new FormData();
   const filename = options.filename ?? 'recording.webm';
   form.append('file', options.blob, filename);
@@ -22,6 +40,7 @@ export async function transcribeAudio(
   form.append('language', options.language ?? 'zh');
 
   if (options.engine === 'gateway') {
+    options.onProgress?.('本机识别中…');
     const response = await fetch('/api/asr/v1/audio/transcriptions', {
       method: 'POST',
       body: form,
@@ -34,6 +53,7 @@ export async function transcribeAudio(
     throw new Error('云端 ASR 需要 OpenAI API Key（设置 → LLM / OpenAI）');
   }
 
+  options.onProgress?.('云端识别中…');
   const endpoint =
     options.cloudEndpoint?.trim() ||
     'https://api.openai.com/v1/audio/transcriptions';
@@ -52,7 +72,7 @@ async function parseTranscriptionResponse(
   label: string,
 ): Promise<string> {
   const payload = (await response.json().catch(() => null)) as
-    | { text?: string; error?: { message?: string } }
+    | { text?: string; error?: { message?: string; type?: string } }
     | null;
 
   if (!response.ok) {

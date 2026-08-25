@@ -14,7 +14,11 @@ export type PipCorner =
   | 'top-left';
 
 /** Q&A 语音转文字引擎 */
-export type QaAsrEngine = 'webSpeech' | 'gateway' | 'cloud';
+export type QaAsrEngine =
+  | 'webSpeech'
+  | 'browserWhisper'
+  | 'gateway'
+  | 'cloud';
 
 export interface PdfSlideSource {
   type: 'pdf';
@@ -58,7 +62,12 @@ export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
   qaAsrEngine: 'webSpeech',
 };
 
-const QA_ASR_ENGINES: QaAsrEngine[] = ['webSpeech', 'gateway', 'cloud'];
+const QA_ASR_ENGINES: QaAsrEngine[] = [
+  'webSpeech',
+  'browserWhisper',
+  'gateway',
+  'cloud',
+];
 
 
 export const MIN_PIP_SIZE = 0.6;
@@ -108,7 +117,8 @@ export function normalizePresentSettings(
 
 export const QA_ASR_ENGINE_LABELS: Record<QaAsrEngine, string> = {
   webSpeech: '浏览器 Web Speech',
-  gateway: '本机 Whisper',
+  browserWhisper: '浏览器内 Whisper（免安装）',
+  gateway: '本机 Whisper（网关）',
   cloud: '云端 Whisper API',
 };
 

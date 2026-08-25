@@ -37,6 +37,9 @@ export default defineConfig({
     ],
   },
   plugins: [react(), serveMonorepoContent(), contentDeckApi()],
+  optimizeDeps: {
+    exclude: ['@huggingface/transformers'],
+  },
   server: {
     proxy: {
       '/api/tts': {

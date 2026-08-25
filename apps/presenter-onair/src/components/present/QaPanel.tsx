@@ -20,6 +20,7 @@ interface QaPanelProps {
   qaAsrEngine: QaAsrEngine;
   onQaAsrEngineChange: (engine: QaAsrEngine) => void;
   getCloudAsrApiKey: () => string;
+  onGatewayAsrUnavailable?: (message: string) => void;
 }
 
 function formatConfidence(value: number | undefined): string {
@@ -38,6 +39,7 @@ export function QaPanel({
   qaAsrEngine,
   onQaAsrEngineChange,
   getCloudAsrApiKey,
+  onGatewayAsrUnavailable,
 }: QaPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const composingRef = useRef(false);
@@ -48,6 +50,7 @@ export function QaPanel({
     disabled,
     asrEngine: qaAsrEngine,
     getCloudAsrApiKey,
+    onGatewayAsrUnavailable,
   });
   const lastQa = qaInput.lastResult?.action.qa;
 
@@ -131,6 +134,9 @@ export function QaPanel({
           </div>
           {qaAsrEngine === 'gateway' ? (
             <p className="present-qa-hint">{UI_QA.asrGatewayHint}</p>
+          ) : null}
+          {qaAsrEngine === 'browserWhisper' ? (
+            <p className="present-qa-hint">{UI_QA.asrBrowserHint}</p>
           ) : null}
           {qaAsrEngine === 'cloud' ? (
             <p className="present-qa-hint">{UI_QA.asrCloudHint}</p>

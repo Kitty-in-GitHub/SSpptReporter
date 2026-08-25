@@ -2459,7 +2459,8 @@ export function SettingsPanel({
               </select>
             </div>
             <p className="settings-hint">
-              浏览器 Web Speech 免安装；本机 Whisper 需{' '}
+              浏览器 Web Speech 免安装；浏览器内 Whisper
+              首次需联网下载模型（之后可离线）；本机网关 Whisper 需{' '}
               <code>npm run setup:asr</code> 后重启{' '}
               <code>npm run dev</code>；云端 Whisper 使用上方 OpenAI API Key。
             </p>

@@ -13,6 +13,7 @@ interface StageQaVoiceProps {
   disabled?: boolean;
   qaAsrEngine: QaAsrEngine;
   getCloudAsrApiKey: () => string;
+  onGatewayAsrUnavailable?: (message: string) => void;
 }
 
 export function StageQaVoice({
@@ -21,6 +22,7 @@ export function StageQaVoice({
   disabled,
   qaAsrEngine,
   getCloudAsrApiKey,
+  onGatewayAsrUnavailable,
 }: StageQaVoiceProps) {
   const qaInput = useQaVoiceInput({
     brainQa,
@@ -28,6 +30,7 @@ export function StageQaVoice({
     disabled,
     asrEngine: qaAsrEngine,
     getCloudAsrApiKey,
+    onGatewayAsrUnavailable,
   });
   const lastSummary = qaInput.lastResult?.action.qa?.question_summary;
 

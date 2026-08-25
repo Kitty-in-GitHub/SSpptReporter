@@ -39,8 +39,10 @@ import { PresentPlaybackControls } from './PresentPlaybackControls';
 import { PresentScriptCue } from './PresentScriptCue';
 import { QaPanel } from './QaPanel';
 import { StageQaVoice } from './StageQaVoice';
+import { GatewayAsrSetupDialog } from './GatewayAsrSetupDialog';
 import { SessionModeToolbar } from './SessionModeToolbar';
 import { useBrainQa } from '../../hooks/useBrainQa';
+import { fetchGatewayAsrHealth } from '../../lib/voice/gatewayAsrHealth';
 import type { AppSettings, ChatProviderOption } from '../../types/settings';
 import './presentLayouts.css';
 
@@ -174,17 +176,15 @@ export function PresentShell({
     getApiKeyForProvider,
   });
 
-  const prevDeckIdRef = useRef(activeDeckId);
-  useEffect(() => {
-    if (prevDeckIdRef.current !== activeDeckId) {
-      prevDeckIdRef.current = activeDeckId;
-      directorQueue.stop();
-    }
-  }, [activeDeckId, directorQueue]);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [stageMode, setStageMode] = useState(false);
   const [chromeRevealed, setChromeRevealed] = useState(false);
+  const [gatewaySetupOpen, setGatewaySetupOpen] = useState(false);
+  const [gatewaySetupMessage, setGatewaySetupMessage] = useState<
+    string | undefined
+  >();
   const stageModeRef = useRef(false);
+  const prevDeckIdRef = useRef(activeDeckId);
   const pipDragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -192,6 +192,32 @@ export function PresentShell({
     originX: number;
     originY: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (prevDeckIdRef.current !== activeDeckId) {
+      prevDeckIdRef.current = activeDeckId;
+      directorQueue.stop();
+    }
+  }, [activeDeckId, directorQueue]);
+
+  const openGatewaySetupDialog = useCallback((message?: string) => {
+    setGatewaySetupMessage(message);
+    setGatewaySetupOpen(true);
+  }, []);
+
+  const handleQaAsrEngineChange = useCallback(
+    async (engine: QaAsrEngine) => {
+      onQaAsrEngineChange(engine);
+      if (engine !== 'gateway') {
+        return;
+      }
+      const health = await fetchGatewayAsrHealth();
+      if (!health.asr) {
+        openGatewaySetupDialog(health.message);
+      }
+    },
+    [onQaAsrEngineChange, openGatewaySetupDialog],
+  );
 
   const showSlide = presentLayout !== 'avatar_full';
   const showAvatar = presentLayout !== 'slide_full';
@@ -556,6 +582,7 @@ export function PresentShell({
             disabled={playbackDisabled}
             qaAsrEngine={qaAsrEngine}
             getCloudAsrApiKey={getCloudAsrApiKey}
+            onGatewayAsrUnavailable={openGatewaySetupDialog}
           />
           <span className="present-stage-hint">移到顶部唤出 · Esc 退出</span>
         </div>
@@ -602,12 +629,24 @@ export function PresentShell({
                 onResumeDeckAfterQaInterruptChange
               }
               qaAsrEngine={qaAsrEngine}
-              onQaAsrEngineChange={onQaAsrEngineChange}
+              onQaAsrEngineChange={(engine) => {
+                void handleQaAsrEngineChange(engine);
+              }}
               getCloudAsrApiKey={getCloudAsrApiKey}
+              onGatewayAsrUnavailable={openGatewaySetupDialog}
             />
           </>
         ) : null}
       </div>
+
+      <GatewayAsrSetupDialog
+        open={gatewaySetupOpen}
+        message={gatewaySetupMessage}
+        onClose={() => setGatewaySetupOpen(false)}
+        onSwitchEngine={(engine) => {
+          void handleQaAsrEngineChange(engine);
+        }}
+      />
     </div>
   );
 }

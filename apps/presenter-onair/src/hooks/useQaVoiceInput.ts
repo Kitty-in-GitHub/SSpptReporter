@@ -24,6 +24,7 @@ export interface UseQaVoiceInputOptions {
   disabled?: boolean;
   asrEngine?: QaAsrEngine;
   getCloudAsrApiKey?: () => string;
+  onGatewayAsrUnavailable?: (message: string) => void;
 }
 
 function enqueueQaAction(
@@ -42,12 +43,19 @@ function enqueueQaAction(
   }
 }
 
+function isRecorderEngine(
+  engine: QaAsrEngine,
+): engine is Exclude<QaAsrEngine, 'webSpeech'> {
+  return engine !== 'webSpeech';
+}
+
 export function useQaVoiceInput({
   brainQa,
   directorQueue,
   disabled = false,
   asrEngine = 'webSpeech',
   getCloudAsrApiKey,
+  onGatewayAsrUnavailable,
 }: UseQaVoiceInputOptions) {
   const [text, setText] = useState('');
   const textRef = useRef('');
@@ -84,8 +92,10 @@ export function useQaVoiceInput({
     }
   }, []);
 
-  const useRecorder = asrEngine === 'gateway' || asrEngine === 'cloud';
-  const recorderEngine = asrEngine === 'cloud' ? 'cloud' : 'gateway';
+  const useRecorder = isRecorderEngine(asrEngine);
+  const recorderEngine: Exclude<QaAsrEngine, 'webSpeech'> = useRecorder
+    ? asrEngine
+    : 'gateway';
 
   const webSpeech = useSpeechRecognition({
     lang: 'zh-CN',
@@ -99,6 +109,7 @@ export function useQaVoiceInput({
     getApiKey: getCloudAsrApiKey,
     onFinalTranscript: appendFinalTranscript,
     onListeningEnd: handleListeningEnd,
+    onGatewayAsrUnavailable,
   });
 
   const speech = useRecorder

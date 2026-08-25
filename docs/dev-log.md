@@ -26,6 +26,14 @@
 
 ---
 
+### 2026-08-24 · ASR：安装指引弹窗 + 浏览器内 Whisper（WASM）
+
+- **做了什么**：
+  - 选「本机 Whisper（网关）」未就绪时弹出操作指引（复制 `setup:asr`、改用 WASM/Web Speech）
+  - 新增引擎 `browserWhisper`：`@huggingface/transformers` + Whisper base（首次下载进度）
+- **相关文件**：`GatewayAsrSetupDialog.tsx`、`browserWhisperAsr.ts`、`docs/phase2-5-asr.md`
+- **验证方式**：汇报 → 语音引擎切换；未装网关时看弹窗；WASM 首次听写看下载进度
+
 ### 2026-08-24 · Phase 2.5 ASR：Web Speech / 本机 Whisper / 云端
 
 - **做了什么**：
