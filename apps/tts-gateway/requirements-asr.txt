@@ -1,0 +1,4 @@
+# Optional ASR (Faster-Whisper). Install via:
+#   npm run setup:asr
+# or: pip install -r apps/tts-gateway/requirements-asr.txt
+faster-whisper>=1.0.3

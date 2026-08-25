@@ -19,6 +19,7 @@ import {
   PRESENT_LAYOUT_LABELS,
   type PipCorner,
   type PresentLayout,
+  type QaAsrEngine,
   type SessionMode,
 } from '../../types/present';
 import type { VrmCameraFraming } from '../../lib/vrmCameraFraming';
@@ -83,6 +84,9 @@ interface PresentShellProps {
   onDeckChange: (deckId: string) => void;
   resumeDeckAfterQaInterrupt: boolean;
   onResumeDeckAfterQaInterruptChange: (value: boolean) => void;
+  qaAsrEngine: QaAsrEngine;
+  onQaAsrEngineChange: (engine: QaAsrEngine) => void;
+  getCloudAsrApiKey: () => string;
   llmSettings: AppSettings['llm'];
   getApiKeyForProvider: (provider: ChatProviderOption) => string;
 }
@@ -157,6 +161,9 @@ export function PresentShell({
   onDeckChange,
   resumeDeckAfterQaInterrupt,
   onResumeDeckAfterQaInterruptChange,
+  qaAsrEngine,
+  onQaAsrEngineChange,
+  getCloudAsrApiKey,
   llmSettings,
   getApiKeyForProvider,
 }: PresentShellProps) {
@@ -547,6 +554,8 @@ export function PresentShell({
             brainQa={brainQa}
             directorQueue={directorQueue}
             disabled={playbackDisabled}
+            qaAsrEngine={qaAsrEngine}
+            getCloudAsrApiKey={getCloudAsrApiKey}
           />
           <span className="present-stage-hint">移到顶部唤出 · Esc 退出</span>
         </div>
@@ -592,6 +601,9 @@ export function PresentShell({
               onResumeDeckAfterQaInterruptChange={
                 onResumeDeckAfterQaInterruptChange
               }
+              qaAsrEngine={qaAsrEngine}
+              onQaAsrEngineChange={onQaAsrEngineChange}
+              getCloudAsrApiKey={getCloudAsrApiKey}
             />
           </>
         ) : null}

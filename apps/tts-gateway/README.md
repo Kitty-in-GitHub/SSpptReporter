@@ -1,18 +1,21 @@
 # @ssreporter/tts-gateway
 
-本机 **CPU** 可用的 Edge-TTS 网关，提供 OpenAI 兼容 `POST /v1/audio/speech`。
+本机 **CPU** 语音网关：
+
+- **TTS**：Edge-TTS，`POST /v1/audio/speech`
+- **ASR（可选）**：Faster-Whisper，`POST /v1/audio/transcriptions`
 
 由根目录 `npm run dev` 与 presenter-onair **一并启动**（默认 `http://127.0.0.1:5050`）。
 
 ## 依赖
 
-- Python 3.10+（推荐在 `conda activate ssreporter` 后使用环境内 Python）
-- 网络（Edge-TTS 走微软在线合成，非完全离线）
-
-首次使用若缺 Python 包，会自动执行 `npm run setup`，或手动：
+- Python 3.10+（推荐 `conda activate ssreporter`）
+- TTS：网络（Edge-TTS 走微软在线合成）
+- ASR：可选，首次需下载 Whisper 模型
 
 ```bash
-npm run setup:tts
+npm run setup:tts   # 基础依赖（含 python-multipart）
+npm run setup:asr   # 安装 faster-whisper（本机 ASR）
 ```
 
 ## 单独启动
@@ -25,16 +28,19 @@ npm run start -w @ssreporter/tts-gateway
 
 | 变量 | 默认 | 说明 |
 |------|------|------|
-| `TTS_GATEWAY_HOST` | `127.0.0.1` | 监听地址 |
-| `TTS_GATEWAY_PORT` | `5050` | 监听端口 |
-| `DEFAULT_VOICE` | `zh-CN-XiaoxiaoNeural` | 默认发音人 |
-| `PYTHON` | conda / PATH | 指定 Python 可执行文件 |
+| `TTS_GATEWAY_HOST` / `HOST` | `127.0.0.1` | 监听地址 |
+| `TTS_GATEWAY_PORT` / `PORT` | `5050` | 监听端口 |
+| `DEFAULT_VOICE` | `zh-CN-XiaoxiaoNeural` | TTS 发音人 |
+| `WHISPER_MODEL` | `base` | ASR 模型（`tiny` / `base` / `small`） |
+| `PYTHON` | conda / PATH | 指定 Python |
+
+## 健康检查
+
+`GET /health` → `{ "status": "ok", "asr": true|false, ... }`
 
 ## SSreporter 设置
 
-Settings → TTS → **OpenAI 兼容（Edge-TTS）**
+- TTS：Settings → TTS → OpenAI 兼容，URL `http://127.0.0.1:5050/v1/audio/speech`
+- ASR：Settings → 汇报 Q&A → 本机 Whisper；开发时走同源代理 `/api/asr`
 
-- URL：`http://127.0.0.1:5050/v1/audio/speech`
-- API Key：留空即可
-
-详见 [`docs/tts-selection.md`](../../docs/tts-selection.md)。
+详见 [`docs/tts-selection.md`](../../docs/tts-selection.md)、[`docs/phase2-5-asr.md`](../../docs/phase2-5-asr.md)。

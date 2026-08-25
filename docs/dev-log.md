@@ -24,6 +24,20 @@
 
 ---
 
+---
+
+### 2026-08-24 · Phase 2.5 ASR：Web Speech / 本机 Whisper / 云端
+
+- **做了什么**：
+  - `tts-gateway` 增加 `POST /v1/audio/transcriptions`（faster-whisper，可选安装）
+  - Vite `/api/asr` 代理；`qaAsrEngine` 设置 + Q&A 面板语音引擎切换
+  - MediaRecorder 整段录音 → 本机/云端转写 → 现有自动提问流程
+  - 文档：`docs/phase2-5-asr.md`、ADR-009
+- **未做 / 阻塞**：向量 RAG（另开计划）；流式逐字 ASR
+- **下一台机器应优先**：`npm run setup:asr` 后本机验收；或用 Web Speech / 云端
+- **相关文件**：`apps/tts-gateway/server.py`、`useMediaRecorderAsr.ts`、`QaPanel.tsx`
+- **验证方式**：Settings → 汇报 Q&A 选引擎 · 麦克风提问
+
 ### 2026-08-24 · Q&A 增强：场次切换、可续播打断、「请重复」
 
 - **做了什么**：

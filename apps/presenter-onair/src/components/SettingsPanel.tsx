@@ -34,6 +34,10 @@ import {
 } from '../lib/voiceOptions';
 import type { useSettings } from '../hooks/useSettings';
 import type { ChatProviderOption, TTSEngineOption } from '../types/settings';
+import {
+  QA_ASR_ENGINE_LABELS,
+  type QaAsrEngine,
+} from '../types/present';
 
 type SettingsHook = ReturnType<typeof useSettings>;
 type ScreenVisionController = ReturnType<typeof useScreenVisionController>;
@@ -250,6 +254,7 @@ interface InworldVoice {
 type SectionKey =
   | 'llm'
   | 'tts'
+  | 'presentQa'
   | 'visual'
   | 'emotionEffects'
   | 'stream'
@@ -271,6 +276,7 @@ export function SettingsPanel({
   updateOpenRouterMaxCandidates,
   updateTTSEngine,
   updateTTSSpeaker,
+  updatePresentQaAsrEngine,
   updateOpenAiCompatibleApiKey,
   updateOpenAiCompatibleApiUrl,
   updateOpenAiCompatibleModel,
@@ -401,6 +407,7 @@ export function SettingsPanel({
   >({
     llm: true,
     tts: true,
+    presentQa: true,
     visual: true,
     emotionEffects: true,
     stream: true,
@@ -2411,6 +2418,51 @@ export function SettingsPanel({
                   {fetchError}
                 </div>
               )}
+          </>
+        )}
+      </div>
+
+      <div className="settings-section">
+        <button
+          type="button"
+          className="settings-section-toggle"
+          onClick={() => toggleSection('presentQa')}
+          aria-expanded={expandedSections.presentQa}
+        >
+          <h3>汇报 Q&A</h3>
+          <span
+            className={`settings-section-chevron${expandedSections.presentQa ? ' is-open' : ''}`}
+          >
+            ⌄
+          </span>
+        </button>
+
+        {expandedSections.presentQa && (
+          <>
+            <div className="settings-field">
+              <label htmlFor="qa-asr-engine">语音输入（ASR）</label>
+              <select
+                id="qa-asr-engine"
+                value={settings.present.qaAsrEngine}
+                onChange={(e) =>
+                  updatePresentQaAsrEngine(e.target.value as QaAsrEngine)
+                }
+                disabled={disabled}
+              >
+                {(Object.keys(QA_ASR_ENGINE_LABELS) as QaAsrEngine[]).map(
+                  (engine) => (
+                    <option key={engine} value={engine}>
+                      {QA_ASR_ENGINE_LABELS[engine]}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+            <p className="settings-hint">
+              浏览器 Web Speech 免安装；本机 Whisper 需{' '}
+              <code>npm run setup:asr</code> 后重启{' '}
+              <code>npm run dev</code>；云端 Whisper 使用上方 OpenAI API Key。
+            </p>
           </>
         )}
       </div>

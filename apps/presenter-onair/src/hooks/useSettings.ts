@@ -48,6 +48,7 @@ import {
   normalizePresentSettings,
   type PresentLayout,
   type PresentSettings,
+  type QaAsrEngine,
   type SessionMode,
 } from '../types/present';
 
@@ -1064,6 +1065,16 @@ export function useSettings() {
     [],
   );
 
+  const updatePresentQaAsrEngine = useCallback((qaAsrEngine: QaAsrEngine) => {
+    setSettings((prev) => ({
+      ...prev,
+      present: normalizePresentSettings({
+        ...prev.present,
+        qaAsrEngine,
+      }),
+    }));
+  }, []);
+
   const updateVisualVrmCameraFraming = useCallback(
     (partial: Partial<VrmCameraFraming>) => {
       setSettings((prev) => ({
@@ -1529,6 +1540,7 @@ export function useSettings() {
     updatePresentPipOffset,
     updatePresentPipSize,
     updatePresentResumeDeckAfterQaInterrupt,
+    updatePresentQaAsrEngine,
     updateVisualVrmCameraFraming,
     resetVisualVrmCameraFraming,
     updateVisualShowInputInBroadcast,

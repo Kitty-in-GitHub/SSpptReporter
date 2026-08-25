@@ -586,6 +586,29 @@
   accent-color: #3b82f6;
 }
 
+.present-qa-asr-engine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.present-qa-asr-engine select {
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.present-qa-hint {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
 .present-qa-options {
   display: flex;
   flex-wrap: wrap;

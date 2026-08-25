@@ -69,3 +69,14 @@
   - **Phase 1**：知识库 + Present + PPT 双栏 + Director 队列
   - **Phase 2**：Q&A + ASR + `barge_in` 打断
 - **理由**：先跑通身体，再叠大脑与答辩场景。
+
+## ADR-009 · Q&A ASR 三引擎
+
+- **日期**：2026-08-24
+- **状态**：accepted
+- **决策**：
+  - 评委提问 ASR 可选：`webSpeech`（默认）/ `gateway`（本机 Faster-Whisper，扩展 tts-gateway `:5050`）/ `cloud`（OpenAI transcriptions，复用 OpenAI Key）
+  - 本机与云端用 MediaRecorder 整段录音后转写；Web Speech 保持浏览器实时听写
+  - faster-whisper 为可选依赖（`npm run setup:asr`），未安装时 gateway 返回 503 说明
+- **理由**：答辩现场噪声与浏览器 ASR 不稳定；本机兜底与现有 TTS 网关同一进程，零额外端口。
+- **不做（本期）**：向量 RAG、流式逐字 ASR

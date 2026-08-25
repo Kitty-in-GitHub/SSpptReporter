@@ -3,6 +3,10 @@ import { UI_PRESENT, UI_QA } from '../../constants/uiZh';
 import type { useBrainQa } from '../../hooks/useBrainQa';
 import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
 import { useQaVoiceInput } from '../../hooks/useQaVoiceInput';
+import {
+  QA_ASR_ENGINE_LABELS,
+  type QaAsrEngine,
+} from '../../types/present';
 
 type DirectorQueueApi = ReturnType<typeof useDirectorQueue>;
 type BrainQaApi = ReturnType<typeof useBrainQa>;
@@ -13,6 +17,9 @@ interface QaPanelProps {
   disabled?: boolean;
   resumeDeckAfterQaInterrupt: boolean;
   onResumeDeckAfterQaInterruptChange: (value: boolean) => void;
+  qaAsrEngine: QaAsrEngine;
+  onQaAsrEngineChange: (engine: QaAsrEngine) => void;
+  getCloudAsrApiKey: () => string;
 }
 
 function formatConfidence(value: number | undefined): string {
@@ -28,11 +35,20 @@ export function QaPanel({
   disabled,
   resumeDeckAfterQaInterrupt,
   onResumeDeckAfterQaInterruptChange,
+  qaAsrEngine,
+  onQaAsrEngineChange,
+  getCloudAsrApiKey,
 }: QaPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const composingRef = useRef(false);
 
-  const qaInput = useQaVoiceInput({ brainQa, directorQueue, disabled });
+  const qaInput = useQaVoiceInput({
+    brainQa,
+    directorQueue,
+    disabled,
+    asrEngine: qaAsrEngine,
+    getCloudAsrApiKey,
+  });
   const lastQa = qaInput.lastResult?.action.qa;
 
   const micTitle = !qaInput.speech.supported
@@ -94,7 +110,31 @@ export function QaPanel({
               />
               {UI_PRESENT.resumeDeckAfterQa}
             </label>
+            <label className="present-qa-asr-engine">
+              <span>{UI_QA.asrEngineLabel}</span>
+              <select
+                value={qaAsrEngine}
+                disabled={disabled || qaInput.speech.listening}
+                onChange={(event) =>
+                  onQaAsrEngineChange(event.target.value as QaAsrEngine)
+                }
+              >
+                {(Object.keys(QA_ASR_ENGINE_LABELS) as QaAsrEngine[]).map(
+                  (engine) => (
+                    <option key={engine} value={engine}>
+                      {QA_ASR_ENGINE_LABELS[engine]}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
           </div>
+          {qaAsrEngine === 'gateway' ? (
+            <p className="present-qa-hint">{UI_QA.asrGatewayHint}</p>
+          ) : null}
+          {qaAsrEngine === 'cloud' ? (
+            <p className="present-qa-hint">{UI_QA.asrCloudHint}</p>
+          ) : null}
 
           <div className="present-qa-input-row">
             <textarea
@@ -109,9 +149,11 @@ export function QaPanel({
               }}
               onKeyDown={handleKeyDown}
               placeholder={
-                qaInput.speech.listening
-                  ? UI_QA.listeningPlaceholder
-                  : UI_QA.inputPlaceholder
+                qaInput.transcribing
+                  ? UI_QA.asrTranscribing
+                  : qaInput.speech.listening
+                    ? UI_QA.listeningPlaceholder
+                    : UI_QA.inputPlaceholder
               }
               rows={2}
               disabled={disabled || qaInput.loading}
@@ -120,10 +162,19 @@ export function QaPanel({
               type="button"
               className={`present-qa-mic${qaInput.speech.listening ? ' is-active' : ''}`}
               onClick={qaInput.toggleMic}
-              disabled={!qaInput.speech.supported || disabled || qaInput.loading}
+              disabled={
+                !qaInput.speech.supported ||
+                disabled ||
+                qaInput.loading ||
+                qaInput.transcribing
+              }
               title={micTitle}
             >
-              {qaInput.speech.listening ? UI_QA.micStop : UI_QA.micLabel}
+              {qaInput.transcribing
+                ? UI_QA.asrTranscribing
+                : qaInput.speech.listening
+                  ? UI_QA.micStop
+                  : UI_QA.micLabel}
             </button>
             <button
               type="button"

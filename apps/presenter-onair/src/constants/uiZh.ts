@@ -80,6 +80,10 @@ export const UI_QA = {
   sourcesPrefix: '来源：',
   admitUnknownBadge: '未覆盖',
   stageMicTitle: '语音提问（说完自动提交）',
+  asrEngineLabel: '语音引擎',
+  asrTranscribing: '识别中…',
+  asrGatewayHint: '本机 Whisper 需 npm run setup:asr 后重启 npm run dev',
+  asrCloudHint: '云端 Whisper 使用 Settings 中的 OpenAI API Key',
 };
 
 export const UI_PRESENT = {

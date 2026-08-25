@@ -13,6 +13,9 @@ export type PipCorner =
   | 'top-right'
   | 'top-left';
 
+/** Q&A 语音转文字引擎 */
+export type QaAsrEngine = 'webSpeech' | 'gateway' | 'cloud';
+
 export interface PdfSlideSource {
   type: 'pdf';
   url: string;
@@ -38,6 +41,8 @@ export interface PresentSettings {
   pipSize: number;
   /** 讲稿播放中被 Q&A 打断后，是否自动续播剩余讲稿（默认关：问答多在演讲结束后） */
   resumeDeckAfterQaInterrupt: boolean;
+  /** 评委提问语音转文字引擎 */
+  qaAsrEngine: QaAsrEngine;
 }
 
 export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
@@ -50,7 +55,11 @@ export const DEFAULT_PRESENT_SETTINGS: PresentSettings = {
   pipOffsetY: 0,
   pipSize: 1,
   resumeDeckAfterQaInterrupt: false,
+  qaAsrEngine: 'webSpeech',
 };
+
+const QA_ASR_ENGINES: QaAsrEngine[] = ['webSpeech', 'gateway', 'cloud'];
+
 
 export const MIN_PIP_SIZE = 0.6;
 export const MAX_PIP_SIZE = 1.8;
@@ -91,8 +100,18 @@ export function normalizePresentSettings(
     resumeDeckAfterQaInterrupt:
       partial?.resumeDeckAfterQaInterrupt ??
       DEFAULT_PRESENT_SETTINGS.resumeDeckAfterQaInterrupt,
+    qaAsrEngine: QA_ASR_ENGINES.includes(partial?.qaAsrEngine as QaAsrEngine)
+      ? (partial!.qaAsrEngine as QaAsrEngine)
+      : DEFAULT_PRESENT_SETTINGS.qaAsrEngine,
   };
 }
+
+export const QA_ASR_ENGINE_LABELS: Record<QaAsrEngine, string> = {
+  webSpeech: '浏览器 Web Speech',
+  gateway: '本机 Whisper',
+  cloud: '云端 Whisper API',
+};
+
 
 function clampNumber(
   value: number | undefined,

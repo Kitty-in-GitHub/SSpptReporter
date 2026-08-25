@@ -484,6 +484,11 @@ export default function App() {
           onResumeDeckAfterQaInterruptChange={
             settingsHook.updatePresentResumeDeckAfterQaInterrupt
           }
+          qaAsrEngine={settingsHook.settings.present.qaAsrEngine}
+          onQaAsrEngineChange={settingsHook.updatePresentQaAsrEngine}
+          getCloudAsrApiKey={() =>
+            settingsHook.getApiKeyForProvider('openai')
+          }
           llmSettings={settingsHook.settings.llm}
           getApiKeyForProvider={settingsHook.getApiKeyForProvider}
         />

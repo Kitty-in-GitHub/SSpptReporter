@@ -4,8 +4,10 @@ import {
   createRepeatRequestAction,
   isRepeatRequest,
 } from '../lib/brain/qaRepeatAction';
+import type { QaAsrEngine } from '../types/present';
 import type { useBrainQa } from './useBrainQa';
 import type { useDirectorQueue } from './useDirectorQueue';
+import { useMediaRecorderAsr } from './useMediaRecorderAsr';
 import {
   readQaAutoSubmitPreference,
   shouldSubmitOnListeningEnd,
@@ -20,6 +22,8 @@ export interface UseQaVoiceInputOptions {
   brainQa: BrainQaApi;
   directorQueue: DirectorQueueApi;
   disabled?: boolean;
+  asrEngine?: QaAsrEngine;
+  getCloudAsrApiKey?: () => string;
 }
 
 function enqueueQaAction(
@@ -42,6 +46,8 @@ export function useQaVoiceInput({
   brainQa,
   directorQueue,
   disabled = false,
+  asrEngine = 'webSpeech',
+  getCloudAsrApiKey,
 }: UseQaVoiceInputOptions) {
   const [text, setText] = useState('');
   const textRef = useRef('');
@@ -78,12 +84,41 @@ export function useQaVoiceInput({
     }
   }, []);
 
-  const speech = useSpeechRecognition({
+  const useRecorder = asrEngine === 'gateway' || asrEngine === 'cloud';
+  const recorderEngine = asrEngine === 'cloud' ? 'cloud' : 'gateway';
+
+  const webSpeech = useSpeechRecognition({
     lang: 'zh-CN',
     continuous: false,
     onFinalTranscript: appendFinalTranscript,
     onListeningEnd: handleListeningEnd,
   });
+
+  const recorderAsr = useMediaRecorderAsr({
+    engine: recorderEngine,
+    getApiKey: getCloudAsrApiKey,
+    onFinalTranscript: appendFinalTranscript,
+    onListeningEnd: handleListeningEnd,
+  });
+
+  const speech = useRecorder
+    ? {
+        supported: recorderAsr.supported,
+        listening: recorderAsr.listening,
+        interimTranscript: recorderAsr.interimTranscript,
+        finalTranscript: recorderAsr.finalTranscript,
+        error: recorderAsr.error,
+        start: () => {
+          void recorderAsr.start();
+        },
+        stop: recorderAsr.stop,
+        reset: recorderAsr.reset,
+      }
+    : webSpeech;
+
+  const busy = useRecorder
+    ? recorderAsr.listening || recorderAsr.transcribing
+    : webSpeech.listening;
 
   stopListeningRef.current = speech.stop;
 
@@ -106,13 +141,13 @@ export function useQaVoiceInput({
       }
 
       clearText();
-      if (speech.listening) {
+      if (busy) {
         stopListeningRef.current?.();
       }
       enqueueQaAction(directorQueue, action);
       return true;
     },
-    [brainQa, clearText, directorQueue, disabled, speech.listening],
+    [brainQa, busy, clearText, directorQueue, disabled],
   );
 
   submitRef.current = submit;
@@ -124,7 +159,7 @@ export function useQaVoiceInput({
   }, []);
 
   const toggleMic = useCallback(() => {
-    if (speech.listening) {
+    if (busy) {
       speech.stop();
       return;
     }
@@ -132,7 +167,7 @@ export function useQaVoiceInput({
     clearText();
     speech.reset();
     speech.start();
-  }, [clearText, speech]);
+  }, [busy, clearText, speech]);
 
   const canSubmit =
     !disabled && !brainQa.loading && text.trim().length > 0;
@@ -140,7 +175,10 @@ export function useQaVoiceInput({
   return {
     text,
     setText: syncText,
-    speech,
+    speech: {
+      ...speech,
+      listening: busy,
+    },
     submit,
     toggleMic,
     autoSubmit,
@@ -149,5 +187,7 @@ export function useQaVoiceInput({
     loading: brainQa.loading,
     error: brainQa.error,
     lastResult: brainQa.lastResult,
+    asrEngine,
+    transcribing: useRecorder ? recorderAsr.transcribing : false,
   };
 }

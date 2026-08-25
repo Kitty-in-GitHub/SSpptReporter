@@ -20,6 +20,7 @@ conda env create -f environment.yml   # 已有则：conda activate ssreporter
 conda activate ssreporter
 npm install
 npm run setup:tts   # 若 environment.yml 已含 pip 依赖可跳过
+npm run setup:asr   # 可选：本机 Whisper ASR（首次下载模型）
 ```
 
 - Node 版本：conda 环境内 **Node 22**（见 `environment.yml`）
