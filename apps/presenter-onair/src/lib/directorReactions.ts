@@ -27,6 +27,34 @@ export interface DirectorReactionDrafts {
   emotion: VrmAvatarReactionDraft | null;
 }
 
+export function applyVrmIntensity(
+  draft: VrmAvatarReactionDraft,
+  intensity?: number,
+): VrmAvatarReactionDraft {
+  if (intensity == null || Number.isNaN(intensity)) {
+    return draft;
+  }
+
+  const value = Math.min(1, Math.max(0, intensity));
+
+  if (draft.type === 'emote') {
+    return { ...draft, intensity: value };
+  }
+
+  if (draft.type === 'gesture' && draft.parts.length > 0) {
+    const peak = Math.max(...draft.parts.map((part) => part.intensity ?? 0), 0.01);
+    return {
+      ...draft,
+      parts: draft.parts.map((part) => ({
+        ...part,
+        intensity: Math.min(1, value * ((part.intensity ?? peak) / peak)),
+      })),
+    };
+  }
+
+  return draft;
+}
+
 export function toDirectorGestureDraft(
   action: DirectorAction,
 ): VrmAvatarReactionDraft | null {
@@ -79,6 +107,7 @@ export function toDirectorReactionDraftsFromResolved(
     emotion =
       fromScreenplay ??
       createVrmReactionFromEffect(expression as VrmEmotionEffect, action.utterance);
+    emotion = applyVrmIntensity(emotion, resolved.vrmIntensity);
   }
 
   return { gesture, emotion };

@@ -99,7 +99,7 @@ export function createBrainLlmClient(
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ];
-        const response = await chatService.chatOnce(messages, false);
+        const response = await chatService.chatOnce(messages, false, () => {});
         return extractChatCompletionText(response);
       },
     };

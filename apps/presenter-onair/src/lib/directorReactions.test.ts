@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { DirectorAction } from '@ssreporter/director';
+import { resolveBeatPerformance } from '@ssreporter/director';
 import {
+  applyVrmIntensity,
   toDirectorEmotionDraft,
   toDirectorGestureDraft,
   toDirectorReactionDrafts,
+  toDirectorReactionDraftsFromResolved,
 } from './directorReactions';
 import {
   gestureToVrmReactionDraft,
@@ -34,9 +37,11 @@ describe('gestureToVrmReactionSpec', () => {
   it('maps point_slide to gesture parts', () => {
     const draft = gestureToVrmReactionDraft('point_slide');
     expect(draft?.type).toBe('gesture');
-    expect(draft?.parts.some((part) => part.name === 'browOuterUpLeft')).toBe(
-      true,
-    );
+    if (draft?.type === 'gesture') {
+      expect(draft.parts.some((part) => part.name === 'browOuterUpLeft')).toBe(
+        true,
+      );
+    }
   });
 });
 
@@ -94,6 +99,32 @@ describe('toDirectorEmotionDraft', () => {
     expect(draft?.type).toBe('emote');
     if (draft?.type === 'emote') {
       expect(draft.name).toBe('happy');
+    }
+  });
+});
+
+describe('applyVrmIntensity', () => {
+  it('overrides emote intensity from profile', () => {
+    const draft = applyVrmIntensity(
+      { type: 'emote', name: 'happy', intensity: 0.8 },
+      0.35,
+    );
+    expect(draft.type).toBe('emote');
+    if (draft.type === 'emote') {
+      expect(draft.intensity).toBe(0.35);
+    }
+  });
+
+  it('applies profile intensity in resolved reaction path', () => {
+    const action: DirectorAction = {
+      ...baseAction,
+      profile: 'confident',
+    };
+    const resolved = resolveBeatPerformance(action);
+    const drafts = toDirectorReactionDraftsFromResolved(action, resolved);
+    expect(drafts.emotion?.type).toBe('emote');
+    if (drafts.emotion?.type === 'emote') {
+      expect(drafts.emotion.intensity).toBe(0.35);
     }
   });
 });

@@ -61,7 +61,6 @@ export function usePerformanceCatalog(deckId: string) {
         };
         await saveDeckPerformanceOverlay(deckId, nextOverlay);
         await reload();
-        return profileId;
       } catch (saveError) {
         const message =
           saveError instanceof Error ? saveError.message : '保存预设失败';
@@ -74,6 +73,67 @@ export function usePerformanceCatalog(deckId: string) {
     [deckId, reload],
   );
 
+  const updateDeckProfile = useCallback(
+    async (profileId: string, profile: PerformanceProfile) => {
+      setIsSaving(true);
+      setError(null);
+      try {
+        const overlay = await loadDeckPerformanceOverlay(deckId);
+        const nextOverlay: PerformanceCatalog = {
+          profiles: {
+            ...overlay.profiles,
+            [profileId]: {
+              ...overlay.profiles[profileId],
+              ...profile,
+              vrm: { ...overlay.profiles[profileId]?.vrm, ...profile.vrm },
+              voice: { ...overlay.profiles[profileId]?.voice, ...profile.voice },
+              timing: { ...overlay.profiles[profileId]?.timing, ...profile.timing },
+            },
+          },
+        };
+        await saveDeckPerformanceOverlay(deckId, nextOverlay);
+        await reload();
+      } catch (saveError) {
+        const message =
+          saveError instanceof Error ? saveError.message : '更新预设失败';
+        setError(message);
+        throw saveError;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [deckId, reload],
+  );
+
+  const removeDeckProfile = useCallback(
+    async (profileId: string) => {
+      setIsSaving(true);
+      setError(null);
+      try {
+        const overlay = await loadDeckPerformanceOverlay(deckId);
+        if (!overlay.profiles[profileId]) {
+          return;
+        }
+        const { [profileId]: _removed, ...rest } = overlay.profiles;
+        await saveDeckPerformanceOverlay(deckId, { profiles: rest });
+        await reload();
+      } catch (saveError) {
+        const message =
+          saveError instanceof Error ? saveError.message : '删除预设失败';
+        setError(message);
+        throw saveError;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [deckId, reload],
+  );
+
+  const hasDeckOverride = useCallback(
+    (profileId: string) => Boolean(deckOverlay?.profiles[profileId]),
+    [deckOverlay],
+  );
+
   return {
     catalog,
     deckOverlay,
@@ -81,6 +141,9 @@ export function usePerformanceCatalog(deckId: string) {
     isSaving,
     reload,
     addDeckProfile,
+    updateDeckProfile,
+    removeDeckProfile,
+    hasDeckOverride,
     resolvePerformance,
   };
 }

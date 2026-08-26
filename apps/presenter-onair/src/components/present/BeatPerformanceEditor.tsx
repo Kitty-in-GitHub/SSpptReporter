@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CSSProperties, RefObject } from 'react';
 import {
   GESTURES,
+  isBuiltInProfile,
   listSelectableProfiles,
   type DirectorAction,
   type Gesture,
@@ -24,14 +25,19 @@ import {
 } from '../../hooks/usePerformanceCatalog';
 import { EmphasisTextEditor } from './EmphasisTextEditor';
 import { isEmotionProfile, ProfileCreateDialog } from './ProfileCreateDialog';
+import { ProfileEditDialog } from './ProfileEditDialog';
 
 interface BeatPerformanceEditorProps {
   beat: SlideBeatDraft;
   catalog: PerformanceCatalog | null;
+  deckOverlay: PerformanceCatalog | null;
   utteranceTextareaRef: RefObject<HTMLTextAreaElement | null>;
   isSavingProfile?: boolean;
+  hasDeckOverride: (profileId: string) => boolean;
   onUpdate: (patch: Partial<SlideBeatDraft>) => void;
   onAddProfile: (profileId: string, profile: PerformanceProfile) => Promise<void>;
+  onUpdateProfile: (profileId: string, profile: PerformanceProfile) => Promise<void>;
+  onRemoveProfile: (profileId: string) => Promise<void>;
   onProfileCreated?: (profileId: string) => void;
 }
 
@@ -77,13 +83,18 @@ function effectiveSpeaker(
 export function BeatPerformanceEditor({
   beat,
   catalog,
+  deckOverlay,
   utteranceTextareaRef,
   isSavingProfile = false,
+  hasDeckOverride,
   onUpdate,
   onAddProfile,
+  onUpdateProfile,
+  onRemoveProfile,
   onProfileCreated,
 }: BeatPerformanceEditorProps) {
   const [createOpen, setCreateOpen] = useState(false);
+  const [editProfileId, setEditProfileId] = useState<string | null>(null);
   const profileName = beat.profile ?? beat.emotion;
   const mergedCatalog = catalog ?? { profiles: {} };
   const profileIds = listSelectableProfiles(mergedCatalog);
@@ -108,6 +119,23 @@ export function BeatPerformanceEditor({
     selectProfile(profileId);
     onProfileCreated?.(profileId);
   };
+
+  const handleDeleteProfile = async (profileId: string) => {
+    const custom = !isBuiltInProfile(profileId);
+    const message = custom
+      ? `删除自定义预设「${resolveProfileDisplayName(profileId, catalog)}」？讲稿里已写的 profile 字段不会自动改。`
+      : `移除本场次对「${resolveProfileDisplayName(profileId, catalog)}」的覆盖，恢复默认？`;
+    if (!window.confirm(message)) {
+      return;
+    }
+    await onRemoveProfile(profileId);
+    if (profileName === profileId) {
+      selectProfile('neutral');
+    }
+  };
+
+  const canDeleteProfile = (profileId: string) =>
+    !isBuiltInProfile(profileId) || hasDeckOverride(profileId);
 
   return (
     <div className="beat-performance-editor">
@@ -146,29 +174,54 @@ export function BeatPerformanceEditor({
             const color = resolveProfileColor(profileId, catalog);
             const isCustom = !isEmotionProfile(profileId);
             return (
-              <button
+              <div
                 key={profileId}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                className={`profile-card${selected ? ' is-selected' : ''}${
-                  isCustom ? ' is-custom' : ''
-                }`}
-                style={{ '--profile-color': color } as CSSProperties}
-                onClick={() => selectProfile(profileId)}
+                className={`profile-card-wrap${selected ? ' is-selected' : ''}`}
               >
-                <span className="profile-card-dot" aria-hidden />
-                <span className="profile-card-label">
-                  {resolveProfileDisplayName(profileId, catalog)}
-                </span>
-                <span className="profile-card-hint">
-                  {resolveProfileDisplayHint(profileId, catalog)}
-                </span>
-                <span className="profile-card-meta">
-                  {formatSpeedLabel(speed)} · ×{speed.toFixed(2)}
-                  {isCustom ? ' · 自定义' : ''}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`profile-card${selected ? ' is-selected' : ''}${
+                    isCustom ? ' is-custom' : ''
+                  }`}
+                  style={{ '--profile-color': color } as CSSProperties}
+                  onClick={() => selectProfile(profileId)}
+                >
+                  <span className="profile-card-dot" aria-hidden />
+                  <span className="profile-card-label">
+                    {resolveProfileDisplayName(profileId, catalog)}
+                  </span>
+                  <span className="profile-card-hint">
+                    {resolveProfileDisplayHint(profileId, catalog)}
+                  </span>
+                  <span className="profile-card-meta">
+                    {formatSpeedLabel(speed)} · ×{speed.toFixed(2)}
+                    {isCustom ? ' · 自定义' : ''}
+                    {hasDeckOverride(profileId) ? ' · 已覆盖' : ''}
+                  </span>
+                </button>
+                <div className="profile-card-actions">
+                  <button
+                    type="button"
+                    className="profile-card-action"
+                    disabled={isSavingProfile}
+                    onClick={() => setEditProfileId(profileId)}
+                  >
+                    编辑
+                  </button>
+                  {canDeleteProfile(profileId) ? (
+                    <button
+                      type="button"
+                      className="profile-card-action is-danger"
+                      disabled={isSavingProfile}
+                      onClick={() => void handleDeleteProfile(profileId)}
+                    >
+                      {isCustom ? '删除' : '恢复默认'}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -350,6 +403,17 @@ export function BeatPerformanceEditor({
           isSaving={isSavingProfile}
           onClose={() => setCreateOpen(false)}
           onCreate={handleCreateProfile}
+        />
+      ) : null}
+
+      {editProfileId && catalog ? (
+        <ProfileEditDialog
+          catalog={catalog}
+          profileId={editProfileId}
+          overlayProfile={deckOverlay?.profiles[editProfileId]}
+          isSaving={isSavingProfile}
+          onClose={() => setEditProfileId(null)}
+          onSave={onUpdateProfile}
         />
       ) : null}
     </div>

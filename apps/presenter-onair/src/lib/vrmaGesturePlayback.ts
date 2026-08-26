@@ -62,14 +62,14 @@ export async function playVrmaGestureOneShot(
         if (event.action !== gestureAction) {
           return;
         }
-        mixer.removeEventListener('finished', onFinished);
+        mixer.removeEventListener('finished', onFinished as never);
         gestureAction.fadeOut(0.25);
         if (idleAction) {
           idleAction.reset().fadeIn(0.3).play();
         }
         resolve();
       };
-      mixer.addEventListener('finished', onFinished);
+      mixer.addEventListener('finished', onFinished as never);
     });
 
     return true;

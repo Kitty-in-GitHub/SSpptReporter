@@ -30,6 +30,30 @@
 
 ---
 
+### 2026-08-26 · P0：导演台预设管理 + vrm.intensity + 测试/类型修复
+
+- **做了什么**：
+  - `vrm.intensity` 接入 `toDirectorReactionDraftsFromResolved` 播放
+  - 讲稿导演台：预设 **新建 / 编辑 / 删除**（写 deck `performance.json`）
+  - 修复 `qaVoicePreferences.test.ts`（localStorage mock）
+  - 修复 presenter-onair 多处 typecheck（slideScriptApi、useDirectorSpeech、vrmaGesturePlayback、createBrainLlmClient 等）
+  - `AGENTS.md` / `phase3-present-director.md` 同步「讲稿导演台」
+- **未做 / 阻塞**：Phase 2/2.5/3 人工验收；Q&A 未接 profile
+- **下一台机器应优先**：`npm run dev` → 导演台试新建/编辑预设 → 汇报播放看表情强度
+- **相关文件**：`directorReactions.ts`、`ProfileEditDialog.tsx`、`usePerformanceCatalog.ts`、`BeatPerformanceEditor.tsx`
+- **验证**：`npm run test`（director 35/35；onair 含 qaVoicePreferences）
+
+---
+
+### 2026-08-26 · 讲稿导演台可视化 + 新建表演预设
+
+- **做了什么**：
+  - 模式改名「讲稿导演台」；可视化预设卡片、语速/停顿滑块、重读选区
+  - **+ 新建预设** → deck `performance.json`；自定义 profile 动态出现在卡片列表
+- **相关文件**：`ScriptEditorShell.tsx`、`BeatPerformanceEditor.tsx`、`ProfileCreateDialog.tsx`、`performanceCatalogApi.ts`
+
+---
+
 ### 2026-08-26 · TTS VoiceDirective + Edge 适配器（音色/语气/句内重读）
 
 - **做了什么**：

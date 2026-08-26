@@ -92,22 +92,25 @@ export async function saveSlideToDisk(
   const pageDraft: SlidePageDraft =
     'beats' in draft && Array.isArray(draft.beats)
       ? draft
-      : {
-          page: draft.page,
-          beats: [
-            {
-              utterance: draft.utterance,
-              profile: draft.profile,
-              emotion: draft.emotion,
-              gesture: draft.gesture,
-              camera: draft.camera,
-              action_id: draft.action_id,
-              slide_action: draft.slide_action,
-              voice: draft.voice,
-              timing: draft.timing,
-            },
-          ],
-        };
+      : (() => {
+          const legacy = draft as SlideBeatDraft & { page: number };
+          return {
+            page: legacy.page,
+            beats: [
+              {
+                utterance: legacy.utterance,
+                profile: legacy.profile,
+                emotion: legacy.emotion,
+                gesture: legacy.gesture,
+                camera: legacy.camera,
+                action_id: legacy.action_id,
+                slide_action: legacy.slide_action,
+                voice: legacy.voice,
+                timing: legacy.timing,
+              },
+            ],
+          };
+        })();
   await saveSlidePageToDisk(deckId, pageDraft);
 }
 
@@ -136,7 +139,7 @@ export async function compileDeckOnDisk(
 }
 
 export function normalizeStoredPageDraft(
-  deckId: string,
+  _deckId: string,
   page: number,
   stored: unknown,
 ): SlidePageDraft | null {

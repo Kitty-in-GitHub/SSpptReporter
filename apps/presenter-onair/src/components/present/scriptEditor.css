@@ -449,6 +449,37 @@
   gap: 8px;
 }
 
+.profile-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-card-wrap.is-selected .profile-card-actions {
+  opacity: 1;
+}
+
+.profile-card-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0.72;
+}
+
+.profile-card-action {
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  font-size: 10px;
+  padding: 3px 4px;
+  cursor: pointer;
+}
+
+.profile-card-action.is-danger {
+  color: #fca5a5;
+}
+
 .profile-card {
   display: flex;
   flex-direction: column;

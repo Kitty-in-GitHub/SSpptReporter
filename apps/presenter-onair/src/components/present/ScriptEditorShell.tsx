@@ -36,7 +36,11 @@ export function ScriptEditorShell({
   const utteranceRef = useRef<HTMLTextAreaElement>(null);
   const {
     catalog,
+    deckOverlay,
     addDeckProfile,
+    updateDeckProfile,
+    removeDeckProfile,
+    hasDeckOverride,
     isSaving: isSavingProfile,
     error: performanceError,
   } = usePerformanceCatalog(deckId);
@@ -184,10 +188,14 @@ export function ScriptEditorShell({
               <BeatPerformanceEditor
                 beat={beat}
                 catalog={catalog}
+                deckOverlay={deckOverlay}
                 utteranceTextareaRef={utteranceRef}
                 isSavingProfile={isSavingProfile}
+                hasDeckOverride={hasDeckOverride}
                 onUpdate={(patch) => editor.updateBeat(editor.activeBeatIndex, patch)}
                 onAddProfile={addDeckProfile}
+                onUpdateProfile={updateDeckProfile}
+                onRemoveProfile={removeDeckProfile}
               />
 
               <fieldset className="script-editor-field script-editor-slide-action">

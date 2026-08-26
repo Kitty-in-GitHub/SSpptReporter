@@ -11,7 +11,7 @@ export interface SlideMarkdownFile {
 }
 
 export function buildSlideIndex(
-  deckId: string,
+  _deckId: string,
   files: SlideMarkdownFile[],
 ): SlideIndexEntry[] {
   const entries: SlideIndexEntry[] = [];

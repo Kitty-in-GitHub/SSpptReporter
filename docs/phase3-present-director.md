@@ -14,7 +14,7 @@
 | 每拍 TTS | `voice.speaker` / speed / pitch / volume；Gemini `style_hint`（待接） | 
 | 句内重读 | `emphasis` → Edge **segment-resynth**（见 [`tts-voice-directive.md`](./tts-voice-directive.md)） |
 | 每拍 Body | profile → 表情 + 默认手势，可被 beat `gesture` 覆盖 |
-| 编辑 UI | 编辑讲稿 → 节拍标签页 |
+| 编辑 UI | 讲稿导演台 → 可视化预设/语速/停顿 + 新建/编辑/删除自定义预设 |
 
 ---
 
@@ -82,7 +82,17 @@ profile: emphatic
 1. `npm run compile:deck` → demo `script.jsonl` 条数增加（03.md 为 3 条）
 2. 汇报 → 播放本场讲稿：第三页中间有 nod、句间停顿可感知
 3. 设置 Edge-TTS speed 1.0，profile `emphatic` 覆盖为 1.05 可听出更快
-4. 编辑讲稿 → 添加节拍 → 保存并编译 → 播放生效
+4. 讲稿导演台 → 添加/编辑预设 → 添加节拍 → 保存并编译 → 播放生效
+
+---
+
+## 讲稿导演台（Preset UI）
+
+- 工具栏第三项：**讲稿导演台**（原「编辑讲稿」）
+- 表演预设：内置 7 张 + `performance.json` 自定义卡片
+- **+ 新建预设**：写入 `content/decks/<id>/performance.json`（dev 写盘 API）
+- **编辑 / 删除**：自定义预设可删；内置预设可保存场次覆盖或「恢复默认」
+- `vrm.intensity` 已接入播放（表情强度随 profile）
 
 ---
 

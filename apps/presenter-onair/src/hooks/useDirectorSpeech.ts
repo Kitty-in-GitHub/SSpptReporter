@@ -123,7 +123,7 @@ export function useDirectorSpeech({
       const restoreEntries = patch
         ? Object.keys(patch).map((key) => [
             key,
-            (previousOptions as Record<string, unknown>)[key],
+            (previousOptions as unknown as Record<string, unknown>)[key],
           ])
         : [];
 

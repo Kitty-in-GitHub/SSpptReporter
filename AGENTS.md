@@ -18,12 +18,12 @@
 | Phase 0 | **已通过本机验收**（见 `docs/phase0-acceptance.md`） |
 | Phase 1 | **已通过本机验收**（见 `docs/phase1-acceptance.md`） |
 | Phase 2 | **功能完成、待正式验收**：Brain RAG + 汇报模式 Q&A 面板（见 `docs/phase2-acceptance.md`） |
-| Phase 3 Present | **功能完成、待验收**：一页多 beat + performance profile（见 `docs/phase3-present-director.md`） |
+| Phase 3 Present | **功能完成、待验收**：一页多 beat + performance profile + 讲稿导演台（见 `docs/phase3-present-director.md`） |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
 | Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试 + 队列） |
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
 | Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
-| 编辑讲稿 | `ScriptEditorShell`（见 `docs/content-decks.md`） |
+| 讲稿导演台 | `ScriptEditorShell`（可视化节拍/预设/语速；见 `docs/content-decks.md`） |
 | 知识库 | `content/` 示例 + `content-private/` 私有（见 `docs/content-decks.md`） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 

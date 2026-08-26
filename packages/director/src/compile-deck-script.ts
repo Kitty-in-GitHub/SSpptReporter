@@ -5,8 +5,6 @@ import {
   type SlideBeatDraft,
 } from "./slide-script-draft.js";
 
-const CAMERA_SHOTS = new Set<string>(["bust", "medium", "wide"]);
-
 export interface SlideMarkdownFile {
   filename: string;
   content: string;
@@ -20,10 +18,6 @@ export interface CompileDeckScriptIssue {
 export interface CompileDeckScriptResult {
   actions: DirectorAction[];
   issues: CompileDeckScriptIssue[];
-}
-
-function isCameraShot(value: string | undefined): boolean {
-  return Boolean(value && CAMERA_SHOTS.has(value));
 }
 
 export function parseSlideFilenamePage(filename: string): number | null {
