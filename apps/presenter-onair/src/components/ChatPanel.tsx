@@ -1,14 +1,9 @@
 import { UI_SESSION_MODES, UI_SETTINGS } from '../constants/uiZh';
+import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import type { ChatMessage } from '../types/chat';
 import type { VisualSettings } from '../types/settings';
-import type { EmotionEffectAnchor } from '../lib/emotionEffectAnchor';
-import type {
-  VrmAvatarReaction,
-  VrmEmotionEffectReaction,
-  VrmEmotionEffectMap,
-  VrmReactionControlMode,
-} from '../lib/vrmReactions';
-import { AvatarBackground } from './AvatarPanel';
+import type { RefObject } from 'react';
+import { AvatarShell } from './AvatarShell';
 import { ChatLog } from './ChatLog';
 import { ChatInput } from './ChatInput';
 
@@ -18,22 +13,13 @@ interface ChatPanelProps {
   isProcessing: boolean;
   onSend: (text: string) => void;
   onToggleSettings: () => void;
-  mouthLevel: number;
+  mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
-  avatarReaction?: VrmAvatarReaction | null;
-  emotionEffectReaction?: VrmEmotionEffectReaction | null;
-  reactionControlMode: VrmReactionControlMode;
-  emotionEffectMap: VrmEmotionEffectMap;
-  effectAnchor: EmotionEffectAnchor;
-  onEffectAnchorChange: (anchor: EmotionEffectAnchor) => void;
-  onEffectAnchorReset: () => void;
+  avatarPresenter: AvatarPresenterController;
   backgroundImageUrl?: string | null;
   visual: VisualSettings;
   onEnterPresentMode?: () => void;
   onEnterEditMode?: () => void;
-  onVrmCameraFramingChange?: (
-    framing: VisualSettings['vrmCameraFraming'],
-  ) => void;
 }
 
 export function ChatPanel({
@@ -42,20 +28,13 @@ export function ChatPanel({
   isProcessing,
   onSend,
   onToggleSettings,
-  mouthLevel,
+  mouthLevelRef,
   isSpeaking,
-  avatarReaction,
-  emotionEffectReaction,
-  reactionControlMode,
-  emotionEffectMap,
-  effectAnchor,
-  onEffectAnchorChange,
-  onEffectAnchorReset,
+  avatarPresenter,
   backgroundImageUrl,
   visual,
   onEnterPresentMode,
   onEnterEditMode,
-  onVrmCameraFramingChange,
 }: ChatPanelProps) {
   const isBroadcast = visual.layoutMode === 'broadcast';
   const shouldShowInput = !isBroadcast || visual.showInputInBroadcast;
@@ -112,18 +91,11 @@ export function ChatPanel({
           ⚙
         </button>
       </div>
-      <AvatarBackground
-        mouthLevel={mouthLevel}
+      <AvatarShell
+        presenter={avatarPresenter}
+        mouthLevelRef={mouthLevelRef}
         isSpeaking={isSpeaking}
-        reaction={avatarReaction}
-        emotionEffectReaction={emotionEffectReaction}
-        reactionControlMode={reactionControlMode}
-        emotionEffectMap={emotionEffectMap}
-        effectAnchor={effectAnchor}
-        onEffectAnchorChange={onEffectAnchorChange}
-        onEffectAnchorReset={onEffectAnchorReset}
-        vrmCameraFraming={visual.vrmCameraFraming}
-        onVrmCameraFramingChange={onVrmCameraFramingChange}
+        backgroundMode={visual.backgroundMode}
       />
       {isBroadcast ? (
         broadcastCaption && (

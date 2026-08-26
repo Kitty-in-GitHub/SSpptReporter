@@ -6,9 +6,9 @@ import {
 import sampleAction from '../fixtures/sample-action.json';
 import sampleQueue from '../fixtures/sample-queue.json';
 import { toDirectorReactionDrafts } from '../lib/directorReactions';
+import type { AvatarReactionDraft } from '../lib/avatar';
 import type { useDirectorQueue } from '../hooks/useDirectorQueue';
 import type { useDeckScriptPlayback } from '../hooks/useDeckScriptPlayback';
-import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
 import type { SessionMode } from '../types/present';
 import type { TTSEngineOption } from '../types/settings';
 import './directorPanel.css';
@@ -24,7 +24,7 @@ interface DirectorPanelProps {
   queue: DirectorQueueApi;
   deckPlayback: DeckScriptPlaybackApi;
   onSpeak: (text: string) => Promise<void>;
-  onApplyEmotion: (draft: VrmAvatarReactionDraft) => void;
+  onApplyReaction: (draft: AvatarReactionDraft) => void;
   onResetEmotion: () => void;
 }
 
@@ -69,7 +69,7 @@ export function DirectorPanel({
   queue,
   deckPlayback,
   onSpeak,
-  onApplyEmotion,
+  onApplyReaction,
   onResetEmotion,
 }: DirectorPanelProps) {
   const isPresentMode = sessionMode === 'present';
@@ -102,10 +102,10 @@ export function DirectorPanel({
     onResetEmotion();
     const { gesture, emotion } = toDirectorReactionDrafts(action);
     if (gesture) {
-      onApplyEmotion(gesture);
+      onApplyReaction(gesture);
     }
     if (emotion) {
-      onApplyEmotion(emotion);
+      onApplyReaction(emotion);
     }
 
     setStatus(`播放中：${action.action_id ?? 'fixture'} / ${action.mode}`);
@@ -118,7 +118,7 @@ export function DirectorPanel({
       onResetEmotion();
     }
   }, [
-    onApplyEmotion,
+    onApplyReaction,
     onResetEmotion,
     onSpeak,
     queue,

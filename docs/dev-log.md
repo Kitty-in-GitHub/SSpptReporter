@@ -22,15 +22,21 @@
 
 ---
 
----
+### 2026-08-26 · Avatar 呈现层抽象（解耦 Director / Brain 与 VRM）
+
+- **做了什么**：
+  - 新增 `lib/avatar/`：`AvatarReactionDraft` 协议、Director → Avatar 映射、VRM 桥接
+  - `useAvatarPresenter` 集中管理 reaction / 情绪特效 / 聊天 TTS 表情
+  - `AvatarShell` 为唯一引用 `AvatarBackground` 的壳层；`ChatPanel` / `PresentShell` 只接 presenter
+  - `useDirectorQueue` / `DirectorPanel` 改为 `onApplyReaction(AvatarReactionDraft)`
+  - 口型改 `mouthLevelRef`，避免 60fps 驱动 React 整树重渲染
+  - `directorReactions.ts` 保留 re-export 兼容旧测试
+- **未做 / 阻塞**：无
+- **下一台机器应优先**：Phase 2/3 人工验收；Q&A 接 VoiceDirective/profile
+- **相关文件**：`apps/presenter-onair/src/lib/avatar/`、`hooks/useAvatarPresenter.ts`、`components/AvatarShell.tsx`、`App.tsx`
+- **验证方式**：`npm run test`；`npx tsc --noEmit -p apps/presenter-onair`
 
 ---
-
----
-
----
-
-### 2026-08-26 · P0：导演台预设管理 + vrm.intensity + 测试/类型修复
 
 - **做了什么**：
   - `vrm.intensity` 接入 `toDirectorReactionDraftsFromResolved` 播放

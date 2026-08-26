@@ -11,15 +11,17 @@ import {
   type VoiceDirective,
 } from '@ssreporter/director';
 import { useCallback, useRef, useState } from 'react';
-import { toDirectorReactionDraftsFromResolved } from '../lib/directorReactions';
+import {
+  avatarReactionsFromDirectorResolved,
+  type AvatarReactionDraft,
+} from '../lib/avatar';
 import { mergePreemptiveDuringPlayback } from '../lib/directorQueueMerge';
 import { sleepMs } from '../lib/sleepMs';
-import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
 
 export interface UseDirectorQueueOptions {
   speak: (text: string, directive?: VoiceDirective) => Promise<void>;
   stopSpeech: () => void;
-  onApplyEmotion: (draft: VrmAvatarReactionDraft) => void;
+  onApplyReaction: (draft: AvatarReactionDraft) => void;
   onResetEmotion: () => void;
   onSlideAction?: (slideAction: SlideAction) => void | Promise<void>;
   resolvePerformance?: (action: DirectorAction) => ResolvedBeatPerformance;
@@ -29,7 +31,7 @@ export interface UseDirectorQueueOptions {
 export function useDirectorQueue({
   speak,
   stopSpeech,
-  onApplyEmotion,
+  onApplyReaction,
   onResetEmotion,
   onSlideAction,
   resolvePerformance,
@@ -118,16 +120,16 @@ export function useDirectorQueue({
           }
 
           onResetEmotion();
-          const { gesture, emotion } = toDirectorReactionDraftsFromResolved(
+          const { gesture, emotion } = avatarReactionsFromDirectorResolved(
             action,
             resolved,
           );
 
           if (gesture) {
-            onApplyEmotion(gesture);
+            onApplyReaction(gesture);
           }
           if (emotion) {
-            onApplyEmotion(emotion);
+            onApplyReaction(emotion);
           }
 
           const utterance = action.utterance.trim();
@@ -157,7 +159,7 @@ export function useDirectorQueue({
       setPlayback('idle');
     },
     [
-      onApplyEmotion,
+      onApplyReaction,
       onResetEmotion,
       onSlideAction,
       setPlayback,

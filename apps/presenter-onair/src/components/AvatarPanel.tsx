@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import {
   ACESFilmicToneMapping,
   AmbientLight,
@@ -73,7 +73,9 @@ import {
 } from '../constants/uiZh';
 
 interface AvatarBackgroundProps {
-  mouthLevel: number;
+  /** @deprecated 优先使用 mouthLevelRef，避免口型驱动 React 整树重渲染 */
+  mouthLevel?: number;
+  mouthLevelRef?: RefObject<number>;
   isSpeaking: boolean;
   reaction?: VrmAvatarReaction | null;
   emotionEffectReaction?: VrmEmotionEffectReaction | null;
@@ -84,6 +86,9 @@ interface AvatarBackgroundProps {
   onEffectAnchorReset: () => void;
   vrmCameraFraming?: VrmCameraFraming;
   onVrmCameraFramingChange?: (framing: VrmCameraFraming) => void;
+  backgroundImageUrl?: string | null;
+  backgroundMode?: 'default' | 'green' | 'transparent';
+  showExpressionControls?: boolean;
 }
 
 interface CameraFramingState {
@@ -501,7 +506,8 @@ function createVrmEffectGeometry(
 }
 
 export function AvatarBackground({
-  mouthLevel,
+  mouthLevel = 0,
+  mouthLevelRef,
   isSpeaking,
   reaction,
   emotionEffectReaction,
@@ -512,6 +518,8 @@ export function AvatarBackground({
   onEffectAnchorReset,
   vrmCameraFraming,
   onVrmCameraFramingChange,
+  backgroundMode = 'default',
+  showExpressionControls = true,
 }: AvatarBackgroundProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -552,7 +560,10 @@ export function AvatarBackground({
   const manualEmotionEffectReactionIdRef = useRef(0);
   const [anchorEditorOpen, setAnchorEditorOpen] = useState(false);
   const [anchorTarget, setAnchorTarget] = useState<EffectAnchorTarget>('face');
-  const showManualControls = reactionControlMode === 'manual';
+  const mouthLevelRefRef = useRef(mouthLevelRef);
+  mouthLevelRefRef.current = mouthLevelRef;
+  const showManualControls =
+    showExpressionControls && reactionControlMode === 'manual';
   const activeEmotionEffectReaction =
     reactionControlMode === 'linked'
       ? emotionEffectReaction || null
@@ -626,14 +637,16 @@ export function AvatarBackground({
   );
 
   const targetWeight = useMemo(() => {
-    if (!isSpeaking) return 0;
+    if (!isSpeaking || mouthLevelRef) return 0;
     const normalized = mouthLevel / MAX_MOUTH_LEVEL;
     return Math.min(Math.max(normalized, 0), 1);
-  }, [isSpeaking, mouthLevel]);
+  }, [isSpeaking, mouthLevel, mouthLevelRef]);
 
   useEffect(() => {
-    targetMouthWeightRef.current = targetWeight;
-  }, [targetWeight]);
+    if (!mouthLevelRef) {
+      targetMouthWeightRef.current = targetWeight;
+    }
+  }, [mouthLevelRef, targetWeight]);
 
   useEffect(() => {
     isSpeakingRef.current = isSpeaking;
@@ -1020,6 +1033,13 @@ export function AvatarBackground({
             isSpeakingRef.current,
           );
           expressionController.update(delta);
+        }
+
+        if (mouthLevelRefRef.current) {
+          const level = isSpeakingRef.current
+            ? mouthLevelRefRef.current.current / MAX_MOUTH_LEVEL
+            : 0;
+          targetMouthWeightRef.current = Math.min(Math.max(level, 0), 1);
         }
 
         const nextWeight =

@@ -5,6 +5,7 @@ import {
   useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
 } from 'react';
 import { UI_SETTINGS } from '../../constants/uiZh';
 import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
@@ -22,15 +23,8 @@ import {
   type QaAsrEngine,
   type SessionMode,
 } from '../../types/present';
-import type { VrmCameraFraming } from '../../lib/vrmCameraFraming';
-import type { EmotionEffectAnchor } from '../../lib/emotionEffectAnchor';
-import type {
-  VrmAvatarReaction,
-  VrmEmotionEffectReaction,
-  VrmEmotionEffectMap,
-  VrmReactionControlMode,
-} from '../../lib/vrmReactions';
-import { AvatarBackground } from '../AvatarPanel';
+import type { AvatarPresenterController } from '../../hooks/useAvatarPresenter';
+import { AvatarShell } from '../AvatarShell';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentDeckSelect } from './PresentDeckSelect';
 import { PresentControls } from './PresentControls';
@@ -69,19 +63,11 @@ interface PresentShellProps {
   onToggleSettings: () => void;
   /** 演讲模式：隐藏导演台等外层面板 */
   onStageModeChange?: (active: boolean) => void;
-  mouthLevel: number;
+  mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
-  avatarReaction?: VrmAvatarReaction | null;
-  emotionEffectReaction?: VrmEmotionEffectReaction | null;
-  reactionControlMode: VrmReactionControlMode;
-  emotionEffectMap: VrmEmotionEffectMap;
-  effectAnchor: EmotionEffectAnchor;
-  onEffectAnchorChange: (anchor: EmotionEffectAnchor) => void;
-  onEffectAnchorReset: () => void;
+  avatarPresenter: AvatarPresenterController;
   backgroundImageUrl?: string | null;
   backgroundMode: 'default' | 'green' | 'transparent';
-  vrmCameraFraming: VrmCameraFraming;
-  onVrmCameraFramingChange?: (framing: VrmCameraFraming) => void;
   activeDeckId: string;
   onDeckChange: (deckId: string) => void;
   resumeDeckAfterQaInterrupt: boolean;
@@ -146,19 +132,11 @@ export function PresentShell({
   onSessionModeChange,
   onToggleSettings,
   onStageModeChange,
-  mouthLevel,
+  mouthLevelRef,
   isSpeaking,
-  avatarReaction,
-  emotionEffectReaction,
-  reactionControlMode,
-  emotionEffectMap,
-  effectAnchor,
-  onEffectAnchorChange,
-  onEffectAnchorReset,
+  avatarPresenter,
   backgroundImageUrl,
   backgroundMode,
-  vrmCameraFraming,
-  onVrmCameraFramingChange,
   activeDeckId,
   onDeckChange,
   resumeDeckAfterQaInterrupt,
@@ -459,18 +437,11 @@ export function PresentShell({
           ⠿ 拖动
         </div>
       ) : null}
-      <AvatarBackground
-        mouthLevel={mouthLevel}
+      <AvatarShell
+        presenter={avatarPresenter}
+        mouthLevelRef={mouthLevelRef}
         isSpeaking={isSpeaking}
-        reaction={avatarReaction}
-        emotionEffectReaction={emotionEffectReaction}
-        reactionControlMode={reactionControlMode}
-        emotionEffectMap={emotionEffectMap}
-        effectAnchor={effectAnchor}
-        onEffectAnchorChange={onEffectAnchorChange}
-        onEffectAnchorReset={onEffectAnchorReset}
-        vrmCameraFraming={vrmCameraFraming}
-        onVrmCameraFramingChange={onVrmCameraFramingChange}
+        showExpressionControls={!stageMode}
       />
     </div>
   ) : null;

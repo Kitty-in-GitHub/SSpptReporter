@@ -79,6 +79,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | 用途 | 路径 |
 |------|------|
 | 加载 VRM | `apps/presenter-onair/src/components/AvatarPanel.tsx` → `VRM_FILE_URL` |
+| Avatar 呈现层 | `lib/avatar/` · `useAvatarPresenter` · `AvatarShell`（Director/Brain 只产出 `AvatarReactionDraft`） |
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |
 | Present 汇报 | `apps/presenter-onair/src/components/present/PresentShell.tsx` |
 | Q&A 面板 | `apps/presenter-onair/src/components/present/QaPanel.tsx` |

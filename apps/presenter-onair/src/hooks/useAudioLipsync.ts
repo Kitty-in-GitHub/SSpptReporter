@@ -12,9 +12,8 @@ interface PlayAudioOptions {
 }
 
 export function useAudioLipsync() {
-  const [mouthLevel, setMouthLevel] = useState(0);
+  const mouthLevelRef = useRef(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [smoothedValue, setSmoothedValue] = useState(0);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -31,7 +30,6 @@ export function useAudioLipsync() {
   }, []);
 
   const clearPlayback = useCallback(() => {
-    // Stop the currently playing source
     if (sourceRef.current) {
       try {
         sourceRef.current.stop();
@@ -42,14 +40,12 @@ export function useAudioLipsync() {
       sourceRef.current = null;
     }
     analyserRef.current = null;
-    // Stop the animation loop
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     }
     smoothedRef.current = 0;
-    setMouthLevel(0);
-    setSmoothedValue(0);
+    mouthLevelRef.current = 0;
     setIsSpeaking(false);
   }, []);
 
@@ -63,7 +59,6 @@ export function useAudioLipsync() {
       arrayBuffer: ArrayBuffer,
       options?: PlayAudioOptions,
     ): Promise<void> => {
-      // Invalidate previous play requests and reset playback state
       const generation = playbackGenerationRef.current + 1;
       playbackGenerationRef.current = generation;
       clearPlayback();
@@ -73,13 +68,11 @@ export function useAudioLipsync() {
         await ctx.resume();
       }
 
-      // Decode audio data
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
       if (generation !== playbackGenerationRef.current) {
         return;
       }
 
-      // Node chain: source -> gain -> analyser -> destination
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
 
@@ -97,7 +90,6 @@ export function useAudioLipsync() {
       analyserRef.current = analyser;
       setIsSpeaking(true);
 
-      // Analysis loop
       const dataArray = new Float32Array(analyser.fftSize);
 
       const tick = () => {
@@ -105,35 +97,28 @@ export function useAudioLipsync() {
         if (!analyserRef.current) return;
         analyserRef.current.getFloatTimeDomainData(dataArray);
 
-        // Compute RMS
         let sumSq = 0;
         for (let i = 0; i < dataArray.length; i++) {
           sumSq += dataArray[i] * dataArray[i];
         }
         const rms = Math.sqrt(sumSq / dataArray.length);
 
-        // Smooth value over time
         smoothedRef.current =
           smoothedRef.current * SMOOTH_FACTOR + rms * (1 - SMOOTH_FACTOR);
 
-        // Normalize (0-1)
         const normalized = Math.min(smoothedRef.current / RMS_CEILING, 1);
-
-        // Mouth animation level (0-4)
         const level = Math.min(
           Math.round(normalized * (MOUTH_LEVELS - 1)),
           MOUTH_LEVELS - 1,
         );
 
-        setMouthLevel(level);
-        setSmoothedValue(smoothedRef.current);
+        mouthLevelRef.current = level;
 
         rafRef.current = requestAnimationFrame(tick);
       };
 
       rafRef.current = requestAnimationFrame(tick);
 
-      // Cleanup when playback ends
       return new Promise<void>((resolve) => {
         source.onended = () => {
           if (generation !== playbackGenerationRef.current) {
@@ -146,8 +131,7 @@ export function useAudioLipsync() {
           }
           analyserRef.current = null;
           smoothedRef.current = 0;
-          setMouthLevel(0);
-          setSmoothedValue(0);
+          mouthLevelRef.current = 0;
           setIsSpeaking(false);
           sourceRef.current = null;
           resolve();
@@ -169,9 +153,8 @@ export function useAudioLipsync() {
   }, [stopCurrent]);
 
   return {
-    mouthLevel,
+    mouthLevelRef,
     isSpeaking,
-    smoothedValue,
     play,
     stop: stopCurrent,
   };

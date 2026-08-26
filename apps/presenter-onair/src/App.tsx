@@ -11,6 +11,7 @@ import { PresentShell } from './components/present/PresentShell';
 import { ScriptEditorShell } from './components/present/ScriptEditorShell';
 import { SettingsPanel } from './components/SettingsPanel';
 import { useAudioLipsync } from './hooks/useAudioLipsync';
+import { useAvatarPresenter } from './hooks/useAvatarPresenter';
 import { useDeckScriptEditor } from './hooks/useDeckScriptEditor';
 import { useDirectorSpeech } from './hooks/useDirectorSpeech';
 import { useDeckScriptPlayback } from './hooks/useDeckScriptPlayback';
@@ -25,20 +26,6 @@ import { useTwitchComments } from './hooks/useTwitchComments';
 import { useYoutubeComments } from './hooks/useYoutubeComments';
 import { clampDialogDragDelta, type DialogDragPoint } from './lib/dialogDrag';
 import { getEmotionEffectAnchor } from './lib/emotionEffectAnchor';
-import {
-  createLinkedVrmEmotionEffectReaction,
-  createVrmReactionFromScreenplay,
-  sustainVrmReactionForSpeech,
-  withReactionId,
-  withVrmEmotionEffectReactionId,
-} from './lib/vrmReactions';
-import type {
-  ScreenplayLike,
-  VrmAvatarReaction,
-  VrmAvatarReactionDraft,
-  VrmEmotionEffectReaction,
-  VrmEmotionEffectReactionDraft,
-} from './lib/vrmReactions';
 import type { TwitchChatMessage } from './services/twitch/twitchService';
 import type { YouTubeChatMessage } from './services/youtube/youtubeService';
 import './styles/app.css';
@@ -55,7 +42,7 @@ interface SettingsDialogDragState {
 }
 
 export default function App() {
-  const { play, stop, mouthLevel, isSpeaking } = useAudioLipsync();
+  const { play, stop, mouthLevelRef, isSpeaking } = useAudioLipsync();
   const settingsHook = useSettings();
   const updateTwitchAccessToken = settingsHook.updateTwitchAccessToken;
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -69,29 +56,29 @@ export default function App() {
   const backgroundObjectUrlRef = useRef<string | null>(null);
   const settingsDialogRef = useRef<HTMLDivElement | null>(null);
   const settingsDialogDragRef = useRef<SettingsDialogDragState | null>(null);
-  const avatarReactionIdRef = useRef(0);
-  const emotionEffectReactionIdRef = useRef(0);
-  const [avatarReaction, setAvatarReaction] =
-    useState<VrmAvatarReaction | null>(null);
-  const [emotionEffectReaction, setEmotionEffectReaction] =
-    useState<VrmEmotionEffectReaction | null>(null);
 
-  const emitAvatarReaction = useCallback((draft: VrmAvatarReactionDraft) => {
-    avatarReactionIdRef.current += 1;
-    setAvatarReaction(withReactionId(draft, avatarReactionIdRef.current));
-  }, []);
-
-  const emitEmotionEffectReaction = useCallback(
-    (draft: VrmEmotionEffectReactionDraft) => {
-      emotionEffectReactionIdRef.current += 1;
-      setEmotionEffectReaction(
-        withVrmEmotionEffectReactionId(
-          draft,
-          emotionEffectReactionIdRef.current,
-        ),
-      );
+  const avatarPresenter = useAvatarPresenter(
+    {
+      reactionControlMode: settingsHook.settings.visual.vrmReactionControlMode,
+      emotionEffectMap: settingsHook.settings.visual.vrmEmotionEffectMap,
+      effectAnchor: getEmotionEffectAnchor(
+        settingsHook.settings.visual.vrmEmotionEffectAnchors,
+        VRM_EFFECT_ANCHOR_PROFILE_ID,
+      ),
+      vrmCameraFraming: settingsHook.settings.visual.vrmCameraFraming,
     },
-    [],
+    {
+      onEffectAnchorChange: (anchor) =>
+        settingsHook.updateVisualVrmEmotionEffectAnchor(
+          VRM_EFFECT_ANCHOR_PROFILE_ID,
+          anchor,
+        ),
+      onEffectAnchorReset: () =>
+        settingsHook.resetVisualVrmEmotionEffectAnchor(
+          VRM_EFFECT_ANCHOR_PROFILE_ID,
+        ),
+      onVrmCameraFramingChange: settingsHook.updateVisualVrmCameraFraming,
+    },
   );
 
   const handleSettingsDialogPointerDown = useCallback(
@@ -196,9 +183,8 @@ export default function App() {
   const directorQueue = useDirectorQueue({
     speak: speakDirector,
     stopSpeech: stop,
-    onApplyEmotion: emitAvatarReaction,
-    onResetEmotion: () =>
-      emitAvatarReaction({ type: 'reset', fadeMs: 280 }),
+    onApplyReaction: avatarPresenter.applyReaction,
+    onResetEmotion: () => avatarPresenter.reset(280),
     onSlideAction: slideDeck.applyDirectorSlideAction,
     resolvePerformance: performanceCatalog.resolvePerformance,
     resumeDeckAfterQaInterrupt: () => resumeDeckAfterQaRef.current,
@@ -214,39 +200,6 @@ export default function App() {
     directorQueue.playbackState === 'playing' ||
     directorQueue.playbackState === 'paused';
 
-  const handleSpeechStart = useCallback(
-    (screenplay: ScreenplayLike) => {
-      const nativeReaction = createVrmReactionFromScreenplay(screenplay);
-      if (nativeReaction) {
-        emitAvatarReaction(sustainVrmReactionForSpeech(nativeReaction));
-      } else {
-        emitAvatarReaction({ type: 'reset', fadeMs: 220 });
-      }
-
-      const emotionEffectReaction = createLinkedVrmEmotionEffectReaction(
-        settingsHook.settings.visual.vrmReactionControlMode,
-        screenplay,
-        settingsHook.settings.visual.vrmEmotionEffectMap,
-      );
-      if (emotionEffectReaction) {
-        emitEmotionEffectReaction(emotionEffectReaction);
-      } else {
-        setEmotionEffectReaction(null);
-      }
-    },
-    [
-      emitAvatarReaction,
-      emitEmotionEffectReaction,
-      settingsHook.settings.visual.vrmEmotionEffectMap,
-      settingsHook.settings.visual.vrmReactionControlMode,
-    ],
-  );
-
-  const handleSpeechEnd = useCallback(() => {
-    emitAvatarReaction({ type: 'reset', fadeMs: 360 });
-    setEmotionEffectReaction(null);
-  }, [emitAvatarReaction]);
-
   const {
     messages,
     isProcessing,
@@ -255,8 +208,8 @@ export default function App() {
     processVisionChat,
   } = useAituberCore({
     onAudioPlay: handleAudioPlay,
-    onSpeechStart: handleSpeechStart,
-    onSpeechEnd: handleSpeechEnd,
+    onSpeechStart: avatarPresenter.onSpeechStart,
+    onSpeechEnd: avatarPresenter.onSpeechEnd,
     settings: settingsHook.settings,
     getApiKeyForProvider: settingsHook.getApiKeyForProvider,
   });
@@ -269,13 +222,12 @@ export default function App() {
 
   const handleSend = useCallback(
     (text: string) => {
-      // Stop previous audio if speech is currently playing
       stop();
-      emitAvatarReaction({ type: 'reset', fadeMs: 160 });
-      setEmotionEffectReaction(null);
+      avatarPresenter.reset(160);
+      avatarPresenter.clearEmotionEffect();
       processChat(text);
     },
-    [stop, emitAvatarReaction, processChat],
+    [stop, avatarPresenter, processChat],
   );
 
   const { enqueueYouTubeComments, enqueueTwitchComments } =
@@ -455,33 +407,11 @@ export default function App() {
           onPipOffsetChange={settingsHook.updatePresentPipOffset}
           onSessionModeChange={settingsHook.updatePresentSessionMode}
           onToggleSettings={toggleSettingsDialog}
-          mouthLevel={mouthLevel}
+          mouthLevelRef={mouthLevelRef}
           isSpeaking={isSpeaking}
-          avatarReaction={avatarReaction}
-          emotionEffectReaction={emotionEffectReaction}
-          reactionControlMode={
-            settingsHook.settings.visual.vrmReactionControlMode
-          }
-          emotionEffectMap={settingsHook.settings.visual.vrmEmotionEffectMap}
-          effectAnchor={getEmotionEffectAnchor(
-            settingsHook.settings.visual.vrmEmotionEffectAnchors,
-            VRM_EFFECT_ANCHOR_PROFILE_ID,
-          )}
-          onEffectAnchorChange={(anchor) =>
-            settingsHook.updateVisualVrmEmotionEffectAnchor(
-              VRM_EFFECT_ANCHOR_PROFILE_ID,
-              anchor,
-            )
-          }
-          onEffectAnchorReset={() =>
-            settingsHook.resetVisualVrmEmotionEffectAnchor(
-              VRM_EFFECT_ANCHOR_PROFILE_ID,
-            )
-          }
+          avatarPresenter={avatarPresenter}
           backgroundImageUrl={backgroundImageUrl}
           backgroundMode={settingsHook.settings.visual.backgroundMode}
-          vrmCameraFraming={settingsHook.settings.visual.vrmCameraFraming}
-          onVrmCameraFramingChange={settingsHook.updateVisualVrmCameraFraming}
           onStageModeChange={setPresentStageMode}
           activeDeckId={settingsHook.settings.present.activeDeckId}
           onDeckChange={settingsHook.updatePresentActiveDeckId}
@@ -505,29 +435,9 @@ export default function App() {
           partialResponse={partialResponse}
           isProcessing={isProcessing}
           onSend={handleSend}
-          mouthLevel={mouthLevel}
+          mouthLevelRef={mouthLevelRef}
           isSpeaking={isSpeaking}
-          avatarReaction={avatarReaction}
-          emotionEffectReaction={emotionEffectReaction}
-          reactionControlMode={
-            settingsHook.settings.visual.vrmReactionControlMode
-          }
-          emotionEffectMap={settingsHook.settings.visual.vrmEmotionEffectMap}
-          effectAnchor={getEmotionEffectAnchor(
-            settingsHook.settings.visual.vrmEmotionEffectAnchors,
-            VRM_EFFECT_ANCHOR_PROFILE_ID,
-          )}
-          onEffectAnchorChange={(anchor) =>
-            settingsHook.updateVisualVrmEmotionEffectAnchor(
-              VRM_EFFECT_ANCHOR_PROFILE_ID,
-              anchor,
-            )
-          }
-          onEffectAnchorReset={() =>
-            settingsHook.resetVisualVrmEmotionEffectAnchor(
-              VRM_EFFECT_ANCHOR_PROFILE_ID,
-            )
-          }
+          avatarPresenter={avatarPresenter}
           backgroundImageUrl={backgroundImageUrl}
           visual={settingsHook.settings.visual}
           onToggleSettings={toggleSettingsDialog}
@@ -537,7 +447,6 @@ export default function App() {
           onEnterEditMode={() =>
             settingsHook.updatePresentSessionMode('edit')
           }
-          onVrmCameraFramingChange={settingsHook.updateVisualVrmCameraFraming}
         />
       )}
 
@@ -550,10 +459,8 @@ export default function App() {
           queue={directorQueue}
           deckPlayback={deckScriptPlayback}
           onSpeak={speakDirector}
-          onApplyEmotion={emitAvatarReaction}
-          onResetEmotion={() =>
-            emitAvatarReaction({ type: 'reset', fadeMs: 280 })
-          }
+          onApplyReaction={avatarPresenter.applyReaction}
+          onResetEmotion={() => avatarPresenter.reset(280)}
         />
       ) : null}
 
