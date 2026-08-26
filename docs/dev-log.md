@@ -30,7 +30,20 @@
 
 ---
 
-### 2026-08-25 · 换机环境修复 + 跨设备文档补坑
+### 2026-08-25 · 修复 Q&A「LLM 统一回答需对照材料」bug（chatOnce 返回被 String() 化）
+
+- **设备/环境**：Windows 11 / Node 24
+- **做了什么**：
+  - 现象：评委提问无论问什么，都固定回答「我需要对照材料确认才能给出准确回答」
+  - 根因：`createBrainLlmClient.complete` 把 `chatService.chatOnce()` 的返回值 `ToolChatCompletion` 对象用 `String()` 转成 `"[object Object]"`，导致 LLM 输出永远无法解析成 JSON，`answerQuestion` 每次都走兜底文案分支（错误含 "JSON" 时固定返回该句）
+  - 修复：新增 `extractChatCompletionText()`，按 OnAir `runOnceText` 同款逻辑从 `blocks` 提取 text 块拼接；新增单元测试 4 项锁定
+  - 验证：新测试 4/4 过；端到端探针（真实知识库 + mock LLM）确认 `usedFallback: false`、confidence 0.9、检索命中
+- **未做 / 阻塞**：`qaVoicePreferences.test.ts` 3 项失败为**预先存在**（干净树同样失败，localStorage mock 问题），未处理；另 typecheck 有 4 处仓库遗留错误（`directorReactions.test.ts`、`vrmaGesturePlayback.ts`、`slideIndex.ts`），均与本次修复无关
+- **下一台机器应优先**：浏览器实测 Q&A（Vite 已热更新）；如需可顺手修 qaVoicePreferences 测试与遗留 typecheck
+- **相关文件**：`apps/presenter-onair/src/lib/brain/createBrainLlmClient.ts`、新增 `createBrainLlmClient.test.ts`
+- **验证方式**：`npm run dev` → 汇报模式 → 评委提问（真实 LLM 应答）
+
+---
 
 - **设备/环境**：Windows 11 / Node 24（非 conda）/ npm 11
 - **做了什么**：

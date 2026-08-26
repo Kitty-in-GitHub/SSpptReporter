@@ -6,11 +6,30 @@ import {
   type ChatService,
   type ChatServiceOptionsByProvider,
   type Message,
+  type ToolChatCompletion,
 } from '@aituber-onair/core';
 import type { BrainLlmClient } from '@ssreporter/brain';
 import type { AppSettings, ChatProviderOption } from '../../types/settings';
 
 const GPT5_SAMPLE_PROVIDER_OPTIONS = { gpt5Preset: 'casual' as const };
+
+/**
+ * Extract the concatenated assistant text from a chatOnce result.
+ * chatOnce returns ToolChatCompletion ({ blocks: [{ type: 'text', text }] }),
+ * not a plain string — mirror what runOnceText does with StreamTextAccumulator.
+ */
+export function extractChatCompletionText(
+  response: string | ToolChatCompletion,
+): string {
+  if (typeof response === 'string') {
+    return response.trim();
+  }
+  const text = (response.blocks ?? [])
+    .filter((block) => block.type === 'text')
+    .map((block) => block.text)
+    .join('');
+  return text.trim();
+}
 
 function createChatServiceFromSettings(
   llmSettings: AppSettings['llm'],
@@ -81,7 +100,7 @@ export function createBrainLlmClient(
           { role: 'user', content: userPrompt },
         ];
         const response = await chatService.chatOnce(messages, false);
-        return typeof response === 'string' ? response.trim() : String(response);
+        return extractChatCompletionText(response);
       },
     };
   } catch {
