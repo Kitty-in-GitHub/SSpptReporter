@@ -82,6 +82,12 @@ export const DEFAULT_PERFORMANCE_CATALOG: PerformanceCatalog = {
       },
       timing: { pause_after_ms: 450 },
     },
+    /** Q&A 基线：统一短答 TTS 音色/语速/停顿（表情由 emotion/profile 驱动） */
+    qa: {
+      vrm: { expression: "neutral" },
+      voice: { speaker: "zh-CN-XiaoxiaoNeural", speed: 1.02 },
+      timing: { pause_before_ms: 100, pause_after_ms: 200 },
+    },
   },
 };
 
@@ -137,7 +143,10 @@ export function listSelectableProfiles(
   catalog: PerformanceCatalog = DEFAULT_PERFORMANCE_CATALOG,
 ): string[] {
   const custom = Object.keys(catalog.profiles)
-    .filter((name) => !isBuiltInProfile(name))
+    .filter(
+      (name) =>
+        !isBuiltInProfile(name) && name !== QA_BASELINE_PROFILE_NAME,
+    )
     .sort((a, b) => a.localeCompare(b, "zh-CN"));
   return [...EMOTIONS, ...custom];
 }
@@ -175,15 +184,85 @@ export function resolveProfileName(action: DirectorAction): string {
   return action.profile?.trim() || action.emotion || "neutral";
 }
 
+export const QA_BASELINE_PROFILE_NAME = "qa";
+
+export const QA_DEFAULT_EXPRESSION_PROFILE = "friendly";
+
+/** Q&A 模式：表情/手势 preset（不含 TTS voice） */
+export function resolveQaExpressionProfileName(action: DirectorAction): string {
+  const candidate = action.profile?.trim() || action.emotion;
+  if (candidate && candidate !== QA_BASELINE_PROFILE_NAME) {
+    return candidate;
+  }
+  return QA_DEFAULT_EXPRESSION_PROFILE;
+}
+
+function resolveProfileFromCatalog(
+  name: string,
+  catalog: PerformanceCatalog,
+): PerformanceProfile {
+  return (
+    catalog.profiles[name] ??
+    catalog.profiles.neutral ??
+    DEFAULT_PERFORMANCE_CATALOG.profiles.neutral
+  );
+}
+
+function resolveQaBeatPerformance(
+  action: DirectorAction,
+  catalog: PerformanceCatalog,
+): ResolvedBeatPerformance {
+  const expressionProfileName = resolveQaExpressionProfileName(action);
+  const expressionProfile = resolveProfileFromCatalog(
+    expressionProfileName,
+    catalog,
+  );
+  const qaProfile = resolveProfileFromCatalog(QA_BASELINE_PROFILE_NAME, catalog);
+
+  const emotion = isEmotion(expressionProfileName)
+    ? expressionProfileName
+    : action.emotion ?? QA_DEFAULT_EXPRESSION_PROFILE;
+
+  const vrmExpression =
+    expressionProfile.vrm?.expression ??
+    emotionToVrmExpression[emotion] ??
+    emotionToVrmExpression.neutral ??
+    "neutral";
+
+  const gesture =
+    action.gesture ??
+    (isGesture(expressionProfile.vrm?.gesture)
+      ? expressionProfile.vrm.gesture
+      : undefined) ??
+    "none";
+
+  return {
+    profileName: expressionProfileName,
+    emotion,
+    vrmExpression,
+    vrmIntensity: expressionProfile.vrm?.intensity,
+    gesture,
+    voice: {
+      ...qaProfile.voice,
+      ...action.voice,
+    },
+    timing: {
+      ...qaProfile.timing,
+      ...action.timing,
+    },
+  };
+}
+
 export function resolveBeatPerformance(
   action: DirectorAction,
   catalog: PerformanceCatalog = DEFAULT_PERFORMANCE_CATALOG,
 ): ResolvedBeatPerformance {
+  if (action.mode === "qa") {
+    return resolveQaBeatPerformance(action, catalog);
+  }
+
   const profileName = resolveProfileName(action);
-  const profile =
-    catalog.profiles[profileName] ??
-    catalog.profiles.neutral ??
-    DEFAULT_PERFORMANCE_CATALOG.profiles.neutral;
+  const profile = resolveProfileFromCatalog(profileName, catalog);
 
   const emotion = isEmotion(profileName) ? profileName : action.emotion ?? "neutral";
   const vrmExpression =

@@ -67,7 +67,7 @@ describe('mergeQueueItems', () => {
 
 describe('runDirectorQueue', () => {
   it('runs actions in order with speak and slide callbacks', async () => {
-    const onSpeak = vi.fn(async () => {});
+    const onSpeak = vi.fn(async (_text: string) => {});
     const onSlideAction = vi.fn(async () => {});
     const onEmotion = vi.fn(async () => {});
 
@@ -97,7 +97,7 @@ describe('runDirectorQueue', () => {
 
   it('calls onInterrupt when barge_in is set', async () => {
     const onInterrupt = vi.fn(async () => {});
-    const onSpeak = vi.fn(async () => {});
+    const onSpeak = vi.fn(async (_text: string) => {});
 
     await runDirectorQueue(
       [{ ...BASE_ACTION, barge_in: true, utterance: '打断后播放' }],
@@ -109,7 +109,7 @@ describe('runDirectorQueue', () => {
   });
 
   it('skips speak for empty utterance', async () => {
-    const onSpeak = vi.fn(async () => {});
+    const onSpeak = vi.fn(async (_text: string) => {});
 
     await runDirectorQueue(
       [{ ...BASE_ACTION, utterance: '   ' }],
@@ -120,7 +120,7 @@ describe('runDirectorQueue', () => {
   });
 
   it('stops when signal is aborted', async () => {
-    const onSpeak = vi.fn(async () => {});
+    const onSpeak = vi.fn(async (_text: string) => {});
     const controller = new AbortController();
     controller.abort();
 

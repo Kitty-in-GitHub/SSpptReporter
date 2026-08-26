@@ -7,6 +7,7 @@ import {
   resolveBeatPerformance,
   sanitizeProfileId,
 } from "./performance-profile.js";
+import { resolveVoiceDirective } from "./voice-directive.js";
 
 describe("resolveBeatPerformance", () => {
   it("merges profile defaults with action overrides", () => {
@@ -79,5 +80,56 @@ describe("resolveBeatPerformance", () => {
       "opening_warm",
     ]);
     expect(sanitizeProfileId(" Opening-Warm ")).toBe("opening_warm");
+  });
+
+  it("uses qa baseline voice while expression profile drives vrm for mode qa", () => {
+    const action: DirectorAction = {
+      schema_version: "1.0",
+      mode: "qa",
+      utterance: "材料在第 2 页。",
+      emotion: "serious",
+      gesture: "point_slide",
+    };
+
+    const resolved = resolveBeatPerformance(action);
+    expect(resolved.profileName).toBe("serious");
+    expect(resolved.vrmExpression).toBe("relaxed");
+    expect(resolved.gesture).toBe("point_slide");
+    expect(resolved.voice.speaker).toBe("zh-CN-XiaoxiaoNeural");
+    expect(resolved.voice.speed).toBe(1.02);
+    expect(resolved.voice.pitch).toBeUndefined();
+    expect(resolved.timing.pause_before_ms).toBe(100);
+    expect(resolved.timing.pause_after_ms).toBe(200);
+
+    const directive = resolveVoiceDirective(action, resolved);
+    expect(directive.speaker).toBe("zh-CN-XiaoxiaoNeural");
+    expect(directive.rate).toBe(1.02);
+  });
+
+  it("allows action.voice override on qa mode", () => {
+    const action: DirectorAction = {
+      schema_version: "1.0",
+      mode: "qa",
+      utterance: "好的。",
+      emotion: "friendly",
+      voice: { speed: 1.15 },
+    };
+
+    const resolved = resolveBeatPerformance(action);
+    expect(resolved.voice.speed).toBe(1.15);
+    expect(resolved.voice.speaker).toBe("zh-CN-XiaoxiaoNeural");
+  });
+
+  it("keeps present mode profile voice behavior unchanged", () => {
+    const action: DirectorAction = {
+      schema_version: "1.0",
+      mode: "present",
+      utterance: "讲稿",
+      emotion: "serious",
+    };
+
+    const resolved = resolveBeatPerformance(action);
+    expect(resolved.voice.speaker).toBe("zh-CN-YunjianNeural");
+    expect(resolved.vrmExpression).toBe("relaxed");
   });
 });

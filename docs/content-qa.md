@@ -59,6 +59,22 @@ Brain **只输出** [`DirectorAction`](../schemas/director-action.schema.json)�
 
 执行由现有 Director 队列 + TTS + VRM 完成（含 `barge_in` 打断讲稿）。
 
+## Q&A Performance Profile（分层）
+
+Q&A 与 Present 讲稿共用 `performance.json`，但解析策略不同：
+
+| 维度 | Present 讲稿 | Q&A 回答 |
+|------|-------------|----------|
+| TTS 音色/语速/停顿 | 由 `profile` / `emotion` preset 驱动 | 由 **`qa` 基线 preset** 统一驱动 |
+| VRM 表情/强度/默认手势 | 同上 | 由 LLM 输出的 **`emotion` / `profile`** 驱动 |
+| 覆盖 | `voice` / `timing`  per beat | 仅 `action.voice` / `action.timing` 可覆盖 qa 基线 |
+
+- 内置 `qa` profile 见 `packages/director` 的 `DEFAULT_PERFORMANCE_CATALOG`；可在 `content/persona/performance.json` 或 deck 覆盖中微调。
+- Brain prompt 不要求 LLM 输出 `voice`；`ensureQaActionFields` 默认 `emotion: friendly`。
+- 讲稿导演台 preset 列表**不包含** `qa`（专用于问答 TTS 基线）。
+
+详见 [`phase3-present-director.md`](./phase3-present-director.md) 的 performance 说明。
+
 ## 私有材料建议
 
 | 类型 | 路径 |

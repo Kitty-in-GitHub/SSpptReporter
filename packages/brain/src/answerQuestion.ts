@@ -13,6 +13,7 @@ function ensureQaActionFields(
   return {
     ...action,
     mode: "qa",
+    emotion: action.emotion ?? "friendly",
     barge_in: action.barge_in ?? true,
     priority: action.priority ?? "high",
     qa: action.qa ?? {

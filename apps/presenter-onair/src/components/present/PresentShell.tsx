@@ -441,6 +441,7 @@ export function PresentShell({
         presenter={avatarPresenter}
         mouthLevelRef={mouthLevelRef}
         isSpeaking={isSpeaking}
+        backgroundMode={backgroundMode}
         showExpressionControls={!stageMode}
       />
     </div>

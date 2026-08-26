@@ -63,6 +63,7 @@ npm run test
 - 讲稿被打断后默认不续播；可在 Q&A 面板勾选「问答打断后自动续播讲稿」
 - 说「请重复一下」等口令会复述上一轮回答（不调用 LLM）
 - LLM 输出非法 JSON 时降级为固定 `qa` action + 短答 fallback
+- Q&A TTS 使用 `qa` 基线 preset；表情由 `emotion`/`profile` 驱动（见 [`content-qa.md`](./content-qa.md)）
 
 ---
 

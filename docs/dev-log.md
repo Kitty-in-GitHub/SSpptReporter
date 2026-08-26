@@ -22,6 +22,21 @@
 
 ---
 
+### 2026-08-26 · Q&A 分层 Profile 接线（qa 基线 TTS + emotion 驱动表情）
+
+- **做了什么**：
+  - `DEFAULT_PERFORMANCE_CATALOG` 新增 `qa` 基线 preset（短答 TTS 音色/语速/停顿）
+  - `resolveBeatPerformance`：`mode: qa` 时分层合并（voice/timing 来自 `qa`，VRM 来自 emotion/profile）
+  - Brain prompt / `ensureQaActionFields`：明确 emotion 只管表达，默认 `friendly`
+  - `content/persona/performance.json` 增加 `qa` 覆盖示例
+  - 文档：`content-qa.md`、`phase2-acceptance.md`
+- **未做 / 阻塞**：无
+- **下一台机器应优先**：content-private 填真材料；Phase 2/3 人工验收
+- **相关文件**：`packages/director/src/performance-profile.ts`、`packages/brain/src/buildQaPrompt.ts`
+- **验证方式**：`npm run test`；`npm run typecheck`
+
+---
+
 ### 2026-08-26 · Avatar 呈现层抽象（解耦 Director / Brain 与 VRM）
 
 - **做了什么**：

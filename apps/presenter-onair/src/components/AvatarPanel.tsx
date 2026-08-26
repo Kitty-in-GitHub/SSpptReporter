@@ -518,7 +518,7 @@ export function AvatarBackground({
   onEffectAnchorReset,
   vrmCameraFraming,
   onVrmCameraFramingChange,
-  backgroundMode = 'default',
+  backgroundMode: _backgroundMode = 'default',
   showExpressionControls = true,
 }: AvatarBackgroundProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);

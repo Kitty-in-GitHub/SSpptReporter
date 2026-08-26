@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import type { EmotionEffectAnchor } from '../emotionEffectAnchor';
-import type { VrmCameraFraming } from '../vrmCameraFraming';
+import type { EmotionEffectAnchor } from '../lib/emotionEffectAnchor';
+import type { VrmCameraFraming } from '../lib/vrmCameraFraming';
 import {
   createLinkedVrmEmotionEffectReaction,
   withVrmEmotionEffectReactionId,
@@ -8,7 +8,7 @@ import {
   type VrmEmotionEffectReaction,
   type VrmEmotionEffectReactionDraft,
   type VrmReactionControlMode,
-} from '../vrmReactions';
+} from '../lib/vrmReactions';
 import type { AvatarReaction, AvatarReactionDraft, ScreenplayCue } from '../lib/avatar';
 import {
   createReactionFromScreenplay,
