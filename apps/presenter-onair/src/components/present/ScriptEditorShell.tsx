@@ -1,8 +1,12 @@
-import { EMOTIONS, GESTURES, type SlideAction } from '@ssreporter/director';
-import { UI_SETTINGS } from '../../constants/uiZh';
+import { useRef } from 'react';
+import type { SlideAction } from '@ssreporter/director';
+import { UI_SESSION_MODES, UI_SETTINGS } from '../../constants/uiZh';
+import { usePerformanceCatalog } from '../../hooks/usePerformanceCatalog';
 import type { DeckScriptEditorController } from '../../hooks/useDeckScriptEditor';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
 import type { SessionMode } from '../../types/present';
+import { BeatPerformanceEditor } from './BeatPerformanceEditor';
+import { BeatTimelineStrip } from './BeatTimelineStrip';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentControls } from './PresentControls';
 import { SessionModeToolbar } from './SessionModeToolbar';
@@ -11,36 +15,10 @@ import './scriptEditor.css';
 interface ScriptEditorShellProps {
   slideDeck: SlideDeckController;
   editor: DeckScriptEditorController;
+  deckId: string;
   onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
 }
-
-const EMOTION_LABELS: Record<string, string> = {
-  neutral: '中性',
-  confident: '自信',
-  friendly: '亲和',
-  serious: '严肃',
-  thinking: '思考',
-  apologetic: '歉意',
-  emphatic: '强调',
-};
-
-const EDGE_VOICE_OPTIONS = [
-  { id: 'zh-CN-XiaoxiaoNeural', label: '晓晓（女，亲和）' },
-  { id: 'zh-CN-YunxiNeural', label: '云希（男，讲解）' },
-  { id: 'zh-CN-YunjianNeural', label: '云健（男，严肃）' },
-  { id: 'zh-CN-XiaoyiNeural', label: '晓伊（女，温柔）' },
-];
-  none: '无',
-  idle: '待机',
-  bow: '鞠躬',
-  nod: '点头',
-  think: '思考',
-  explain: '讲解',
-  point_slide: '指幻灯',
-  open_hands: '摊手',
-  emphasize: '强调',
-};
 
 function slideActionKind(action: SlideAction | undefined): 'goto' | 'next' | 'prev' {
   if (action?.next) return 'next';
@@ -51,9 +29,12 @@ function slideActionKind(action: SlideAction | undefined): 'goto' | 'next' | 'pr
 export function ScriptEditorShell({
   slideDeck,
   editor,
+  deckId,
   onSessionModeChange,
   onToggleSettings,
 }: ScriptEditorShellProps) {
+  const utteranceRef = useRef<HTMLTextAreaElement>(null);
+  const { catalog } = usePerformanceCatalog(deckId);
   const pageDraft = editor.pageDraft;
   const beat = editor.activeBeat;
   const pageCount = slideDeck.pageCount;
@@ -92,7 +73,7 @@ export function ScriptEditorShell({
         onSessionModeChange={onSessionModeChange}
         onToggleSettings={onToggleSettings}
         settingsAriaLabel={UI_SETTINGS.ariaLabel}
-        title={slideDeck.deck?.title ?? '编辑讲稿'}
+        title={slideDeck.deck?.title ?? UI_SESSION_MODES.edit}
       >
         <PresentControls
           currentPage={editor.currentPage}
@@ -159,34 +140,32 @@ export function ScriptEditorShell({
           ) : (
             <>
               <div className="script-editor-form-header">
-                <h2 className="script-editor-form-title">
-                  第 {editor.currentPage} 页 · {pageDraft.beats.length} 个节拍
-                </h2>
+                <div>
+                  <h2 className="script-editor-form-title">
+                    第 {editor.currentPage} 页 · {pageDraft.beats.length} 个节拍
+                  </h2>
+                  <p className="script-editor-form-subtitle">
+                    可视化编排汇报情绪、语速与停顿；保存并编译后写入讲稿。
+                  </p>
+                </div>
                 <button type="button" className="script-editor-beat-add" onClick={editor.addBeat}>
                   + 添加节拍
                 </button>
               </div>
 
-              <div className="script-editor-beat-tabs">
-                {pageDraft.beats.map((item, index) => (
-                  <button
-                    key={`beat-tab-${index}`}
-                    type="button"
-                    className={`script-editor-beat-tab${
-                      index === editor.activeBeatIndex ? ' is-active' : ''
-                    }`}
-                    onClick={() => editor.setActiveBeatIndex(index)}
-                  >
-                    节拍 {index + 1}
-                  </button>
-                ))}
-              </div>
+              <BeatTimelineStrip
+                beats={pageDraft.beats}
+                activeIndex={editor.activeBeatIndex}
+                onSelect={editor.setActiveBeatIndex}
+                onAdd={editor.addBeat}
+              />
 
-              <label className="script-editor-field">
+              <label className="script-editor-field script-editor-utterance">
                 朗读文本
                 <textarea
+                  ref={utteranceRef}
                   value={beat.utterance}
-                  rows={6}
+                  rows={5}
                   onChange={(event) =>
                     editor.updateBeat(editor.activeBeatIndex, {
                       utterance: event.target.value,
@@ -196,163 +175,12 @@ export function ScriptEditorShell({
                 />
               </label>
 
-              <div className="script-editor-field-row">
-                <label className="script-editor-field">
-                  表演预设（profile）
-                  <select
-                    value={beat.profile ?? beat.emotion}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        profile: value,
-                        emotion: value as typeof beat.emotion,
-                      });
-                    }}
-                  >
-                    {EMOTIONS.map((value) => (
-                      <option key={value} value={value}>
-                        {EMOTION_LABELS[value] ?? value}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="script-editor-field">
-                  手势
-                  <select
-                    value={beat.gesture}
-                    onChange={(event) =>
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        gesture: event.target.value as typeof beat.gesture,
-                      })
-                    }
-                  >
-                    {GESTURES.map((value) => (
-                      <option key={value} value={value}>
-                        {GESTURE_LABELS[value] ?? value}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div className="script-editor-field-row">
-                <label className="script-editor-field">
-                  音色（Edge）
-                  <select
-                    value={beat.voice?.speaker ?? ''}
-                    onChange={(event) => {
-                      const speaker = event.target.value;
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        voice: {
-                          ...beat.voice,
-                          speaker: speaker || undefined,
-                        },
-                      });
-                    }}
-                  >
-                    <option value="">留空 → 用 profile / 设置</option>
-                    {EDGE_VOICE_OPTIONS.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="script-editor-field">
-                  语速覆盖
-                  <input
-                    type="number"
-                    min={0.25}
-                    max={4}
-                    step={0.05}
-                    value={beat.voice?.speed ?? ''}
-                    placeholder="留空用 profile"
-                    onChange={(event) => {
-                      const raw = event.target.value;
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        voice: {
-                          ...beat.voice,
-                          speed: raw ? Number.parseFloat(raw) : undefined,
-                        },
-                      });
-                    }}
-                  />
-                </label>
-
-                <label className="script-editor-field">
-                  播前停顿 (ms)
-                  <input
-                    type="number"
-                    min={0}
-                    step={50}
-                    value={beat.timing?.pause_before_ms ?? ''}
-                    placeholder="profile"
-                    onChange={(event) => {
-                      const raw = event.target.value;
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        timing: {
-                          ...beat.timing,
-                          pause_before_ms: raw
-                            ? Number.parseInt(raw, 10)
-                            : undefined,
-                        },
-                      });
-                    }}
-                  />
-                </label>
-
-                <label className="script-editor-field">
-                  播后停顿 (ms)
-                  <input
-                    type="number"
-                    min={0}
-                    step={50}
-                    value={beat.timing?.pause_after_ms ?? ''}
-                    placeholder="profile"
-                    onChange={(event) => {
-                      const raw = event.target.value;
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        timing: {
-                          ...beat.timing,
-                          pause_after_ms: raw
-                            ? Number.parseInt(raw, 10)
-                            : undefined,
-                        },
-                      });
-                    }}
-                  />
-                </label>
-              </div>
-
-              <label className="script-editor-field">
-                句内重读（emphasis JSON）
-                <input
-                  type="text"
-                  value={
-                    beat.emphasis ? JSON.stringify(beat.emphasis) : ''
-                  }
-                  placeholder='例：[[2,6],[10,12]]'
-                  onChange={(event) => {
-                    const raw = event.target.value.trim();
-                    if (!raw) {
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        emphasis: undefined,
-                      });
-                      return;
-                    }
-                    try {
-                      const parsed = JSON.parse(raw) as [number, number][];
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        emphasis: parsed,
-                      });
-                    } catch {
-                      // ignore invalid JSON while typing
-                    }
-                  }}
-                />
-              </label>
+              <BeatPerformanceEditor
+                beat={beat}
+                catalog={catalog}
+                utteranceTextareaRef={utteranceRef}
+                onUpdate={(patch) => editor.updateBeat(editor.activeBeatIndex, patch)}
+              />
 
               <fieldset className="script-editor-field script-editor-slide-action">
                 <legend>翻页动作（本节拍）</legend>

@@ -63,6 +63,12 @@ export const UI_SETTINGS = {
   ariaLabel: '设置',
 };
 
+export const UI_SESSION_MODES = {
+  chat: '聊天',
+  present: '汇报',
+  edit: '讲稿导演台',
+} as const;
+
 export const UI_QA = {
   panelTitle: '评委提问',
   inputPlaceholder: '输入评委问题，Enter 提交',

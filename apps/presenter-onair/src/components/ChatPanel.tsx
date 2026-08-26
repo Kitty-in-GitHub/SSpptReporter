@@ -1,4 +1,4 @@
-import { UI_SETTINGS } from '../constants/uiZh';
+import { UI_SESSION_MODES, UI_SETTINGS } from '../constants/uiZh';
 import type { ChatMessage } from '../types/chat';
 import type { VisualSettings } from '../types/settings';
 import type { EmotionEffectAnchor } from '../lib/emotionEffectAnchor';
@@ -100,7 +100,7 @@ export function ChatPanel({
             className="chat-mode-button"
             onClick={onEnterEditMode}
           >
-            编辑讲稿
+            {UI_SESSION_MODES.edit}
           </button>
         )}
         <button

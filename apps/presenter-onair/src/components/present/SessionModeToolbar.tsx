@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { UI_SESSION_MODES } from '../../constants/uiZh';
 import type { SessionMode } from '../../types/present';
 
 interface SessionModeToolbarProps {
@@ -43,7 +44,7 @@ export function SessionModeToolbar({
           disabled={sessionMode === 'edit'}
           onClick={() => onSessionModeChange('edit')}
         >
-          编辑讲稿
+          {UI_SESSION_MODES.edit}
         </button>
       </div>
       {children}

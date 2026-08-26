@@ -431,6 +431,7 @@ export default function App() {
         <ScriptEditorShell
           slideDeck={slideDeck}
           editor={scriptEditor}
+          deckId={settingsHook.settings.present.activeDeckId || 'demo'}
           onSessionModeChange={settingsHook.updatePresentSessionMode}
           onToggleSettings={toggleSettingsDialog}
         />
