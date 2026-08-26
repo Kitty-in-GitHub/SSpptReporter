@@ -18,7 +18,7 @@ conda env create -f environment.yml   # 已有则：conda activate ssreporter
 # 旧环境只有 Node 时，补装 Python + edge-tts：
 # conda env update -f environment.yml --prune
 conda activate ssreporter
-npm install
+npm install          # ⚠️ 必须先装！见下方「1.1.1 首次必须 npm install」
 npm run setup:tts   # 若 environment.yml 已含 pip 依赖可跳过
 npm run setup:asr   # 可选：本机 Whisper ASR（首次下载模型）
 ```
@@ -26,6 +26,32 @@ npm run setup:asr   # 可选：本机 Whisper ASR（首次下载模型）
 - Node 版本：conda 环境内 **Node 22**（见 `environment.yml`）
 - Python：**3.11** + `edge-tts`（`environment.yml` 的 pip 段；或 `npm run setup:tts`）
 - 勿用 base Miniconda 自带的 npm（曾出现损坏）
+
+#### 1.1.1 首次必须 `npm install`（换机高频坑）
+
+`scripts/dev.mjs` 直接以**仓库根** `node_modules/vite/bin/vite.js` 启动 Vite（npm workspaces 提升到根）。**新 clone / node_modules 被删后直接 `npm run dev` 必报**：
+
+```
+Error: Cannot find module 'D:\project\SSpptReporter\node_modules\vite\bin\vite.js'
+```
+
+这不是代码问题，是依赖没装。先 `npm install`（约 354 个包，2 分钟左右）。装完自检：
+
+```bash
+npm run dev
+# → http://localhost:5173（Vite）+ http://127.0.0.1:5050（TTS 网关）
+```
+
+**`npm install` 报 EPERM 的两个原因与对策**：
+
+1. **npm 缓存目录不可写**（默认 `%LOCALAPPDATA%\npm-cache`，可能被杀毒/权限挡住）：
+   ```bash
+   npm install --cache .\.npm-cache   # 缓存重定向到仓库内，干净且不污染系统
+   ```
+   `.npm-cache/` 已加进 `.gitignore`（本地缓存不提交，约 100MB，可留可删）。
+2. **受限环境禁止 postinstall 脚本派生子进程**（sharp / esbuild 等包的安装脚本需要 spawn；沙箱或受限 CI 会报 `spawn EPERM`）：在**正常终端**（非受限环境）执行安装，或给执行环境完整权限。
+
+**端口检查注意**：Vite 默认绑定 IPv6 `::1`，用 `127.0.0.1:5173` 探测可能失败，但浏览器开 `http://localhost:5173` 正常——属正常现象，不是故障。
 
 ### 1.2 本地独有文件（不进 Git）
 
@@ -46,6 +72,8 @@ npm run dev
 # → http://localhost:5173 + http://127.0.0.1:5050（TTS）
 # 仅页面：npm run dev:web
 ```
+
+> **⚠️ 2026-08-25 换机实测**：新机器 `public/avatar/` 与 `assets/avatars/` 均为空时，页面能起但**无角色/VRM load error**。换机后第一步就确认 VRM 是否在位，再谈验收。
 
 ### 1.3 GitHub 认证（推送私仓）
 
@@ -150,8 +178,9 @@ Web Speech（Director Phase0 按钮）通常**无 viseme**。在 Settings 配置
 
 - [ ] 已读 `AGENTS.md` 与 `docs/dev-log.md` 最新条目
 - [ ] `git pull` 完成
-- [ ] `conda activate ssreporter` + `npm install`（若 lockfile 有变）
-- [ ] VRM 文件已在 `public/avatar/`
+- [ ] `conda activate ssreporter` + `npm install`（**换机后必跑**；若 lockfile 有变）
+- [ ] VRM 文件已在 `public/avatar/`（**换机后必查**，缺失则页面无角色）
+- [ ] `npm run dev` 能起：5173 返回页面、5050 有 Uvicorn 日志
 - [ ] 未把 `token` / `.env` / `.vrm` 加入提交
 - [ ] 改动结束后更新 `docs/dev-log.md`
 

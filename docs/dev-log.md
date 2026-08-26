@@ -30,6 +30,21 @@
 
 ---
 
+### 2026-08-25 · 换机环境修复 + 跨设备文档补坑
+
+- **设备/环境**：Windows 11 / Node 24（非 conda）/ npm 11
+- **做了什么**：
+  - 根目录 `node_modules` 缺失导致 `npm run dev` 报 `Cannot find module vite/bin/vite.js` → `npm install`（354 包）
+  - `npm install` 两次 EPERM：缓存目录不可写（重定向 `--cache .\.npm-cache`）、postinstall spawn 受限（需完整权限）→ `.npm-cache/` 加入 `.gitignore`
+  - 冒烟验证：5173（Vite 7.3.6，HTTP 200，绑定 IPv6 `::1`）+ 5050（Edge-TTS 网关）均正常
+  - `docs/cross-device-dev.md`：新增「1.1.1 首次必须 npm install」、EPERM 对策、IPv6 端口检查说明、VRM 缺失实测警告、交接清单补两项
+- **未做 / 阻塞**：`public/avatar/StarString1.0.vrm` 不在位（换机未复制，需用户提供）；Phase 2 / 2.5 未做人工验收
+- **下一台机器应优先**：按 `docs/phase2-acceptance.md` 做 Phase 2 人工验收（9 项）；VRM 到位后补 Phase 0/1 抽查
+- **相关文件**：`.gitignore`、`docs/cross-device-dev.md`
+- **验证方式**：`npm run dev` → localhost:5173 页面 + 5050 Uvicorn
+
+---
+
 ### 2026-08-24 · 本机 CPU Embedding（无显卡）
 
 - **做了什么**：
