@@ -1,0 +1,9 @@
+{
+  "id": "{{deckId}}",
+  "title": "{{title}}",
+  "slideSource": {
+    "type": "pdf",
+    "url": "/decks/{{deckId}}/slides.pdf"
+  },
+  "scriptUrl": "/content/decks/{{deckId}}/script.jsonl"
+}

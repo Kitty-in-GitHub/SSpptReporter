@@ -15,6 +15,32 @@
 
 ## 新建一场私有答辩
 
+**推荐：一键脚手架**
+
+```bash
+npm run scaffold:deck -- --id my-defense --title "我的答辩" --pages 5
+```
+
+会在本机生成（已存在则跳过，加 `--force` 覆盖）：
+
+| 路径 | 内容 |
+|------|------|
+| `content-private/decks/<id>/deck.json` | 场次元数据 |
+| `content-private/decks/<id>/slides/01.md` … | 讲稿模板 |
+| `content-private/decks/<id>/performance.json` | 空预设（可后续在讲稿导演台编辑） |
+| `content-private/persona/presenter.md` | 人设模板（仅首次） |
+| `content-private/faq/<id>.md` | FAQ 模板 |
+| `apps/presenter-onair/public/decks/<id>/README.txt` | 提醒拷贝 `slides.pdf` |
+
+然后：
+
+1. 拷贝 PDF → `apps/presenter-onair/public/decks/<id>/slides.pdf`
+2. 编辑 slides / FAQ / persona
+3. `npm run compile:deck`
+4. `npm run dev` → 汇报模式选该场次
+
+**手工创建**（等价于脚手架）：
+
 ```bash
 # 1. 讲稿
 mkdir -p content-private/decks/my-defense/slides
@@ -24,7 +50,7 @@ mkdir -p content-private/decks/my-defense/slides
 mkdir -p apps/presenter-onair/public/decks/my-defense
 # 把 slides.pdf 拷进去
 
-# 3. 编译（指定根目录）
+# 3. 编译
 # 应用内「保存并编译」会自动选 content-private
 # 或 CLI：见 docs/content-decks.md
 ```

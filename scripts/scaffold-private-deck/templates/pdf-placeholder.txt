@@ -1,0 +1,5 @@
+请将本场 PDF 幻灯片复制为本目录下的 slides.pdf
+
+路径：apps/presenter-onair/public/decks/{{deckId}}/slides.pdf
+
+本文件仅为占位说明，可删除。

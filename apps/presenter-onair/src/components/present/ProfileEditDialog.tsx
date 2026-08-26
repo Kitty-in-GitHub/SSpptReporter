@@ -4,6 +4,7 @@ import {
   type PerformanceCatalog,
   type PerformanceProfile,
 } from '@ssreporter/director';
+import { EDGE_VOICE_OPTIONS } from '../../constants/performanceUi';
 import { resolveProfileDisplayName } from '../../hooks/usePerformanceCatalog';
 
 interface ProfileEditDialogProps {
@@ -15,6 +16,43 @@ interface ProfileEditDialogProps {
   onSave: (profileId: string, profile: PerformanceProfile) => Promise<void>;
 }
 
+function mergedVoiceField(
+  overlayProfile: PerformanceProfile | undefined,
+  merged: PerformanceProfile | undefined,
+  key: 'speaker' | 'pitch' | 'volume' | 'style_hint',
+): string {
+  const overlay = overlayProfile?.voice?.[key];
+  if (overlay != null && overlay !== '') {
+    return String(overlay);
+  }
+  const base = merged?.voice?.[key];
+  return base != null ? String(base) : '';
+}
+
+function buildVoicePatch(
+  speed: number,
+  speaker: string,
+  pitch: string,
+  volume: string,
+  styleHint: string,
+  includeSpeaker: boolean,
+): PerformanceProfile['voice'] {
+  const voice: NonNullable<PerformanceProfile['voice']> = { speed };
+  if (includeSpeaker && speaker.trim()) {
+    voice.speaker = speaker.trim();
+  }
+  if (pitch.trim()) {
+    voice.pitch = pitch.trim();
+  }
+  if (volume.trim()) {
+    voice.volume = volume.trim();
+  }
+  if (styleHint.trim()) {
+    voice.style_hint = styleHint.trim();
+  }
+  return voice;
+}
+
 export function ProfileEditDialog({
   catalog,
   profileId,
@@ -24,12 +62,24 @@ export function ProfileEditDialog({
   onSave,
 }: ProfileEditDialogProps) {
   const merged = catalog.profiles[profileId];
+  const isBuiltIn = isBuiltInProfile(profileId);
+
   const [label, setLabel] = useState(
     overlayProfile?.label ?? merged?.label ?? resolveProfileDisplayName(profileId, catalog),
   );
   const [hint, setHint] = useState(overlayProfile?.hint ?? merged?.hint ?? '');
+  const [speaker, setSpeaker] = useState(
+    mergedVoiceField(overlayProfile, merged, 'speaker'),
+  );
   const [speed, setSpeed] = useState(
     String(overlayProfile?.voice?.speed ?? merged?.voice?.speed ?? 1),
+  );
+  const [pitch, setPitch] = useState(mergedVoiceField(overlayProfile, merged, 'pitch'));
+  const [volume, setVolume] = useState(
+    mergedVoiceField(overlayProfile, merged, 'volume'),
+  );
+  const [styleHint, setStyleHint] = useState(
+    mergedVoiceField(overlayProfile, merged, 'style_hint'),
   );
   const [pauseAfter, setPauseAfter] = useState(
     String(
@@ -43,13 +93,17 @@ export function ProfileEditDialog({
       overlayProfile?.label ?? merged?.label ?? resolveProfileDisplayName(profileId, catalog),
     );
     setHint(overlayProfile?.hint ?? merged?.hint ?? '');
+    setSpeaker(mergedVoiceField(overlayProfile, merged, 'speaker'));
     setSpeed(String(overlayProfile?.voice?.speed ?? merged?.voice?.speed ?? 1));
+    setPitch(mergedVoiceField(overlayProfile, merged, 'pitch'));
+    setVolume(mergedVoiceField(overlayProfile, merged, 'volume'));
+    setStyleHint(mergedVoiceField(overlayProfile, merged, 'style_hint'));
     setPauseAfter(
       String(
         overlayProfile?.timing?.pause_after_ms ?? merged?.timing?.pause_after_ms ?? 0,
       ),
     );
-  }, [catalog, merged?.hint, merged?.label, merged?.timing?.pause_after_ms, merged?.voice?.speed, overlayProfile, profileId]);
+  }, [catalog, merged, overlayProfile, profileId]);
 
   const handleSubmit = async () => {
     setFormError(null);
@@ -63,15 +117,36 @@ export function ProfileEditDialog({
       setFormError('播后停顿需在 0–5000 ms');
       return;
     }
+    if (pitch.trim().length > 32) {
+      setFormError('音高描述过长（最多 32 字符）');
+      return;
+    }
+    if (volume.trim().length > 32) {
+      setFormError('音量描述过长（最多 32 字符）');
+      return;
+    }
+    if (styleHint.trim().length > 500) {
+      setFormError('语气提示过长（最多 500 字符）');
+      return;
+    }
+
+    const voicePatch = buildVoicePatch(
+      parsedSpeed,
+      speaker,
+      pitch,
+      volume,
+      styleHint,
+      !isBuiltIn,
+    );
 
     const nextProfile: PerformanceProfile = {
       ...overlayProfile,
-      ...(!isBuiltInProfile(profileId)
+      ...(!isBuiltIn
         ? {
             vrm: overlayProfile?.vrm ?? merged?.vrm,
             voice: {
               ...(overlayProfile?.voice ?? merged?.voice),
-              speed: parsedSpeed,
+              ...voicePatch,
             },
             timing: {
               ...(overlayProfile?.timing ?? merged?.timing),
@@ -79,10 +154,10 @@ export function ProfileEditDialog({
             },
           }
         : {
-            voice: { speed: parsedSpeed },
+            voice: voicePatch,
             timing: { pause_after_ms: parsedPauseAfter },
           }),
-      label: isBuiltInProfile(profileId) ? undefined : label.trim() || undefined,
+      label: isBuiltIn ? undefined : label.trim() || undefined,
       hint: hint.trim() || undefined,
     };
 
@@ -112,12 +187,12 @@ export function ProfileEditDialog({
         </header>
 
         <p className="profile-create-lead">
-          {isBuiltInProfile(profileId)
+          {isBuiltIn
             ? '保存为本场次覆盖项（写入 performance.json），不影响全局默认。'
-            : '修改自定义预设；VRM/音色基底保持不变，此处主要改显示名与语速/停顿。'}
+            : '修改自定义预设；VRM 基底保持不变，可调整音色与语速/语气。'}
         </p>
 
-        {!isBuiltInProfile(profileId) ? (
+        {!isBuiltIn ? (
           <label className="profile-create-field">
             显示名称
             <input
@@ -137,6 +212,20 @@ export function ProfileEditDialog({
           />
         </label>
 
+        {!isBuiltIn ? (
+          <label className="profile-create-field">
+            默认音色
+            <select value={speaker} onChange={(event) => setSpeaker(event.target.value)}>
+              <option value="">跟随模板</option>
+              {EDGE_VOICE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}（{option.hint}）
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
         <label className="profile-create-field">
           默认语速
           <input
@@ -146,6 +235,39 @@ export function ProfileEditDialog({
             step={0.05}
             value={speed}
             onChange={(event) => setSpeed(event.target.value)}
+          />
+        </label>
+
+        <label className="profile-create-field">
+          音高 pitch（可选）
+          <input
+            type="text"
+            value={pitch}
+            placeholder="-2Hz / +2Hz"
+            maxLength={32}
+            onChange={(event) => setPitch(event.target.value)}
+          />
+        </label>
+
+        <label className="profile-create-field">
+          音量 volume（可选）
+          <input
+            type="text"
+            value={volume}
+            placeholder="-5% / +10%"
+            maxLength={32}
+            onChange={(event) => setVolume(event.target.value)}
+          />
+        </label>
+
+        <label className="profile-create-field">
+          语气 style_hint（可选）
+          <input
+            type="text"
+            value={styleHint}
+            placeholder="Gemini TTS 语气；Edge 会忽略"
+            maxLength={500}
+            onChange={(event) => setStyleHint(event.target.value)}
           />
         </label>
 

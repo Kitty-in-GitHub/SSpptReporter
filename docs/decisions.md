@@ -25,6 +25,27 @@
 - **理由**：情绪控制需跨 TTS 引擎扩展；先在本机 Edge 打通音色/语气/重读，不绑定单一供应商 API。
 - **文档**：[`tts-voice-directive.md`](./tts-voice-directive.md)
 
+## ADR-011 · Avatar 呈现层抽象
+
+- **日期**：2026-08-26
+- **状态**：accepted
+- **决策**：
+  - 新增 **`lib/avatar/`** 呈现协议（`AvatarReactionDraft`）；Director / Brain 只产出或消费该类型，不直接依赖 VRM
+  - **`useAvatarPresenter`** 集中 reaction / 情绪特效 / 聊天 TTS 表情状态
+  - **`AvatarShell`** 为唯一引用 `AvatarBackground` 的壳层；`ChatPanel` / `PresentShell` 只接 presenter
+  - 口型用 **`mouthLevelRef`** 驱动 WebGL 循环，避免 60fps React 整树重渲染
+- **理由**：换皮套时只改 VRM 桥接层；导演层与呈现层职责清晰，便于后续非 VRM 后端。
+
+## ADR-012 · Q&A 分层 Performance Profile
+
+- **日期**：2026-08-26
+- **状态**：accepted
+- **决策**：
+  - Q&A 模式（`mode: qa`）TTS 统一由 **`qa` 基线 preset** 驱动（speaker / speed / timing）
+  - **表情 / 默认手势** 仍由 LLM 输出的 `emotion` / `profile` 对应 preset 驱动
+  - `listSelectableProfiles` **不包含** `qa`（专用于问答 TTS，不出现在讲稿导演台 preset 列表）
+- **理由**：短答需要稳定、统一的语音基线；表情仍可随回答语义变化，与 Present 讲稿 preset 策略一致。
+
 ---
 
 - **日期**：2026-08-20

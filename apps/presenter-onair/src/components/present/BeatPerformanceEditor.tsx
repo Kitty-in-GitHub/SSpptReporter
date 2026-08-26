@@ -105,6 +105,20 @@ export function BeatPerformanceEditor({
   const pauseAfter =
     beat.timing?.pause_after_ms ?? effectivePause(beat, catalog, 'pause_after_ms');
   const speakerValue = beat.voice?.speaker ?? '';
+  const pitchOverride = beat.voice?.pitch;
+  const volumeOverride = beat.voice?.volume;
+  const styleHintOverride = beat.voice?.style_hint;
+
+  const formatVoiceScalar = (value: number | string | undefined): string => {
+    if (value == null || value === '') {
+      return '';
+    }
+    return String(value);
+  };
+
+  const resolvedPitch = formatVoiceScalar(resolved.voice.pitch);
+  const resolvedVolume = formatVoiceScalar(resolved.voice.volume);
+  const resolvedStyleHint = resolved.voice.style_hint?.trim() ?? '';
 
   const selectProfile = (profileId: string) => {
     if (isEmotionProfile(profileId)) {
@@ -329,6 +343,109 @@ export function BeatPerformanceEditor({
             </button>
           )}
         </div>
+
+        <details className="beat-performance-advanced">
+          <summary className="beat-performance-advanced-summary">高级 Voice</summary>
+          <p className="beat-performance-advanced-hint">
+            覆盖本节拍 pitch / volume / style_hint；留空则跟随预设。
+          </p>
+
+          <label className="profile-create-field">
+            音高 pitch
+            <input
+              type="text"
+              value={pitchOverride != null ? String(pitchOverride) : ''}
+              placeholder={resolvedPitch || '-2Hz / +2Hz'}
+              maxLength={32}
+              onChange={(event) => {
+                const value = event.target.value;
+                onUpdate({
+                  voice: {
+                    ...beat.voice,
+                    pitch: value.trim() ? value : undefined,
+                  },
+                });
+              }}
+            />
+          </label>
+          {pitchOverride != null && pitchOverride !== '' ? (
+            <button
+              type="button"
+              className="slider-field-reset"
+              onClick={() =>
+                onUpdate({
+                  voice: { ...beat.voice, pitch: undefined },
+                })
+              }
+            >
+              恢复预设音高
+            </button>
+          ) : null}
+
+          <label className="profile-create-field">
+            音量 volume
+            <input
+              type="text"
+              value={volumeOverride != null ? String(volumeOverride) : ''}
+              placeholder={resolvedVolume || '-5% / +10%'}
+              maxLength={32}
+              onChange={(event) => {
+                const value = event.target.value;
+                onUpdate({
+                  voice: {
+                    ...beat.voice,
+                    volume: value.trim() ? value : undefined,
+                  },
+                });
+              }}
+            />
+          </label>
+          {volumeOverride != null && volumeOverride !== '' ? (
+            <button
+              type="button"
+              className="slider-field-reset"
+              onClick={() =>
+                onUpdate({
+                  voice: { ...beat.voice, volume: undefined },
+                })
+              }
+            >
+              恢复预设音量
+            </button>
+          ) : null}
+
+          <label className="profile-create-field">
+            语气 style_hint
+            <input
+              type="text"
+              value={styleHintOverride ?? ''}
+              placeholder={resolvedStyleHint || 'Gemini TTS 语气；Edge 忽略'}
+              maxLength={500}
+              onChange={(event) => {
+                const value = event.target.value;
+                onUpdate({
+                  voice: {
+                    ...beat.voice,
+                    style_hint: value.trim() ? value : undefined,
+                  },
+                });
+              }}
+            />
+          </label>
+          {styleHintOverride?.trim() ? (
+            <button
+              type="button"
+              className="slider-field-reset"
+              onClick={() =>
+                onUpdate({
+                  voice: { ...beat.voice, style_hint: undefined },
+                })
+              }
+            >
+              恢复预设语气
+            </button>
+          ) : null}
+        </details>
       </section>
 
       <section className="beat-performance-section">
@@ -391,7 +508,11 @@ export function BeatPerformanceEditor({
         <span className="beat-performance-summary-title">本节拍将播放为</span>
         <span>
           {resolveProfileDisplayName(resolved.profileName, catalog)} ·{' '}
-          {GESTURE_LABELS[resolved.gesture]} · ×{(resolved.voice.speed ?? 1).toFixed(2)} · 前{' '}
+          {GESTURE_LABELS[resolved.gesture]} · ×{(resolved.voice.speed ?? 1).toFixed(2)}
+          {resolvedPitch ? ` · pitch ${resolvedPitch}` : ''}
+          {resolvedVolume ? ` · vol ${resolvedVolume}` : ''}
+          {resolvedStyleHint ? ` · 语气「${resolvedStyleHint.slice(0, 24)}${resolvedStyleHint.length > 24 ? '…' : ''}」` : ''}
+          {' · 前 '}
           {resolved.timing.pause_before_ms ?? 0} ms / 后 {resolved.timing.pause_after_ms ?? 0}{' '}
           ms
         </span>

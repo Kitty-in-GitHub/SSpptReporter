@@ -22,6 +22,19 @@
 
 ---
 
+### 2026-08-26 · 打磨 Sprint：私有场次脚手架 + 导演台 Voice UI + ADR
+
+- **做了什么**：
+  - `npm run scaffold:deck`：一键生成 `content-private/decks/<id>/`、persona、FAQ、PDF 占位说明
+  - 讲稿导演台：`ProfileEditDialog` 补 pitch/volume/style_hint/speaker；`BeatPerformanceEditor` 高级 Voice 折叠区
+  - ADR-011 Avatar 呈现层、ADR-012 Q&A 分层 profile；更新 `AGENTS.md`
+- **未做 / 阻塞**：无
+- **下一台机器应优先**：`scaffold:deck` 填真材料 → Phase 2/3 验收
+- **相关文件**：`scripts/scaffold-private-deck/`、`ProfileEditDialog.tsx`、`BeatPerformanceEditor.tsx`
+- **验证方式**：`npm run test`；`npm run scaffold:deck -- --id test-scaffold --title 测试 --pages 2`
+
+---
+
 ### 2026-08-26 · Q&A 分层 Profile 接线（qa 基线 TTS + emotion 驱动表情）
 
 - **做了什么**：

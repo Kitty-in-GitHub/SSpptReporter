@@ -14,6 +14,7 @@
     "setup:asr": "npm run setup:asr -w @ssreporter/tts-gateway",
     "setup:embed": "npm run setup:embed -w @ssreporter/tts-gateway",
     "setup:gestures": "node apps/presenter-onair/scripts/setup-gesture-vrma.mjs",
+    "scaffold:deck": "node scripts/scaffold-private-deck/scaffold-private-deck.mjs",
     "build": "npm run build -w @ssreporter/presenter-onair",
     "typecheck": "npm run typecheck -w @ssreporter/director && npm run typecheck -w @ssreporter/brain && npm run typecheck -w @ssreporter/presenter-onair",
     "test": "npm run test -w @ssreporter/director && npm run test -w @ssreporter/brain && npm run test -w @ssreporter/presenter-onair",
