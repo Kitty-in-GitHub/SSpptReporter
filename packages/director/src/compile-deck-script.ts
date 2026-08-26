@@ -1,15 +1,11 @@
-import type {
-  CameraShot,
-  DirectorAction,
-  Emotion,
-  Gesture,
-  SlideAction,
-} from "./types.js";
-import { EMOTIONS, GESTURES } from "./types.js";
+import type { DirectorAction } from "./types.js";
 import { validateDirectorAction } from "./validate.js";
+import {
+  parseSlideMarkdownToPageDraft,
+  type SlideBeatDraft,
+} from "./slide-script-draft.js";
 
-const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
-const CAMERA_SHOTS = new Set<CameraShot>(["bust", "medium", "wide"]);
+const CAMERA_SHOTS = new Set<string>(["bust", "medium", "wide"]);
 
 export interface SlideMarkdownFile {
   filename: string;
@@ -26,16 +22,8 @@ export interface CompileDeckScriptResult {
   issues: CompileDeckScriptIssue[];
 }
 
-function isEmotion(value: string | undefined): value is Emotion {
-  return Boolean(value && (EMOTIONS as readonly string[]).includes(value));
-}
-
-function isGesture(value: string | undefined): value is Gesture {
-  return Boolean(value && (GESTURES as readonly string[]).includes(value));
-}
-
-function isCameraShot(value: string | undefined): value is CameraShot {
-  return Boolean(value && CAMERA_SHOTS.has(value as CameraShot));
+function isCameraShot(value: string | undefined): boolean {
+  return Boolean(value && CAMERA_SHOTS.has(value));
 }
 
 export function parseSlideFilenamePage(filename: string): number | null {
@@ -51,6 +39,7 @@ export function parseFrontmatter(raw: string): {
   meta: Record<string, string>;
   body: string;
 } {
+  const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
   const match = raw.match(FRONTMATTER_RE);
   if (!match) {
     return { meta: {}, body: raw.trim() };
@@ -76,21 +65,36 @@ export function parseFrontmatter(raw: string): {
   return { meta, body: match[2].trim() };
 }
 
-function parseSlideAction(value: string): SlideAction | null {
-  try {
-    const parsed = JSON.parse(value) as SlideAction;
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
+function beatDraftToAction(beat: SlideBeatDraft): DirectorAction {
+  const action: DirectorAction = {
+    schema_version: "1.0",
+    mode: "present",
+    utterance: beat.utterance,
+    camera: beat.camera,
+    action_id: beat.action_id,
+    emotion: beat.emotion,
+    gesture: beat.gesture,
+  };
+
+  if (beat.profile?.trim()) {
+    action.profile = beat.profile.trim();
   }
+  if (beat.slide_action) {
+    action.slide_action = beat.slide_action;
+  }
+  if (beat.voice && Object.keys(beat.voice).length > 0) {
+    action.voice = beat.voice;
+  }
+  if (beat.timing && Object.keys(beat.timing).length > 0) {
+    action.timing = beat.timing;
+  }
+
+  return action;
 }
 
 export function compileSlideMarkdown(
   file: SlideMarkdownFile,
-): { action?: DirectorAction; issue?: CompileDeckScriptIssue } {
+): { actions?: DirectorAction[]; issue?: CompileDeckScriptIssue } {
   const page = parseSlideFilenamePage(file.filename);
   if (!page) {
     return {
@@ -101,62 +105,32 @@ export function compileSlideMarkdown(
     };
   }
 
-  const { meta, body } = parseFrontmatter(file.content);
-  if (!body) {
+  const pageDraft = parseSlideMarkdownToPageDraft(page, file.content);
+  if (pageDraft.beats.length === 0) {
     return {
       issue: {
         source: file.filename,
-        message: "讲稿正文为空",
+        message: "讲稿无有效节拍",
       },
     };
   }
 
-  let slideAction: SlideAction = { goto: page };
-  if (meta.slide_action) {
-    const parsed = parseSlideAction(meta.slide_action);
-    if (!parsed) {
+  const actions: DirectorAction[] = [];
+  for (const beat of pageDraft.beats) {
+    const action = beatDraftToAction(beat);
+    const validated = validateDirectorAction(action);
+    if (!validated.ok) {
       return {
         issue: {
           source: file.filename,
-          message: 'slide_action 须为 JSON，如 {"next": true}',
+          message: validated.errors.join("; "),
         },
       };
     }
-    slideAction = parsed;
+    actions.push(validated.action);
   }
 
-  const action: DirectorAction = {
-    schema_version: "1.0",
-    action_id: meta.action_id || `p${String(page).padStart(2, "0")}`,
-    mode: "present",
-    utterance: body,
-    camera: isCameraShot(meta.camera) ? meta.camera : "bust",
-    slide_action: slideAction,
-  };
-
-  if (isEmotion(meta.emotion)) {
-    action.emotion = meta.emotion;
-  } else {
-    action.emotion = "neutral";
-  }
-
-  if (isGesture(meta.gesture)) {
-    action.gesture = meta.gesture;
-  } else {
-    action.gesture = page === 1 ? "bow" : "explain";
-  }
-
-  const validated = validateDirectorAction(action);
-  if (!validated.ok) {
-    return {
-      issue: {
-        source: file.filename,
-        message: validated.errors.join("; "),
-      },
-    };
-  }
-
-  return { action: validated.action };
+  return { actions };
 }
 
 export function compileDeckScript(
@@ -174,8 +148,8 @@ export function compileDeckScript(
       issues.push(result.issue);
       continue;
     }
-    if (result.action) {
-      actions.push(result.action);
+    if (result.actions) {
+      actions.push(...result.actions);
     }
   }
 

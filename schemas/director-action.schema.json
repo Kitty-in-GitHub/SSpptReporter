@@ -27,6 +27,11 @@
       "description": "要朗读的完整中文文本；空字符串表示本拍只做动作不说话",
       "maxLength": 2000
     },
+    "profile": {
+      "type": "string",
+      "minLength": 1,
+      "description": "表演预设名（performance.json profiles）；统一驱动 VRM 表情与 TTS 语气/语速"
+    },
     "emotion": {
       "type": "string",
       "enum": [
@@ -39,7 +44,7 @@
         "emphatic"
       ],
       "default": "neutral",
-      "description": "映射到 VRM Expression 权重表，由 Body 层解释"
+      "description": "兼容字段；未设 profile 时等同 profile 名。映射到 VRM Expression"
     },
     "gesture": {
       "type": "string",
@@ -55,13 +60,52 @@
         "emphasize"
       ],
       "default": "none",
-      "description": "播放预置 VRMA/Mixamo 片段名"
+      "description": "播放预置 VRMA/Mixamo 片段名；可覆盖 profile 默认手势"
     },
     "camera": {
       "type": "string",
       "enum": ["bust", "medium", "wide"],
       "default": "bust",
       "description": "虚拟机位；答辩默认 bust 半身"
+    },
+    "voice": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "本拍 TTS 覆盖（合并 performance profile）",
+      "properties": {
+        "speed": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pitch": {
+          "type": "number",
+          "minimum": -12,
+          "maximum": 12
+        },
+        "style_hint": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "部分引擎（如 Gemini TTS）的风格提示"
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "本拍前后静音（毫秒）",
+      "properties": {
+        "pause_before_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000
+        },
+        "pause_after_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000
+        }
+      }
     },
     "slide_action": {
       "$ref": "#/$defs/SlideAction"

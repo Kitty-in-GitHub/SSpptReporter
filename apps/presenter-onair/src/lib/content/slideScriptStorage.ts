@@ -1,4 +1,4 @@
-import type { SlideScriptDraft } from '@ssreporter/director';
+import type { SlidePageDraft } from '@ssreporter/director';
 
 const DRAFT_PREFIX = 'ssreporter-slide-draft';
 
@@ -9,19 +9,19 @@ function draftKey(deckId: string, page: number): string {
 export function loadSlideDraft(
   deckId: string,
   page: number,
-): SlideScriptDraft | null {
+): SlidePageDraft | null {
   try {
     const raw = localStorage.getItem(draftKey(deckId, page));
     if (!raw) {
       return null;
     }
-    return JSON.parse(raw) as SlideScriptDraft;
+    return JSON.parse(raw) as SlidePageDraft;
   } catch {
     return null;
   }
 }
 
-export function saveSlideDraft(deckId: string, draft: SlideScriptDraft): void {
+export function saveSlideDraft(deckId: string, draft: SlidePageDraft): void {
   localStorage.setItem(draftKey(deckId, draft.page), JSON.stringify(draft));
 }
 

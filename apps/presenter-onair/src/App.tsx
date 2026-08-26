@@ -15,6 +15,7 @@ import { useDeckScriptEditor } from './hooks/useDeckScriptEditor';
 import { useDirectorSpeech } from './hooks/useDirectorSpeech';
 import { useDeckScriptPlayback } from './hooks/useDeckScriptPlayback';
 import { useDirectorQueue } from './hooks/useDirectorQueue';
+import { usePerformanceCatalog } from './hooks/usePerformanceCatalog';
 import { useSlideDeck } from './hooks/useSlideDeck';
 import { useAituberCore } from './hooks/useAituberCore';
 import { useLiveCommentIntelligence } from './hooks/useLiveCommentIntelligence';
@@ -188,6 +189,10 @@ export default function App() {
   resumeDeckAfterQaRef.current =
     settingsHook.settings.present.resumeDeckAfterQaInterrupt;
 
+  const performanceCatalog = usePerformanceCatalog(
+    settingsHook.settings.present.activeDeckId,
+  );
+
   const directorQueue = useDirectorQueue({
     speak: speakDirector,
     stopSpeech: stop,
@@ -195,6 +200,7 @@ export default function App() {
     onResetEmotion: () =>
       emitAvatarReaction({ type: 'reset', fadeMs: 280 }),
     onSlideAction: slideDeck.applyDirectorSlideAction,
+    resolvePerformance: performanceCatalog.resolvePerformance,
     resumeDeckAfterQaInterrupt: () => resumeDeckAfterQaRef.current,
   });
 

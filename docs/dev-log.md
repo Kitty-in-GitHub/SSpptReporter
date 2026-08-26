@@ -30,7 +30,22 @@
 
 ---
 
-### 2026-08-25 · 修复 Q&A「LLM 统一回答需对照材料」bug（chatOnce 返回被 String() 化）
+### 2026-08-26 · Phase 3 Present 导演：一页多 beat + performance profile
+
+- **设备/环境**：Windows / conda ssreporter
+- **做了什么**：
+  - `DirectorAction` 扩展 `profile`、`voice`、`timing`；schema + `packages/director` 校验
+  - `performance.json`（`content/persona/` + deck 覆盖）统一映射 VRM 表情/手势与 TTS 语速/停顿
+  - 讲稿 `<!-- beat -->` 多节拍编译；demo `03.md` 示例 3 beat
+  - 播放：`useDirectorQueue` 播前/播后停顿 + `useDirectorSpeech` 按拍语速；编辑讲稿 UI 节拍标签
+  - 文档：`docs/phase3-present-director.md`、ADR-009、`content-decks.md` 更新
+- **未做 / 阻塞**：毫秒级时间轴；`emphasis` 未接 TTS；Q&A 路径未用 profile（可后续复用）
+- **下一台机器应优先**：`npm run dev` → 编辑讲稿试多 beat → 汇报播放验收；按需改 `performance.json`
+- **相关文件**：`packages/director/src/performance-profile.ts`、`slide-script-draft.ts`、`useDirectorQueue.ts`、`ScriptEditorShell.tsx`
+- **验证方式**：`npm run test -w @ssreporter/director`；汇报模式播放 demo 讲稿（script.jsonl 约 8 条）
+
+---
+
 
 - **设备/环境**：Windows 11 / Node 24
 - **做了什么**：

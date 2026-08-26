@@ -49,29 +49,30 @@ export function ScriptEditorShell({
   onSessionModeChange,
   onToggleSettings,
 }: ScriptEditorShellProps) {
-  const draft = editor.draft;
+  const pageDraft = editor.pageDraft;
+  const beat = editor.activeBeat;
   const pageCount = slideDeck.pageCount;
-  const slideAction = draft?.slide_action ?? { goto: editor.currentPage };
+  const slideAction = beat?.slide_action ?? { goto: editor.currentPage };
   const actionKind = slideActionKind(slideAction);
 
   const handleSlideActionKindChange = (kind: 'goto' | 'next' | 'prev') => {
-    if (!draft) return;
+    if (!beat) return;
     if (kind === 'next') {
-      editor.updateDraft({ slide_action: { next: true } });
+      editor.updateBeat(editor.activeBeatIndex, { slide_action: { next: true } });
       return;
     }
     if (kind === 'prev') {
-      editor.updateDraft({ slide_action: { prev: true } });
+      editor.updateBeat(editor.activeBeatIndex, { slide_action: { prev: true } });
       return;
     }
-    editor.updateDraft({
-      slide_action: { goto: slideAction.goto ?? draft.page },
+    editor.updateBeat(editor.activeBeatIndex, {
+      slide_action: { goto: slideAction.goto ?? editor.currentPage },
     });
   };
 
   const handleGotoPageChange = (value: number) => {
-    if (!draft) return;
-    editor.updateDraft({ slide_action: { goto: value } });
+    if (!beat) return;
+    editor.updateBeat(editor.activeBeatIndex, { slide_action: { goto: value } });
   };
 
   const syncPdfPage = (page: number) => {
@@ -98,7 +99,7 @@ export function ScriptEditorShell({
         <div className="script-editor-actions">
           <button
             type="button"
-            disabled={!draft || editor.isSaving || !editor.isDirty}
+            disabled={!pageDraft || editor.isSaving || !editor.isDirty}
             onClick={() => void editor.saveCurrentPage()}
           >
             保存本页
@@ -106,7 +107,7 @@ export function ScriptEditorShell({
           <button
             type="button"
             className="is-primary"
-            disabled={!draft || editor.isSaving}
+            disabled={!pageDraft || editor.isSaving}
             onClick={() => void editor.saveAndCompile()}
           >
             保存并编译
@@ -148,36 +149,60 @@ export function ScriptEditorShell({
         </div>
 
         <div className="script-editor-form">
-          {editor.isLoading || !draft ? (
+          {editor.isLoading || !pageDraft || !beat ? (
             <div className="script-editor-loading">加载讲稿…</div>
           ) : (
             <>
-              <h2 className="script-editor-form-title">
-                第 {editor.currentPage} 页讲稿
-              </h2>
+              <div className="script-editor-form-header">
+                <h2 className="script-editor-form-title">
+                  第 {editor.currentPage} 页 · {pageDraft.beats.length} 个节拍
+                </h2>
+                <button type="button" className="script-editor-beat-add" onClick={editor.addBeat}>
+                  + 添加节拍
+                </button>
+              </div>
+
+              <div className="script-editor-beat-tabs">
+                {pageDraft.beats.map((item, index) => (
+                  <button
+                    key={`beat-tab-${index}`}
+                    type="button"
+                    className={`script-editor-beat-tab${
+                      index === editor.activeBeatIndex ? ' is-active' : ''
+                    }`}
+                    onClick={() => editor.setActiveBeatIndex(index)}
+                  >
+                    节拍 {index + 1}
+                  </button>
+                ))}
+              </div>
 
               <label className="script-editor-field">
                 朗读文本
                 <textarea
-                  value={draft.utterance}
-                  rows={8}
+                  value={beat.utterance}
+                  rows={6}
                   onChange={(event) =>
-                    editor.updateDraft({ utterance: event.target.value })
+                    editor.updateBeat(editor.activeBeatIndex, {
+                      utterance: event.target.value,
+                    })
                   }
-                  placeholder="输入本页要讲的内容…"
+                  placeholder="输入本节拍要讲的内容；留空表示只动作/停顿"
                 />
               </label>
 
               <div className="script-editor-field-row">
                 <label className="script-editor-field">
-                  表情
+                  表演预设（profile）
                   <select
-                    value={draft.emotion}
-                    onChange={(event) =>
-                      editor.updateDraft({
-                        emotion: event.target.value as typeof draft.emotion,
-                      })
-                    }
+                    value={beat.profile ?? beat.emotion}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        profile: value,
+                        emotion: value as typeof beat.emotion,
+                      });
+                    }}
                   >
                     {EMOTIONS.map((value) => (
                       <option key={value} value={value}>
@@ -190,10 +215,10 @@ export function ScriptEditorShell({
                 <label className="script-editor-field">
                   手势
                   <select
-                    value={draft.gesture}
+                    value={beat.gesture}
                     onChange={(event) =>
-                      editor.updateDraft({
-                        gesture: event.target.value as typeof draft.gesture,
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        gesture: event.target.value as typeof beat.gesture,
                       })
                     }
                   >
@@ -206,8 +231,75 @@ export function ScriptEditorShell({
                 </label>
               </div>
 
+              <div className="script-editor-field-row">
+                <label className="script-editor-field">
+                  语速覆盖
+                  <input
+                    type="number"
+                    min={0.25}
+                    max={4}
+                    step={0.05}
+                    value={beat.voice?.speed ?? ''}
+                    placeholder="留空用 profile"
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        voice: {
+                          ...beat.voice,
+                          speed: raw ? Number.parseFloat(raw) : undefined,
+                        },
+                      });
+                    }}
+                  />
+                </label>
+
+                <label className="script-editor-field">
+                  播前停顿 (ms)
+                  <input
+                    type="number"
+                    min={0}
+                    step={50}
+                    value={beat.timing?.pause_before_ms ?? ''}
+                    placeholder="profile"
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        timing: {
+                          ...beat.timing,
+                          pause_before_ms: raw
+                            ? Number.parseInt(raw, 10)
+                            : undefined,
+                        },
+                      });
+                    }}
+                  />
+                </label>
+
+                <label className="script-editor-field">
+                  播后停顿 (ms)
+                  <input
+                    type="number"
+                    min={0}
+                    step={50}
+                    value={beat.timing?.pause_after_ms ?? ''}
+                    placeholder="profile"
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        timing: {
+                          ...beat.timing,
+                          pause_after_ms: raw
+                            ? Number.parseInt(raw, 10)
+                            : undefined,
+                        },
+                      });
+                    }}
+                  />
+                </label>
+              </div>
+
               <fieldset className="script-editor-field script-editor-slide-action">
-                <legend>翻页动作</legend>
+                <legend>翻页动作（本节拍）</legend>
                 <label>
                   <input
                     type="radio"
@@ -235,6 +327,19 @@ export function ScriptEditorShell({
                   />
                   上一页
                 </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="slide-action-kind"
+                    checked={!beat.slide_action}
+                    onChange={() =>
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        slide_action: undefined,
+                      })
+                    }
+                  />
+                  不翻页
+                </label>
                 {actionKind === 'goto' && (
                   <label className="script-editor-goto">
                     页码
@@ -242,7 +347,7 @@ export function ScriptEditorShell({
                       type="number"
                       min={1}
                       max={pageCount || undefined}
-                      value={slideAction.goto ?? draft.page}
+                      value={slideAction.goto ?? editor.currentPage}
                       onChange={(event) =>
                         handleGotoPageChange(Number(event.target.value) || 1)
                       }
@@ -250,6 +355,16 @@ export function ScriptEditorShell({
                   </label>
                 )}
               </fieldset>
+
+              {pageDraft.beats.length > 1 && (
+                <button
+                  type="button"
+                  className="script-editor-beat-remove"
+                  onClick={() => editor.removeBeat(editor.activeBeatIndex)}
+                >
+                  删除当前节拍
+                </button>
+              )}
             </>
           )}
         </div>

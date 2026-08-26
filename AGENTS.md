@@ -18,6 +18,7 @@
 | Phase 0 | **已通过本机验收**（见 `docs/phase0-acceptance.md`） |
 | Phase 1 | **已通过本机验收**（见 `docs/phase1-acceptance.md`） |
 | Phase 2 | **功能完成、待正式验收**：Brain RAG + 汇报模式 Q&A 面板（见 `docs/phase2-acceptance.md`） |
+| Phase 3 Present | **功能完成、待验收**：一页多 beat + performance profile（见 `docs/phase3-present-director.md`） |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
 | Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试 + 队列） |
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |

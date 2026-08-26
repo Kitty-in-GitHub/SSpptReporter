@@ -11,6 +11,7 @@ const directorActionSchema = {
     action_id: { type: "string", minLength: 1 },
     mode: { type: "string", enum: ["present", "qa", "idle", "system"] },
     utterance: { type: "string", maxLength: 2000 },
+    profile: { type: "string", minLength: 1 },
     emotion: {
       type: "string",
       enum: [
@@ -38,6 +39,23 @@ const directorActionSchema = {
       ],
     },
     camera: { type: "string", enum: ["bust", "medium", "wide"] },
+    voice: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        speed: { type: "number", minimum: 0.25, maximum: 4 },
+        pitch: { type: "number", minimum: -12, maximum: 12 },
+        style_hint: { type: "string", maxLength: 500 },
+      },
+    },
+    timing: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        pause_before_ms: { type: "integer", minimum: 0, maximum: 60000 },
+        pause_after_ms: { type: "integer", minimum: 0, maximum: 60000 },
+      },
+    },
     slide_action: {
       type: "object",
       additionalProperties: false,

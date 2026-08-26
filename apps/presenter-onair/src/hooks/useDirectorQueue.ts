@@ -2,22 +2,26 @@ import {
   enqueueManyValidated,
   isPreemptiveAction,
   mergeQueueItems,
+  resolveBeatPerformance,
   type DirectorAction,
   type DirectorQueuePlaybackState,
+  type ResolvedBeatPerformance,
   type SlideAction,
+  type VoiceBeatOverrides,
 } from '@ssreporter/director';
 import { useCallback, useRef, useState } from 'react';
+import { toDirectorReactionDraftsFromResolved } from '../lib/directorReactions';
 import { mergePreemptiveDuringPlayback } from '../lib/directorQueueMerge';
-import { toDirectorReactionDrafts } from '../lib/directorReactions';
+import { sleepMs } from '../lib/sleepMs';
 import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
 
 export interface UseDirectorQueueOptions {
-  speak: (text: string) => Promise<void>;
+  speak: (text: string, voiceOverrides?: VoiceBeatOverrides) => Promise<void>;
   stopSpeech: () => void;
   onApplyEmotion: (draft: VrmAvatarReactionDraft) => void;
   onResetEmotion: () => void;
   onSlideAction?: (slideAction: SlideAction) => void | Promise<void>;
-  /** 讲稿播放中被 Q&A 打断后是否续播剩余讲稿 */
+  resolvePerformance?: (action: DirectorAction) => ResolvedBeatPerformance;
   resumeDeckAfterQaInterrupt?: () => boolean;
 }
 
@@ -27,6 +31,7 @@ export function useDirectorQueue({
   onApplyEmotion,
   onResetEmotion,
   onSlideAction,
+  resolvePerformance,
   resumeDeckAfterQaInterrupt,
 }: UseDirectorQueueOptions) {
   const [playbackState, setPlaybackState] =
@@ -42,7 +47,9 @@ export function useDirectorQueue({
   const pauseResolversRef = useRef<(() => void)[]>([]);
   const currentIndexRef = useRef(-1);
   const resumeDeckAfterQaRef = useRef(resumeDeckAfterQaInterrupt);
+  const resolvePerformanceRef = useRef(resolvePerformance);
   resumeDeckAfterQaRef.current = resumeDeckAfterQaInterrupt;
+  resolvePerformanceRef.current = resolvePerformance;
 
   const syncQueue = useCallback((items: DirectorAction[]) => {
     queueRef.current = items;
@@ -89,8 +96,19 @@ export function useDirectorQueue({
         setCurrentIndex(index);
 
         try {
+          const resolved =
+            resolvePerformanceRef.current?.(action) ??
+            resolveBeatPerformance(action);
+
           if (action.barge_in || action.priority === 'emergency') {
             stopSpeech();
+          }
+
+          if (resolved.timing.pause_before_ms) {
+            await sleepMs(resolved.timing.pause_before_ms);
+            if (runIdRef.current !== runId) {
+              return;
+            }
           }
 
           if (action.slide_action) {
@@ -98,7 +116,11 @@ export function useDirectorQueue({
           }
 
           onResetEmotion();
-          const { gesture, emotion } = toDirectorReactionDrafts(action);
+          const { gesture, emotion } = toDirectorReactionDraftsFromResolved(
+            action,
+            resolved,
+          );
+
           if (gesture) {
             onApplyEmotion(gesture);
           }
@@ -108,7 +130,11 @@ export function useDirectorQueue({
 
           const utterance = action.utterance.trim();
           if (utterance) {
-            await speak(utterance);
+            await speak(utterance, resolved.voice);
+          }
+
+          if (resolved.timing.pause_after_ms) {
+            await sleepMs(resolved.timing.pause_after_ms);
           }
         } catch {
           if (runIdRef.current === runId) {

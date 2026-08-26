@@ -1,8 +1,9 @@
 import {
   pageToSlideFilename,
-  parseSlideMarkdownToDraft,
+  parseSlideMarkdownToPageDraft,
   serializeSlideMarkdown,
-  type SlideScriptDraft,
+  type SlideBeatDraft,
+  type SlidePageDraft,
 } from '@ssreporter/director';
 
 export async function fetchSlideMarkdown(
@@ -20,32 +21,48 @@ export async function fetchSlideMarkdown(
   return response.text();
 }
 
-export async function loadSlideDraftFromDisk(
-  deckId: string,
-  page: number,
-): Promise<SlideScriptDraft> {
-  const content = await fetchSlideMarkdown(deckId, page);
-  if (!content) {
-    return {
-      page,
-      utterance: '',
-      emotion: page === 1 ? 'friendly' : 'neutral',
-      gesture: page === 1 ? 'bow' : 'explain',
-      camera: 'bust',
-      action_id: `p${String(page).padStart(2, '0')}`,
-      slide_action: { goto: page },
-    };
-  }
-  return parseSlideMarkdownToDraft(page, content);
+function defaultPageDraft(page: number): SlidePageDraft {
+  return {
+    page,
+    beats: [
+      {
+        utterance: '',
+        emotion: page === 1 ? 'friendly' : 'neutral',
+        gesture: page === 1 ? 'bow' : 'explain',
+        camera: 'bust',
+        action_id: `p${String(page).padStart(2, '0')}`,
+        slide_action: { goto: page },
+      },
+    ],
+  };
 }
 
-export async function saveSlideToDisk(
+function isSlidePageDraft(value: unknown): value is SlidePageDraft {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const record = value as SlidePageDraft;
+  return Number.isInteger(record.page) && Array.isArray(record.beats);
+}
+
+export async function loadSlidePageDraftFromDisk(
   deckId: string,
-  draft: SlideScriptDraft,
+  page: number,
+): Promise<SlidePageDraft> {
+  const content = await fetchSlideMarkdown(deckId, page);
+  if (!content) {
+    return defaultPageDraft(page);
+  }
+  return parseSlideMarkdownToPageDraft(page, content);
+}
+
+export async function saveSlidePageToDisk(
+  deckId: string,
+  pageDraft: SlidePageDraft,
 ): Promise<void> {
-  const content = serializeSlideMarkdown(draft);
+  const content = serializeSlideMarkdown(pageDraft);
   const response = await fetch(
-    `/api/content/decks/${encodeURIComponent(deckId)}/slides/${draft.page}`,
+    `/api/content/decks/${encodeURIComponent(deckId)}/slides/${pageDraft.page}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -57,6 +74,41 @@ export async function saveSlideToDisk(
   if (!response.ok || !payload.ok) {
     throw new Error(payload.message ?? `保存失败（${response.status}）`);
   }
+}
+
+/** @deprecated Use loadSlidePageDraftFromDisk */
+export async function loadSlideDraftFromDisk(
+  deckId: string,
+  page: number,
+): Promise<SlidePageDraft> {
+  return loadSlidePageDraftFromDisk(deckId, page);
+}
+
+/** @deprecated Use saveSlidePageToDisk */
+export async function saveSlideToDisk(
+  deckId: string,
+  draft: SlidePageDraft | (SlideBeatDraft & { page: number }),
+): Promise<void> {
+  const pageDraft: SlidePageDraft =
+    'beats' in draft && Array.isArray(draft.beats)
+      ? draft
+      : {
+          page: draft.page,
+          beats: [
+            {
+              utterance: draft.utterance,
+              profile: draft.profile,
+              emotion: draft.emotion,
+              gesture: draft.gesture,
+              camera: draft.camera,
+              action_id: draft.action_id,
+              slide_action: draft.slide_action,
+              voice: draft.voice,
+              timing: draft.timing,
+            },
+          ],
+        };
+  await saveSlidePageToDisk(deckId, pageDraft);
 }
 
 export async function compileDeckOnDisk(
@@ -81,4 +133,37 @@ export async function compileDeckOnDisk(
   }
 
   return { count: payload.count ?? 0 };
+}
+
+export function normalizeStoredPageDraft(
+  deckId: string,
+  page: number,
+  stored: unknown,
+): SlidePageDraft | null {
+  if (!stored) {
+    return null;
+  }
+  if (isSlidePageDraft(stored)) {
+    return stored;
+  }
+  const legacy = stored as SlideBeatDraft & { page?: number };
+  if (typeof legacy.utterance === 'string' && legacy.emotion && legacy.gesture) {
+    return {
+      page: legacy.page ?? page,
+      beats: [
+        {
+          utterance: legacy.utterance,
+          profile: legacy.profile,
+          emotion: legacy.emotion,
+          gesture: legacy.gesture,
+          camera: legacy.camera ?? 'bust',
+          action_id: legacy.action_id,
+          slide_action: legacy.slide_action,
+          voice: legacy.voice,
+          timing: legacy.timing,
+        },
+      ],
+    };
+  }
+  return null;
 }

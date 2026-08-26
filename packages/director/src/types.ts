@@ -34,6 +34,17 @@ export interface SlideAction {
   cite_only?: boolean;
 }
 
+export interface VoiceBeatOverrides {
+  speed?: number;
+  pitch?: number;
+  style_hint?: string;
+}
+
+export interface TimingBeat {
+  pause_before_ms?: number;
+  pause_after_ms?: number;
+}
+
 export interface QaSource {
   kind: "slide" | "faq" | "doc" | "skill";
   ref?: string;
@@ -51,9 +62,12 @@ export interface DirectorAction {
   action_id?: string;
   mode: PresenterMode;
   utterance: string;
+  profile?: string;
   emotion?: Emotion;
   gesture?: Gesture;
   camera?: CameraShot;
+  voice?: VoiceBeatOverrides;
+  timing?: TimingBeat;
   slide_action?: SlideAction;
   emphasis?: [number, number][];
   qa?: QaMeta;

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "confident": {
+      "voice": { "speed": 0.93 },
+      "timing": { "pause_after_ms": 350 }
+    },
+    "emphatic": {
+      "voice": { "speed": 1.08 },
+      "timing": { "pause_after_ms": 500 }
+    }
+  }
+}

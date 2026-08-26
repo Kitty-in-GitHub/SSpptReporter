@@ -6,7 +6,14 @@
 
 ---
 
-## ADR-001 · VRM 皮套路线
+## ADR-009 · Present 节拍与 Performance Profile
+
+- **日期**：2026-08-26
+- **状态**：accepted
+- **决策**：汇报讲稿支持一页多 **beat**（`<!-- beat -->`）；每拍引用 **profile**（`performance.json`）统一映射 VRM 表情/手势与 TTS 语速/停顿；`DirectorAction` 扩展 `profile`、`voice`、`timing`。
+- **理由**：答辩需要句级导演控制，且 Voice/Body 可配置、可版本管理；避免毫秒时间轴的复杂度。
+
+---
 
 - **日期**：2026-08-20
 - **状态**：accepted

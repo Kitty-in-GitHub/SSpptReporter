@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseSlideMarkdownToDraft, serializeSlideMarkdown } from "./slide-script-draft.js";
+import {
+  parseSlideMarkdownToPageDraft,
+  serializeSlideMarkdown,
+} from "./slide-script-draft.js";
 
-describe("slide-script-draft roundtrip", () => {
+describe("slide page draft roundtrip", () => {
   it("parses and serializes demo slide 02", () => {
     const source = `---
 emotion: confident
@@ -12,24 +15,48 @@ slide_action: {"next": true}
 
 第二页我们来看整体技术架构。`;
 
-    const draft = parseSlideMarkdownToDraft(2, source);
-    expect(draft.emotion).toBe("confident");
-    expect(draft.slide_action).toEqual({ next: true });
+    const pageDraft = parseSlideMarkdownToPageDraft(2, source);
+    expect(pageDraft.beats[0]?.emotion).toBe("confident");
+    expect(pageDraft.beats[0]?.slide_action).toEqual({ next: true });
 
-    const serialized = serializeSlideMarkdown(draft);
-    const again = parseSlideMarkdownToDraft(2, serialized);
-    expect(again.utterance).toBe("第二页我们来看整体技术架构。");
-    expect(again.slide_action).toEqual({ next: true });
+    const serialized = serializeSlideMarkdown(pageDraft);
+    const again = parseSlideMarkdownToPageDraft(2, serialized);
+    expect(again.beats[0]?.utterance).toBe("第二页我们来看整体技术架构。");
+    expect(again.beats[0]?.slide_action).toEqual({ next: true });
   });
 
-  it("omits default goto slide_action on serialize", () => {
-    const draft = parseSlideMarkdownToDraft(1, `---
+  it("parses multiple beats", () => {
+    const source = `---
+emotion: confident
+---
+
+<!-- beat -->
+profile: confident
+第一句。
+
+<!-- beat -->
+profile: thinking
+gesture: nod
+utterance:
+
+<!-- beat -->
+profile: emphatic
+第二句。`;
+
+    const pageDraft = parseSlideMarkdownToPageDraft(3, source);
+    expect(pageDraft.beats.length).toBe(3);
+    expect(pageDraft.beats[1]?.utterance).toBe("");
+    expect(pageDraft.beats[1]?.gesture).toBe("nod");
+  });
+
+  it("omits default goto slide_action on serialize for first beat", () => {
+    const pageDraft = parseSlideMarkdownToPageDraft(1, `---
 emotion: friendly
 gesture: bow
 ---
 
 开场白。`);
-    const serialized = serializeSlideMarkdown(draft);
+    const serialized = serializeSlideMarkdown(pageDraft);
     expect(serialized).not.toContain("slide_action");
   });
 });

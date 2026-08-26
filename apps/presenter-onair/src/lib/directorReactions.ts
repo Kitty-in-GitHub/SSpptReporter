@@ -1,6 +1,8 @@
 import {
+  directorActionForPerformance,
   emotionToVrmExpression,
   type DirectorAction,
+  type ResolvedBeatPerformance,
 } from '@ssreporter/director';
 import { gestureToVrmReactionDraft } from './gestureToVrmReaction';
 import {
@@ -58,6 +60,28 @@ export function toDirectorReactionDrafts(
     gesture: toDirectorGestureDraft(action),
     emotion: toDirectorEmotionDraft(action),
   };
+}
+
+export function toDirectorReactionDraftsFromResolved(
+  action: DirectorAction,
+  resolved: ResolvedBeatPerformance,
+): DirectorReactionDrafts {
+  const merged = directorActionForPerformance(action, resolved);
+  const gesture = toDirectorGestureDraft(merged);
+
+  const expression = resolved.vrmExpression;
+  let emotion: VrmAvatarReactionDraft | null = null;
+  if (expression !== 'neutral' && VRM_EMOTION_SET.has(expression)) {
+    const fromScreenplay = createVrmReactionFromScreenplay({
+      emotion: expression,
+      text: action.utterance,
+    });
+    emotion =
+      fromScreenplay ??
+      createVrmReactionFromEffect(expression as VrmEmotionEffect, action.utterance);
+  }
+
+  return { gesture, emotion };
 }
 
 /** @deprecated Prefer {@link toDirectorReactionDrafts} for gesture + emotion. */

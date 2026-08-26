@@ -58,7 +58,7 @@ flowchart LR
 
 ## slides/NN.md 格式（主格式）
 
-文件名 = 页码（`01.md` → 第 1 页）。
+文件名 = 页码（`01.md` → 第 1 页）。**一页可多节拍**：正文内用 `<!-- beat -->` 分段（见 [`phase3-present-director.md`](./phase3-present-director.md)）。
 
 ```markdown
 ---
@@ -74,11 +74,16 @@ slide_action: {"goto": 1}
 | frontmatter | 必填 | 默认 | 说明 |
 |-------------|------|------|------|
 | （正文） | 是 | — | TTS 朗读全文 |
-| `emotion` | 否 | `neutral` | schema 枚举 |
+| `profile` | 否 | — | 表演预设（`performance.json`）；与 `emotion` 二选一或并用 |
+| `emotion` | 否 | `neutral` | 等同 profile 名（兼容） |
 | `gesture` | 否 | 第 1 页 `bow`，其余 `explain` | schema 枚举 |
 | `camera` | 否 | `bust` | |
 | `action_id` | 否 | `p{NN}` | |
 | `slide_action` | 否 | `{"goto": 页码}` | JSON 字符串；跨页用 `{"next":true}` 等 |
+| `voice` / `voice_speed` | 否 | profile | 本拍语速等 |
+| `timing` / `pause_*_ms` | 否 | profile | 播前/播后停顿 |
+
+**表演预设**：`content/persona/performance.json`（全场）+ `content/decks/<id>/performance.json`（场次覆盖）。统一配置 VRM 表情/手势与 TTS 语速/停顿。
 
 `slide_action` 须写在一行 JSON，例如：
 

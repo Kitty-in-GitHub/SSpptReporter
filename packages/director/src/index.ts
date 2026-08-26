@@ -8,6 +8,8 @@ export type {
   QaMeta,
   QaSource,
   SlideAction,
+  TimingBeat,
+  VoiceBeatOverrides,
 } from "./types.js";
 export { EMOTIONS, GESTURES } from "./types.js";
 export {
@@ -40,8 +42,12 @@ export {
   pageToSlideFilename,
   parseSlideMarkdownFile,
   parseSlideMarkdownToDraft,
+  parseSlideMarkdownToPageDraft,
   serializeSlideMarkdown,
-  slideMarkdownFileFromDraft,
+  serializeSlideMarkdownFromBeat,
+  slideMarkdownFileFromPageDraft,
+  type SlideBeatDraft,
+  type SlidePageDraft,
   type SlideScriptDraft,
 } from "./slide-script-draft.js";
 export {
@@ -54,13 +60,15 @@ export {
   type DirectorEnqueueResult,
 } from "./queue.js";
 
-/** Map Director emotion → VRM expression / OnAir reaction emotion names. */
-export const emotionToVrmExpression: Record<string, string> = {
-  neutral: "neutral",
-  confident: "happy",
-  friendly: "happy",
-  serious: "relaxed",
-  thinking: "thinking",
-  apologetic: "sad",
-  emphatic: "surprised",
-};
+export { emotionToVrmExpression } from "./emotion-map.js";
+export {
+  DEFAULT_PERFORMANCE_CATALOG,
+  directorActionForPerformance,
+  mergePerformanceCatalogs,
+  resolveBeatPerformance,
+  resolveProfileName,
+  type PerformanceCatalog,
+  type PerformanceProfile,
+  type PerformanceVrmSlice,
+  type ResolvedBeatPerformance,
+} from "./performance-profile.js";

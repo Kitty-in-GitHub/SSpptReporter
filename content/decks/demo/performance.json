@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "friendly": {
+      "timing": { "pause_after_ms": 300 }
+    }
+  }
+}
