@@ -3,11 +3,12 @@ import {
   isPreemptiveAction,
   mergeQueueItems,
   resolveBeatPerformance,
+  resolveVoiceDirective,
   type DirectorAction,
   type DirectorQueuePlaybackState,
   type ResolvedBeatPerformance,
   type SlideAction,
-  type VoiceBeatOverrides,
+  type VoiceDirective,
 } from '@ssreporter/director';
 import { useCallback, useRef, useState } from 'react';
 import { toDirectorReactionDraftsFromResolved } from '../lib/directorReactions';
@@ -16,7 +17,7 @@ import { sleepMs } from '../lib/sleepMs';
 import type { VrmAvatarReactionDraft } from '../lib/vrmReactions';
 
 export interface UseDirectorQueueOptions {
-  speak: (text: string, voiceOverrides?: VoiceBeatOverrides) => Promise<void>;
+  speak: (text: string, directive?: VoiceDirective) => Promise<void>;
   stopSpeech: () => void;
   onApplyEmotion: (draft: VrmAvatarReactionDraft) => void;
   onResetEmotion: () => void;
@@ -99,6 +100,7 @@ export function useDirectorQueue({
           const resolved =
             resolvePerformanceRef.current?.(action) ??
             resolveBeatPerformance(action);
+          const voiceDirective = resolveVoiceDirective(action, resolved);
 
           if (action.barge_in || action.priority === 'emergency') {
             stopSpeech();
@@ -130,7 +132,7 @@ export function useDirectorQueue({
 
           const utterance = action.utterance.trim();
           if (utterance) {
-            await speak(utterance, resolved.voice);
+            await speak(utterance, voiceDirective);
           }
 
           if (resolved.timing.pause_after_ms) {

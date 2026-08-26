@@ -55,6 +55,14 @@ class SpeechRequest(BaseModel):
     voice: str | None = None
     response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "mp3"
     speed: float = Field(default=1.0, ge=0.25, le=4.0)
+    pitch: str | None = Field(
+        default=None,
+        description='Edge prosody pitch, e.g. "+5Hz" or "-2Hz"',
+    )
+    volume: str | None = Field(
+        default=None,
+        description='Edge prosody volume, e.g. "+10%" or "-5%"',
+    )
 
 
 class EmbeddingRequest(BaseModel):
@@ -168,9 +176,17 @@ async def list_models() -> dict:
 async def create_speech(body: SpeechRequest) -> Response:
     voice = (body.voice or DEFAULT_VOICE).strip()
     rate = speed_to_rate(body.speed)
+    pitch = body.pitch.strip() if body.pitch else None
+    volume = body.volume.strip() if body.volume else None
 
     audio = bytearray()
-    communicate = edge_tts.Communicate(body.input, voice, rate=rate)
+    communicate_kwargs: dict[str, str] = {"rate": rate}
+    if pitch:
+        communicate_kwargs["pitch"] = pitch
+    if volume:
+        communicate_kwargs["volume"] = volume
+
+    communicate = edge_tts.Communicate(body.input, voice, **communicate_kwargs)
     async for chunk in communicate.stream():
         if chunk["type"] == "audio":
             audio.extend(chunk["data"])

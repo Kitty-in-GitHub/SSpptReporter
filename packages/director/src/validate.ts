@@ -43,8 +43,10 @@ const directorActionSchema = {
       type: "object",
       additionalProperties: false,
       properties: {
+        speaker: { type: "string", maxLength: 120 },
         speed: { type: "number", minimum: 0.25, maximum: 4 },
-        pitch: { type: "number", minimum: -12, maximum: 12 },
+        pitch: { type: ["number", "string"] },
+        volume: { type: ["number", "string"] },
         style_hint: { type: "string", maxLength: 500 },
       },
     },

@@ -62,6 +62,16 @@ export {
 
 export { emotionToVrmExpression } from "./emotion-map.js";
 export {
+  normalizeEmphasisRanges,
+  resolveVoiceDirective,
+  splitUtteranceByEmphasis,
+  voiceBeatOverridesToDirective,
+  type EmphasisTextSegment,
+  type IntraUtteranceEmphasisMode,
+  type TtsEngineCapabilities,
+  type VoiceDirective,
+} from "./voice-directive.js";
+export {
   DEFAULT_PERFORMANCE_CATALOG,
   directorActionForPerformance,
   mergePerformanceCatalogs,

@@ -27,6 +27,7 @@ export interface SlideBeatDraft {
   slide_action?: SlideAction;
   voice?: VoiceBeatOverrides;
   timing?: TimingBeat;
+  emphasis?: [number, number][];
 }
 
 export interface SlidePageDraft {
@@ -181,6 +182,11 @@ function beatDraftFromMeta(
   const timing = parseJsonField<TimingBeat>(meta.timing);
   if (timing) {
     draft.timing = timing;
+  }
+
+  const emphasis = parseJsonField<[number, number][]>(meta.emphasis);
+  if (emphasis?.length) {
+    draft.emphasis = emphasis;
   }
 
   if (meta.voice_speed?.trim()) {
@@ -373,6 +379,10 @@ export function serializeSlideMarkdown(pageDraft: SlidePageDraft): string {
       lines.push(`timing: ${JSON.stringify(beat.timing)}`);
     }
 
+    if (beat.emphasis?.length) {
+      lines.push(`emphasis: ${JSON.stringify(beat.emphasis)}`);
+    }
+
     lines.push("", beat.utterance.trim());
     if (index < pageDraft.beats.length - 1) {
       lines.push("");
@@ -427,6 +437,7 @@ export function serializeSlideMarkdownFromBeat(
         slide_action: draft.slide_action,
         voice: draft.voice,
         timing: draft.timing,
+        emphasis: draft.emphasis,
       },
     ],
   });

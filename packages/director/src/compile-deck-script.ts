@@ -88,6 +88,9 @@ function beatDraftToAction(beat: SlideBeatDraft): DirectorAction {
   if (beat.timing && Object.keys(beat.timing).length > 0) {
     action.timing = beat.timing;
   }
+  if (beat.emphasis?.length) {
+    action.emphasis = beat.emphasis;
+  }
 
   return action;
 }

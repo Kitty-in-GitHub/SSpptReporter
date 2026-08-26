@@ -13,6 +13,18 @@
 - **决策**：汇报讲稿支持一页多 **beat**（`<!-- beat -->`）；每拍引用 **profile**（`performance.json`）统一映射 VRM 表情/手势与 TTS 语速/停顿；`DirectorAction` 扩展 `profile`、`voice`、`timing`。
 - **理由**：答辩需要句级导演控制，且 Voice/Body 可配置、可版本管理；避免毫秒时间轴的复杂度。
 
+## ADR-010 · TTS VoiceDirective 与引擎适配器
+
+- **日期**：2026-08-26
+- **状态**：accepted
+- **决策**：
+  - 引擎无关层 **`VoiceDirective`**（`speaker` / `rate` / `pitch` / `volume` / `styleHint` / `emphasis`）
+  - 呈现层 **`prepareUtterance(engineId, …)`** + 按引擎适配；**Edge（openaiCompatible）首个实现**
+  - Edge 网关扩展 `pitch` / `volume`；句内重读采用 **`segment-resynth`**（按区间顺序合成，重读段提高 volume/rate）
+  - 其它引擎走 `legacyVoicePatch` + OnAir `VoiceEngineAdapter`，后续加 adapter 不改讲稿
+- **理由**：情绪控制需跨 TTS 引擎扩展；先在本机 Edge 打通音色/语气/重读，不绑定单一供应商 API。
+- **文档**：[`tts-voice-directive.md`](./tts-voice-directive.md)
+
 ---
 
 - **日期**：2026-08-20

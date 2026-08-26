@@ -11,7 +11,8 @@
 |------|------|
 | 一页多 beat | `slides/NN.md` 内用 `<!-- beat -->` 分段 |
 | Performance Profile | `content/persona/performance.json` + deck 覆盖 |
-| 每拍 TTS | `voice.speed`、Gemini `style_hint`、播前/播后 `timing` |
+| 每拍 TTS | `voice.speaker` / speed / pitch / volume；Gemini `style_hint`（待接） | 
+| 句内重读 | `emphasis` → Edge **segment-resynth**（见 [`tts-voice-directive.md`](./tts-voice-directive.md)） |
 | 每拍 Body | profile → 表情 + 默认手势，可被 beat `gesture` 覆盖 |
 | 编辑 UI | 编辑讲稿 → 节拍标签页 |
 

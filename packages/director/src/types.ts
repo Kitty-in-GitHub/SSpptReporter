@@ -35,8 +35,11 @@ export interface SlideAction {
 }
 
 export interface VoiceBeatOverrides {
+  /** Engine-specific voice id, e.g. `zh-CN-YunxiNeural` or `edge:zh-CN-YunxiNeural`. */
+  speaker?: string;
   speed?: number;
-  pitch?: number;
+  pitch?: number | string;
+  volume?: number | string;
   style_hint?: string;
 }
 

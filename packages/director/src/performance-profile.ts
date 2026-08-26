@@ -38,37 +38,42 @@ export const DEFAULT_PERFORMANCE_CATALOG: PerformanceCatalog = {
   profiles: {
     neutral: {
       vrm: { expression: "neutral" },
-      voice: { speed: 1 },
+      voice: { speaker: "zh-CN-XiaoxiaoNeural", speed: 1 },
       timing: {},
     },
     confident: {
       vrm: { expression: "happy", intensity: 0.35, gesture: "explain" },
-      voice: { speed: 0.95 },
+      voice: { speaker: "zh-CN-YunxiNeural", speed: 0.95, pitch: "-2Hz" },
       timing: { pause_after_ms: 300 },
     },
     friendly: {
       vrm: { expression: "happy", intensity: 0.45, gesture: "open_hands" },
-      voice: { speed: 1 },
+      voice: { speaker: "zh-CN-XiaoxiaoNeural", speed: 1 },
       timing: { pause_after_ms: 250 },
     },
     serious: {
       vrm: { expression: "relaxed", intensity: 0.4, gesture: "explain" },
-      voice: { speed: 0.92 },
+      voice: { speaker: "zh-CN-YunjianNeural", speed: 0.92, pitch: "-3Hz" },
       timing: { pause_after_ms: 400 },
     },
     thinking: {
       vrm: { expression: "thinking", intensity: 0.5, gesture: "think" },
-      voice: { speed: 0.88 },
+      voice: { speaker: "zh-CN-XiaoxiaoNeural", speed: 0.88, pitch: "-4Hz" },
       timing: { pause_before_ms: 200, pause_after_ms: 500 },
     },
     apologetic: {
       vrm: { expression: "sad", intensity: 0.35, gesture: "nod" },
-      voice: { speed: 0.9 },
+      voice: { speaker: "zh-CN-XiaoxiaoNeural", speed: 0.9, volume: "-5%" },
       timing: { pause_after_ms: 350 },
     },
     emphatic: {
       vrm: { expression: "surprised", intensity: 0.4, gesture: "emphasize" },
-      voice: { speed: 1.05 },
+      voice: {
+        speaker: "zh-CN-YunxiNeural",
+        speed: 1.05,
+        volume: "+8%",
+        pitch: "+2Hz",
+      },
       timing: { pause_after_ms: 450 },
     },
   },

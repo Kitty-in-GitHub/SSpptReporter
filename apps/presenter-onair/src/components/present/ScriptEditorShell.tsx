@@ -25,7 +25,12 @@ const EMOTION_LABELS: Record<string, string> = {
   emphatic: '强调',
 };
 
-const GESTURE_LABELS: Record<string, string> = {
+const EDGE_VOICE_OPTIONS = [
+  { id: 'zh-CN-XiaoxiaoNeural', label: '晓晓（女，亲和）' },
+  { id: 'zh-CN-YunxiNeural', label: '云希（男，讲解）' },
+  { id: 'zh-CN-YunjianNeural', label: '云健（男，严肃）' },
+  { id: 'zh-CN-XiaoyiNeural', label: '晓伊（女，温柔）' },
+];
   none: '无',
   idle: '待机',
   bow: '鞠躬',
@@ -233,6 +238,29 @@ export function ScriptEditorShell({
 
               <div className="script-editor-field-row">
                 <label className="script-editor-field">
+                  音色（Edge）
+                  <select
+                    value={beat.voice?.speaker ?? ''}
+                    onChange={(event) => {
+                      const speaker = event.target.value;
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        voice: {
+                          ...beat.voice,
+                          speaker: speaker || undefined,
+                        },
+                      });
+                    }}
+                  >
+                    <option value="">留空 → 用 profile / 设置</option>
+                    {EDGE_VOICE_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="script-editor-field">
                   语速覆盖
                   <input
                     type="number"
@@ -297,6 +325,34 @@ export function ScriptEditorShell({
                   />
                 </label>
               </div>
+
+              <label className="script-editor-field">
+                句内重读（emphasis JSON）
+                <input
+                  type="text"
+                  value={
+                    beat.emphasis ? JSON.stringify(beat.emphasis) : ''
+                  }
+                  placeholder='例：[[2,6],[10,12]]'
+                  onChange={(event) => {
+                    const raw = event.target.value.trim();
+                    if (!raw) {
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        emphasis: undefined,
+                      });
+                      return;
+                    }
+                    try {
+                      const parsed = JSON.parse(raw) as [number, number][];
+                      editor.updateBeat(editor.activeBeatIndex, {
+                        emphasis: parsed,
+                      });
+                    } catch {
+                      // ignore invalid JSON while typing
+                    }
+                  }}
+                />
+              </label>
 
               <fieldset className="script-editor-field script-editor-slide-action">
                 <legend>翻页动作（本节拍）</legend>

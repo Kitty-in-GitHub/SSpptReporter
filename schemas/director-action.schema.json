@@ -73,15 +73,29 @@
       "additionalProperties": false,
       "description": "本拍 TTS 覆盖（合并 performance profile）",
       "properties": {
+        "speaker": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "发音人/音色 ID（引擎相关，如 Edge Neural 名）"
+        },
         "speed": {
           "type": "number",
           "minimum": 0.25,
           "maximum": 4
         },
         "pitch": {
-          "type": "number",
-          "minimum": -12,
-          "maximum": 12
+          "oneOf": [
+            { "type": "number", "minimum": -50, "maximum": 50 },
+            { "type": "string", "maxLength": 20 }
+          ],
+          "description": "音高；Edge 可用 +5Hz 字符串"
+        },
+        "volume": {
+          "oneOf": [
+            { "type": "number", "minimum": -100, "maximum": 100 },
+            { "type": "string", "maxLength": 20 }
+          ],
+          "description": "音量；Edge 可用 +10% 字符串"
         },
         "style_hint": {
           "type": "string",

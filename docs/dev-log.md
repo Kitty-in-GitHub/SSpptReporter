@@ -30,7 +30,17 @@
 
 ---
 
-### 2026-08-26 · Phase 3 Present 导演：一页多 beat + performance profile
+### 2026-08-26 · TTS VoiceDirective + Edge 适配器（音色/语气/句内重读）
+
+- **做了什么**：
+  - `VoiceDirective` 引擎无关层；`prepareUtterance` + Edge 首个适配器
+  - 网关扩展 `pitch` / `volume`；按拍 `speaker` + prosody；emphasis **segment-resynth**
+  - profile 默认绑定 Edge Neural 音色；编辑 UI 音色/重读 JSON
+  - ADR-010、`docs/tts-voice-directive.md`
+- **验证**：`npm run test -w @ssreporter/director`；汇报 + Edge TTS 播放带 profile 的 demo
+
+---
+
 
 - **设备/环境**：Windows / conda ssreporter
 - **做了什么**：

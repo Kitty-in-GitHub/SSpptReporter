@@ -1,12 +1,27 @@
 {
   "profiles": {
     "confident": {
-      "voice": { "speed": 0.93 },
+      "voice": {
+        "speaker": "zh-CN-YunxiNeural",
+        "speed": 0.93,
+        "pitch": "-2Hz"
+      },
       "timing": { "pause_after_ms": 350 }
     },
     "emphatic": {
-      "voice": { "speed": 1.08 },
+      "voice": {
+        "speaker": "zh-CN-YunxiNeural",
+        "speed": 1.08,
+        "volume": "+10%",
+        "pitch": "+2Hz"
+      },
       "timing": { "pause_after_ms": 500 }
+    },
+    "serious": {
+      "voice": {
+        "speaker": "zh-CN-YunjianNeural",
+        "pitch": "-4Hz"
+      }
     }
   }
 }
