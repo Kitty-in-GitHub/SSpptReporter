@@ -1,32 +1,38 @@
-import type { CSSProperties } from 'react';
+import { useState } from 'react';
+import type { CSSProperties, RefObject } from 'react';
 import {
-  EMOTIONS,
   GESTURES,
+  listSelectableProfiles,
   type DirectorAction,
-  type Emotion,
   type Gesture,
   type PerformanceCatalog,
+  type PerformanceProfile,
   type SlideBeatDraft,
   resolveBeatPerformance,
 } from '@ssreporter/director';
-import type { RefObject } from 'react';
 import {
   EDGE_VOICE_OPTIONS,
   GESTURE_ICONS,
   GESTURE_LABELS,
-  PROFILE_COLORS,
-  PROFILE_HINTS,
-  PROFILE_LABELS,
   formatPauseLabel,
   formatSpeedLabel,
 } from '../../constants/performanceUi';
+import {
+  resolveProfileColor,
+  resolveProfileDisplayHint,
+  resolveProfileDisplayName,
+} from '../../hooks/usePerformanceCatalog';
 import { EmphasisTextEditor } from './EmphasisTextEditor';
+import { isEmotionProfile, ProfileCreateDialog } from './ProfileCreateDialog';
 
 interface BeatPerformanceEditorProps {
   beat: SlideBeatDraft;
   catalog: PerformanceCatalog | null;
   utteranceTextareaRef: RefObject<HTMLTextAreaElement | null>;
+  isSavingProfile?: boolean;
   onUpdate: (patch: Partial<SlideBeatDraft>) => void;
+  onAddProfile: (profileId: string, profile: PerformanceProfile) => Promise<void>;
+  onProfileCreated?: (profileId: string) => void;
 }
 
 function beatPreviewAction(beat: SlideBeatDraft): DirectorAction {
@@ -72,9 +78,15 @@ export function BeatPerformanceEditor({
   beat,
   catalog,
   utteranceTextareaRef,
+  isSavingProfile = false,
   onUpdate,
+  onAddProfile,
+  onProfileCreated,
 }: BeatPerformanceEditorProps) {
-  const profileName = (beat.profile ?? beat.emotion) as Emotion;
+  const [createOpen, setCreateOpen] = useState(false);
+  const profileName = beat.profile ?? beat.emotion;
+  const mergedCatalog = catalog ?? { profiles: {} };
+  const profileIds = listSelectableProfiles(mergedCatalog);
   const resolved = resolveBeatPerformance(beatPreviewAction(beat), catalog ?? undefined);
   const speedValue = beat.voice?.speed ?? effectiveSpeed(beat, catalog);
   const pauseBefore =
@@ -83,47 +95,78 @@ export function BeatPerformanceEditor({
     beat.timing?.pause_after_ms ?? effectivePause(beat, catalog, 'pause_after_ms');
   const speakerValue = beat.voice?.speaker ?? '';
 
+  const selectProfile = (profileId: string) => {
+    if (isEmotionProfile(profileId)) {
+      onUpdate({ profile: profileId, emotion: profileId });
+      return;
+    }
+    onUpdate({ profile: profileId });
+  };
+
+  const handleCreateProfile = async (profileId: string, profile: PerformanceProfile) => {
+    await onAddProfile(profileId, profile);
+    selectProfile(profileId);
+    onProfileCreated?.(profileId);
+  };
+
   return (
     <div className="beat-performance-editor">
       <section className="beat-performance-section">
-        <h3 className="beat-performance-heading">汇报情绪 · 表演预设</h3>
-        <p className="beat-performance-lead">
-          选择本节拍的情绪与默认语速；写入讲稿后编译即生效。
-        </p>
+        <div className="beat-performance-section-header">
+          <div>
+            <h3 className="beat-performance-heading">汇报情绪 · 表演预设</h3>
+            <p className="beat-performance-lead">
+              选择本节拍预设，或使用「新建预设」为本场次添加自定义卡片。
+            </p>
+          </div>
+          <button
+            type="button"
+            className="profile-create-trigger"
+            disabled={!catalog || isSavingProfile}
+            onClick={() => setCreateOpen(true)}
+          >
+            + 新建预设
+          </button>
+        </div>
+
         <div className="profile-picker" role="listbox" aria-label="表演预设">
-          {EMOTIONS.map((emotion) => {
-            const selected = profileName === emotion;
+          {profileIds.map((profileId) => {
+            const selected = profileName === profileId;
             const preview = resolveBeatPerformance(
               {
                 schema_version: '1.0',
                 mode: 'present',
                 utterance: '',
-                profile: emotion,
-                emotion,
+                profile: profileId,
+                emotion: isEmotionProfile(profileId) ? profileId : beat.emotion,
               },
               catalog ?? undefined,
             );
             const speed = preview.voice.speed ?? 1;
+            const color = resolveProfileColor(profileId, catalog);
+            const isCustom = !isEmotionProfile(profileId);
             return (
               <button
-                key={emotion}
+                key={profileId}
                 type="button"
                 role="option"
                 aria-selected={selected}
-                className={`profile-card${selected ? ' is-selected' : ''}`}
-                style={{ '--profile-color': PROFILE_COLORS[emotion] } as CSSProperties}
-                onClick={() =>
-                  onUpdate({
-                    profile: emotion,
-                    emotion,
-                  })
-                }
+                className={`profile-card${selected ? ' is-selected' : ''}${
+                  isCustom ? ' is-custom' : ''
+                }`}
+                style={{ '--profile-color': color } as CSSProperties}
+                onClick={() => selectProfile(profileId)}
               >
                 <span className="profile-card-dot" aria-hidden />
-                <span className="profile-card-label">{PROFILE_LABELS[emotion]}</span>
-                <span className="profile-card-hint">{PROFILE_HINTS[emotion]}</span>
+                <span className="profile-card-label">
+                  {resolveProfileDisplayName(profileId, catalog)}
+                </span>
+                <span className="profile-card-hint">
+                  {resolveProfileDisplayHint(profileId, catalog)}
+                </span>
                 <span className="profile-card-meta">
                   {formatSpeedLabel(speed)} · ×{speed.toFixed(2)}
+                  {isCustom ? ' · 自定义' : ''}
                 </span>
               </button>
             );
@@ -294,11 +337,21 @@ export function BeatPerformanceEditor({
       <aside className="beat-performance-summary" aria-label="本节拍生效摘要">
         <span className="beat-performance-summary-title">本节拍将播放为</span>
         <span>
-          {PROFILE_LABELS[resolved.emotion]} · {GESTURE_LABELS[resolved.gesture]} · ×
-          {(resolved.voice.speed ?? 1).toFixed(2)} · 前 {resolved.timing.pause_before_ms ?? 0}{' '}
-          ms / 后 {resolved.timing.pause_after_ms ?? 0} ms
+          {resolveProfileDisplayName(resolved.profileName, catalog)} ·{' '}
+          {GESTURE_LABELS[resolved.gesture]} · ×{(resolved.voice.speed ?? 1).toFixed(2)} · 前{' '}
+          {resolved.timing.pause_before_ms ?? 0} ms / 后 {resolved.timing.pause_after_ms ?? 0}{' '}
+          ms
         </span>
       </aside>
+
+      {createOpen && catalog ? (
+        <ProfileCreateDialog
+          catalog={catalog}
+          isSaving={isSavingProfile}
+          onClose={() => setCreateOpen(false)}
+          onCreate={handleCreateProfile}
+        />
+      ) : null}
     </div>
   );
 }

@@ -15,6 +15,12 @@ export interface PerformanceVrmSlice {
 }
 
 export interface PerformanceProfile {
+  /** UI 显示名（自定义预设；写入 deck performance.json） */
+  label?: string;
+  /** UI 简短说明 */
+  hint?: string;
+  /** 卡片/时间轴色条（CSS 颜色） */
+  color?: string;
   vrm?: PerformanceVrmSlice;
   voice?: VoiceBeatOverrides;
   timing?: TimingBeat;
@@ -96,6 +102,9 @@ export function mergePerformanceCatalogs(
   for (const [name, profile] of Object.entries(overlay.profiles)) {
     const existing = profiles[name];
     profiles[name] = {
+      label: profile.label ?? existing?.label,
+      hint: profile.hint ?? existing?.hint,
+      color: profile.color ?? existing?.color,
       vrm: { ...existing?.vrm, ...profile.vrm },
       voice: { ...existing?.voice, ...profile.voice },
       timing: { ...existing?.timing, ...profile.timing },
@@ -103,6 +112,63 @@ export function mergePerformanceCatalogs(
   }
 
   return { profiles };
+}
+
+export function isBuiltInProfile(name: string): boolean {
+  return isEmotion(name);
+}
+
+const PROFILE_ID_RE = /^[a-z][a-z0-9_]{0,31}$/;
+
+export function sanitizeProfileId(input: string): string | null {
+  const normalized = input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
+  if (!normalized || !PROFILE_ID_RE.test(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
+export function listSelectableProfiles(
+  catalog: PerformanceCatalog = DEFAULT_PERFORMANCE_CATALOG,
+): string[] {
+  const custom = Object.keys(catalog.profiles)
+    .filter((name) => !isBuiltInProfile(name))
+    .sort((a, b) => a.localeCompare(b, "zh-CN"));
+  return [...EMOTIONS, ...custom];
+}
+
+export function cloneProfileTemplate(
+  baseName: string,
+  catalog: PerformanceCatalog = DEFAULT_PERFORMANCE_CATALOG,
+): PerformanceProfile {
+  const resolved = resolveBeatPerformance(
+    {
+      schema_version: "1.0",
+      mode: "present",
+      utterance: "",
+      profile: baseName,
+      emotion: isEmotion(baseName) ? baseName : "neutral",
+    },
+    catalog,
+  );
+  const baseProfile = catalog.profiles[baseName];
+
+  return {
+    vrm: {
+      expression: resolved.vrmExpression,
+      intensity: resolved.vrmIntensity,
+      gesture:
+        baseProfile?.vrm?.gesture ??
+        (resolved.gesture !== "none" ? resolved.gesture : undefined),
+    },
+    voice: { ...resolved.voice },
+    timing: { ...resolved.timing },
+  };
 }
 
 export function resolveProfileName(action: DirectorAction): string {

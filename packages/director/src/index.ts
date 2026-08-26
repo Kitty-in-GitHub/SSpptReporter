@@ -72,11 +72,15 @@ export {
   type VoiceDirective,
 } from "./voice-directive.js";
 export {
+  cloneProfileTemplate,
   DEFAULT_PERFORMANCE_CATALOG,
   directorActionForPerformance,
+  isBuiltInProfile,
+  listSelectableProfiles,
   mergePerformanceCatalogs,
   resolveBeatPerformance,
   resolveProfileName,
+  sanitizeProfileId,
   type PerformanceCatalog,
   type PerformanceProfile,
   type PerformanceVrmSlice,

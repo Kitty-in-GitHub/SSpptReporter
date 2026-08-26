@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { DirectorAction } from "./types.js";
 import {
   DEFAULT_PERFORMANCE_CATALOG,
+  listSelectableProfiles,
   mergePerformanceCatalogs,
   resolveBeatPerformance,
+  sanitizeProfileId,
 } from "./performance-profile.js";
 
 describe("resolveBeatPerformance", () => {
@@ -55,5 +57,27 @@ describe("resolveBeatPerformance", () => {
       merged,
     );
     expect(resolved.voice.speed).toBe(0.8);
+  });
+
+  it("lists built-in and custom profiles", () => {
+    const merged = mergePerformanceCatalogs(DEFAULT_PERFORMANCE_CATALOG, {
+      profiles: {
+        opening_warm: {
+          label: "开场温暖",
+          vrm: { expression: "happy" },
+        },
+      },
+    });
+    expect(listSelectableProfiles(merged)).toEqual([
+      "neutral",
+      "confident",
+      "friendly",
+      "serious",
+      "thinking",
+      "apologetic",
+      "emphatic",
+      "opening_warm",
+    ]);
+    expect(sanitizeProfileId(" Opening-Warm ")).toBe("opening_warm");
   });
 });

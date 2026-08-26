@@ -34,7 +34,12 @@ export function ScriptEditorShell({
   onToggleSettings,
 }: ScriptEditorShellProps) {
   const utteranceRef = useRef<HTMLTextAreaElement>(null);
-  const { catalog } = usePerformanceCatalog(deckId);
+  const {
+    catalog,
+    addDeckProfile,
+    isSaving: isSavingProfile,
+    error: performanceError,
+  } = usePerformanceCatalog(deckId);
   const pageDraft = editor.pageDraft;
   const beat = editor.activeBeat;
   const pageCount = slideDeck.pageCount;
@@ -108,13 +113,13 @@ export function ScriptEditorShell({
         </div>
       </SessionModeToolbar>
 
-      {(editor.status || editor.error) && (
+      {(editor.status || editor.error || performanceError) && (
         <div
-          className={`script-editor-status${editor.error ? ' is-error' : ''}${
+          className={`script-editor-status${editor.error || performanceError ? ' is-error' : ''}${
             editor.isDirty ? ' is-dirty' : ''
           }`}
         >
-          {editor.error ?? editor.status}
+          {editor.error ?? performanceError ?? editor.status}
           {editor.isDirty && !editor.error ? ' · 有未保存修改（已自动存草稿）' : ''}
         </div>
       )}
@@ -156,6 +161,7 @@ export function ScriptEditorShell({
               <BeatTimelineStrip
                 beats={pageDraft.beats}
                 activeIndex={editor.activeBeatIndex}
+                catalog={catalog}
                 onSelect={editor.setActiveBeatIndex}
                 onAdd={editor.addBeat}
               />
@@ -179,7 +185,9 @@ export function ScriptEditorShell({
                 beat={beat}
                 catalog={catalog}
                 utteranceTextareaRef={utteranceRef}
+                isSavingProfile={isSavingProfile}
                 onUpdate={(patch) => editor.updateBeat(editor.activeBeatIndex, patch)}
+                onAddProfile={addDeckProfile}
               />
 
               <fieldset className="script-editor-field script-editor-slide-action">

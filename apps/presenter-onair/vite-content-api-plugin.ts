@@ -1,5 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
+import type { PerformanceCatalog } from '../../packages/director/src/performance-profile.ts';
 import {
   compileDeckDir,
   writeSlideMarkdown,
@@ -28,6 +31,18 @@ function sendJson(res: ServerResponse, status: number, payload: unknown) {
   res.end(JSON.stringify(payload));
 }
 
+function writeDeckPerformanceJson(
+  contentDir: string,
+  deckId: string,
+  overlay: PerformanceCatalog,
+): string {
+  const deckDir = path.join(contentDir, 'decks', deckId);
+  fs.mkdirSync(deckDir, { recursive: true });
+  const filePath = path.join(deckDir, 'performance.json');
+  fs.writeFileSync(filePath, `${JSON.stringify(overlay, null, 2)}\n`, 'utf8');
+  return filePath;
+}
+
 export function contentDeckApi(): Plugin {
   return {
     name: 'content-deck-api',
@@ -46,7 +61,7 @@ export function contentDeckApi(): Plugin {
         }
 
         const match = url.match(
-          /^\/api\/content\/decks\/([^/]+)(?:\/slides\/(\d+)|\/compile)?$/,
+          /^\/api\/content\/decks\/([^/]+)(?:\/slides\/(\d+)|\/compile|\/performance)?$/,
         );
         if (!match) {
           next();
@@ -56,9 +71,21 @@ export function contentDeckApi(): Plugin {
         const deckId = decodeURIComponent(match[1]);
         const pageRaw = match[2];
         const isCompile = url.endsWith('/compile');
+        const isPerformance = url.endsWith('/performance');
         const contentDir = resolveDeckContentRoot(deckId);
 
         try {
+          if (isPerformance && req.method === 'PUT') {
+            const body = await readJsonBody<PerformanceCatalog>(req);
+            if (!body.profiles || typeof body.profiles !== 'object') {
+              sendJson(res, 400, { ok: false, message: 'profiles 不能为空' });
+              return;
+            }
+            const filePath = writeDeckPerformanceJson(contentDir, deckId, body);
+            sendJson(res, 200, { ok: true, filePath });
+            return;
+          }
+
           if (isCompile && req.method === 'POST') {
             const result = compileDeckDir(contentDir, deckId);
             if (result.issues.length > 0) {

@@ -280,6 +280,146 @@
   gap: 18px;
 }
 
+.beat-performance-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.profile-create-trigger {
+  flex: 0 0 auto;
+  border: 1px dashed rgba(59, 130, 246, 0.55);
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.profile-create-trigger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.profile-card.is-custom {
+  border-style: dashed;
+}
+
+.profile-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.profile-create-dialog {
+  width: min(420px, 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #151b26;
+  color: #e8eef8;
+  padding: 16px 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.profile-create-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.profile-create-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.profile-create-close {
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.profile-create-lead {
+  margin: 0 0 12px;
+  font-size: 12px;
+  opacity: 0.75;
+  line-height: 1.45;
+}
+
+.profile-create-lead code {
+  font-size: 11px;
+}
+
+.profile-create-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.profile-create-field input,
+.profile-create-field select {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.profile-create-error {
+  margin: 0 0 10px;
+  color: #fca5a5;
+  font-size: 12px;
+}
+
+.profile-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.profile-create-primary,
+.profile-create-secondary {
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.profile-create-primary {
+  border: 1px solid #3b82f6;
+  background: #3b82f6;
+  color: #fff;
+}
+
+.profile-create-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.profile-create-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+}
+
 .beat-performance-section {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 14px;

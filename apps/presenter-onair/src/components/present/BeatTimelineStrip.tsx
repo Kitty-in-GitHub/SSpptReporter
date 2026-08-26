@@ -1,10 +1,14 @@
 import type { CSSProperties } from 'react';
-import type { Emotion, SlideBeatDraft } from '@ssreporter/director';
-import { PROFILE_COLORS, PROFILE_LABELS } from '../../constants/performanceUi';
+import type { PerformanceCatalog, SlideBeatDraft } from '@ssreporter/director';
+import {
+  resolveProfileColor,
+  resolveProfileDisplayName,
+} from '../../hooks/usePerformanceCatalog';
 
 interface BeatTimelineStripProps {
   beats: SlideBeatDraft[];
   activeIndex: number;
+  catalog: PerformanceCatalog | null;
   onSelect: (index: number) => void;
   onAdd: () => void;
 }
@@ -15,13 +19,14 @@ function beatSnippet(beat: SlideBeatDraft): string {
   return text.length > 18 ? `${text.slice(0, 18)}…` : text;
 }
 
-function beatProfile(beat: SlideBeatDraft): Emotion {
-  return (beat.profile ?? beat.emotion) as Emotion;
+function beatProfileId(beat: SlideBeatDraft): string {
+  return beat.profile ?? beat.emotion;
 }
 
 export function BeatTimelineStrip({
   beats,
   activeIndex,
+  catalog,
   onSelect,
   onAdd,
 }: BeatTimelineStripProps) {
@@ -29,8 +34,8 @@ export function BeatTimelineStrip({
     <div className="beat-timeline">
       <div className="beat-timeline-track">
         {beats.map((beat, index) => {
-          const profile = beatProfile(beat);
-          const color = PROFILE_COLORS[profile] ?? PROFILE_COLORS.neutral;
+          const profileId = beatProfileId(beat);
+          const color = resolveProfileColor(profileId, catalog);
           const active = index === activeIndex;
           return (
             <button
@@ -41,7 +46,9 @@ export function BeatTimelineStrip({
               onClick={() => onSelect(index)}
             >
               <span className="beat-timeline-index">节拍 {index + 1}</span>
-              <span className="beat-timeline-profile">{PROFILE_LABELS[profile]}</span>
+              <span className="beat-timeline-profile">
+                {resolveProfileDisplayName(profileId, catalog)}
+              </span>
               <span className="beat-timeline-snippet">{beatSnippet(beat)}</span>
             </button>
           );
