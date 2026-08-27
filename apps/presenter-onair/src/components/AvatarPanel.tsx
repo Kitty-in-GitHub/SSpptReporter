@@ -31,10 +31,22 @@ import {
 } from '@pixiv/three-vrm-animation';
 import type { VRMAnimation } from '@pixiv/three-vrm-animation';
 import {
-  VrmExpressionController,
-  pickVrmIdleMotion,
   runVrmOneShotAnimation,
+  VrmExpressionController,
 } from '../lib/vrmExpressionController';
+import {
+  createIdleMotionState,
+  IDLE_MOTION_AFTER_REACTION_DELAY_MS,
+  IDLE_MOTION_AFTER_SPEECH_DELAY_MS,
+  maybeRunIdleMotion,
+  scheduleNextIdleMotion,
+  suppressIdleMotion,
+} from '../lib/vrm/vrmIdleMotion';
+import {
+  applyVrmMouthAndFaceCapture,
+  MAX_MOUTH_LEVEL,
+  type VrmMouthDriveState,
+} from '../lib/vrm/vrmMouthAndFaceDrive';
 import { playVrmaGestureOneShot } from '../lib/vrmaGesturePlayback';
 import {
   DEFAULT_EMOTION_EFFECT_ANCHOR,
@@ -67,7 +79,6 @@ import {
   type VrmCameraFraming,
   type VrmCameraFramingBase,
 } from '../lib/vrmCameraFraming';
-import { applyFaceCaptureToVrm } from '../lib/vrm/applyFaceCaptureToVrm';
 import type { FaceCaptureFrame } from '../lib/avatar/faceCaptureTypes';
 import type { FaceCaptureMouthDriver } from '../types/settings';
 import {
@@ -148,7 +159,6 @@ const VRM_AMBIENT_LIGHT_INTENSITY = 0.38;
 const VRM_DIRECTIONAL_LIGHT_INTENSITY = 0.7;
 const VRM_TONE_MAPPING_EXPOSURE = 0.86;
 const VRMA_FILE_URL = `${import.meta.env.BASE_URL}avatar/idle_loop.vrma`;
-const MAX_MOUTH_LEVEL = 4;
 const DEFAULT_VISIBLE_HEIGHT_RATIO = 0.39;
 const DEFAULT_VISIBLE_WIDTH_RATIO = 0.72;
 const DEFAULT_LOOK_AT_HEIGHT_RATIO = 0.8;
@@ -156,10 +166,6 @@ const DEFAULT_LOOK_AT_RAISE_RATIO = 0.045;
 const DEFAULT_CAMERA_HEIGHT_OFFSET_RATIO = 0.0;
 const DEFAULT_MODEL_X_OFFSET = 0.0;
 const DEFAULT_MODEL_Y_ROTATION = -0.12;
-const IDLE_MOTION_MIN_DELAY_MS = 4500;
-const IDLE_MOTION_MAX_DELAY_MS = 9500;
-const IDLE_MOTION_AFTER_REACTION_DELAY_MS = 4200;
-const IDLE_MOTION_AFTER_SPEECH_DELAY_MS = 2600;
 const MANUAL_EFFECT_DURATION_MS = 2600;
 type EffectAnchorTarget = 'face' | 'leftEye' | 'rightEye';
 const EFFECT_ANCHOR_TARGETS = UI_ANCHOR_TARGETS;
@@ -370,11 +376,6 @@ function disposeVrmBackEffectSprites(
   sprites.ringMaterial.dispose();
 }
 
-interface IdleMotionState {
-  nextAt: number;
-  lockUntil: number;
-}
-
 function createVrmAnchorPoint(bounds: Box3, xRatio: number, yRatio: number) {
   return new Vector3(
     bounds.min.x + (bounds.max.x - bounds.min.x) * xRatio,
@@ -545,13 +546,12 @@ export function AvatarBackground({
   const animationTokenRef = useRef(0);
   const mixerRef = useRef<AnimationMixer | null>(null);
   const idleActionRef = useRef<AnimationAction | null>(null);
-  const idleMotionStateRef = useRef<IdleMotionState>({
-    nextAt: 0,
-    lockUntil: 0,
-  });
+  const idleMotionStateRef = useRef(createIdleMotionState());
   const isSpeakingRef = useRef(isSpeaking);
-  const targetMouthWeightRef = useRef(0);
-  const mouthWeightRef = useRef(0);
+  const mouthDriveStateRef = useRef<VrmMouthDriveState>({
+    mouthWeight: 0,
+    targetMouthWeight: 0,
+  });
   const effectAnchorRef = useRef(effectAnchor);
   const effectGeometryRef = useRef<EmotionEffectGeometry | null>(null);
   const effectPlaybackRef = useRef<EmotionEffectPlayback>({
@@ -660,7 +660,7 @@ export function AvatarBackground({
 
   useEffect(() => {
     if (!mouthLevelRef) {
-      targetMouthWeightRef.current = targetWeight;
+      mouthDriveStateRef.current.targetMouthWeight = targetWeight;
     }
   }, [mouthLevelRef, targetWeight]);
 
@@ -1061,60 +1061,17 @@ export function AvatarBackground({
         }
 
         const frame = faceCaptureRefRef.current?.current;
-        const mouthFromFaceCapture =
-          faceCaptureActiveRef.current &&
-          mouthDriverRef.current === 'faceCapture' &&
-          frame;
-
-        if (mouthFromFaceCapture && frame) {
-          applyFaceCaptureToVrm(vrm, frame, expressionController, {
-            applyMouth: true,
-            applyHeadEyes: true,
-          });
-          targetMouthWeightRef.current = 0;
-          mouthWeightRef.current = 0;
-        } else if (faceCaptureActiveRef.current && frame) {
-          applyFaceCaptureToVrm(vrm, frame, expressionController, {
-            applyMouth: false,
-            applyHeadEyes: true,
-          });
-
-          if (mouthLevelRefRef.current) {
-            const level = isSpeakingRef.current
-              ? mouthLevelRefRef.current.current / MAX_MOUTH_LEVEL
-              : 0;
-            targetMouthWeightRef.current = Math.min(Math.max(level, 0), 1);
-          }
-
-          const nextWeight =
-            mouthWeightRef.current +
-            (targetMouthWeightRef.current - mouthWeightRef.current) * 0.35;
-          mouthWeightRef.current = nextWeight;
-
-          if (mouthExpressionNameRef.current) {
-            vrm.expressionManager?.setValue(
-              mouthExpressionNameRef.current,
-              nextWeight,
-            );
-          }
-        } else if (mouthLevelRefRef.current) {
-          const level = isSpeakingRef.current
-            ? mouthLevelRefRef.current.current / MAX_MOUTH_LEVEL
-            : 0;
-          targetMouthWeightRef.current = Math.min(Math.max(level, 0), 1);
-
-          const nextWeight =
-            mouthWeightRef.current +
-            (targetMouthWeightRef.current - mouthWeightRef.current) * 0.35;
-          mouthWeightRef.current = nextWeight;
-
-          if (mouthExpressionNameRef.current) {
-            vrm.expressionManager?.setValue(
-              mouthExpressionNameRef.current,
-              nextWeight,
-            );
-          }
-        }
+        applyVrmMouthAndFaceCapture({
+          vrm,
+          expressionController,
+          faceCaptureActive: faceCaptureActiveRef.current,
+          mouthDriver: mouthDriverRef.current,
+          frame,
+          mouthLevelRef: mouthLevelRefRef.current,
+          isSpeaking: isSpeakingRef.current,
+          mouthExpressionName: mouthExpressionNameRef.current,
+          mouthState: mouthDriveStateRef.current,
+        });
         vrm.expressionManager?.update();
         vrm.update(delta);
       } else {
@@ -1191,10 +1148,9 @@ export function AvatarBackground({
       expressionControllerRef.current = null;
       mouthExpressionNameRef.current = null;
       animationTokenRef.current += 1;
-      idleMotionState.nextAt = 0;
-      idleMotionState.lockUntil = 0;
-      mouthWeightRef.current = 0;
-      targetMouthWeightRef.current = 0;
+      idleMotionStateRef.current = createIdleMotionState();
+      mouthDriveStateRef.current.mouthWeight = 0;
+      mouthDriveStateRef.current.targetMouthWeight = 0;
       effectGeometryRef.current = null;
       effectProjectionRef.current = null;
       effectPlaybackRef.current = { effect: null, weight: 0 };
@@ -1350,52 +1306,4 @@ export function AvatarBackground({
       )}
     </div>
   );
-}
-
-function maybeRunIdleMotion(
-  controller: VrmExpressionController,
-  state: IdleMotionState,
-  isSpeaking: boolean,
-) {
-  const now = window.performance.now();
-  if (isSpeaking) {
-    state.lockUntil = Math.max(
-      state.lockUntil,
-      now + IDLE_MOTION_AFTER_SPEECH_DELAY_MS,
-    );
-    return;
-  }
-
-  if (state.nextAt === 0) {
-    scheduleNextIdleMotion(state);
-    return;
-  }
-
-  if (now < state.lockUntil || now < state.nextAt) {
-    return;
-  }
-
-  const motion = pickVrmIdleMotion(controller);
-  if (motion) {
-    controller.gesture(motion.parts, motion.fadeMs, motion.holdMs);
-    state.lockUntil = now + motion.fadeMs + motion.holdMs + 900;
-  }
-
-  scheduleNextIdleMotion(state);
-}
-
-function suppressIdleMotion(state: IdleMotionState, delayMs: number) {
-  const now = window.performance.now();
-  state.lockUntil = Math.max(state.lockUntil, now + delayMs);
-  state.nextAt = Math.max(state.nextAt, state.lockUntil + 1200);
-}
-
-function scheduleNextIdleMotion(
-  state: IdleMotionState,
-  minDelayMs = IDLE_MOTION_MIN_DELAY_MS,
-  maxDelayMs = IDLE_MOTION_MAX_DELAY_MS,
-) {
-  const delayMs =
-    minDelayMs + Math.random() * Math.max(0, maxDelayMs - minDelayMs);
-  state.nextAt = window.performance.now() + delayMs;
 }

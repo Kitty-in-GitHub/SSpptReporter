@@ -3,7 +3,7 @@ import {
   resolveAivisSpeechApiUrl,
   resolveVoicepeakApiUrl,
   resolveVoicevoxApiUrl,
-} from '../../lib/voiceOptions';
+} from '../../../lib/voiceOptions';
 import {
   DEFAULT_AIVIS_CLOUD_MODEL_UUID,
   DEFAULT_EDGE_TTS_VOICE,
@@ -26,15 +26,15 @@ import {
   DEFAULT_ELEVENLABS_MODEL,
   DEFAULT_ELEVENLABS_OUTPUT_FORMAT,
   DEFAULT_ELEVENLABS_TTS_ENDPOINT,
-} from '../../lib/settings/constants';
-import type { AppSettings, TTSEngineOption } from '../../types/settings';
-import type { SetSettings } from './types';
+} from '../../../lib/settings/constants';
+import type { AppSettings, TTSEngineOption } from '../../../types/settings';
+import type { SetSettings } from '../types';
 
-export interface TtsSettingsUpdaterDeps {
+export interface TtsCoreUpdaterDeps {
   setSettings: SetSettings;
 }
 
-export function createTtsSettingsUpdaters(deps: TtsSettingsUpdaterDeps) {
+export function createTtsCoreUpdaters(deps: TtsCoreUpdaterDeps) {
   const { setSettings } = deps;
 
   const updateTTSEngine = useCallback(
@@ -249,206 +249,6 @@ export function createTtsSettingsUpdaters(deps: TtsSettingsUpdaterDeps) {
     [setSettings],
   );
 
-  const updateOpenAiCompatibleApiKey = useCallback(
-    (key: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, openAiCompatibleApiKey: key },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateOpenAiCompatibleApiUrl = useCallback(
-    (url: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, openAiCompatibleApiUrl: url },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateOpenAiCompatibleModel = useCallback(
-    (model: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, openAiCompatibleModel: model },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateOpenAiCompatibleSpeed = useCallback(
-    (speed: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, openAiCompatibleSpeed: speed },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateGeminiTtsModel = useCallback(
-    (model: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, geminiTtsModel: model },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateGeminiTtsLanguageCode = useCallback(
-    (languageCode: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, geminiTtsLanguageCode: languageCode },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateGeminiTtsPrompt = useCallback(
-    (prompt: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, geminiTtsPrompt: prompt },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateVoicevoxApiUrl = useCallback(
-    (url: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, voicevoxApiUrl: url },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateVoicepeakApiUrl = useCallback(
-    (url: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, voicepeakApiUrl: url },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateAivisSpeechApiUrl = useCallback(
-    (url: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, aivisSpeechApiUrl: url },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateAivisCloudApiKey = useCallback(
-    (key: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, aivisCloudApiKey: key },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateAivisCloudModelUuid = useCallback(
-    (modelUuid: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, aivisCloudModelUuid: modelUuid },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateAivisCloudSpeakerUuid = useCallback(
-    (speakerUuid: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, aivisCloudSpeakerUuid: speakerUuid },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateAivisCloudStyleId = useCallback(
-    (styleId: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, aivisCloudStyleId: styleId },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateMinimaxApiKey = useCallback(
-    (key: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, minimaxApiKey: key },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateMinimaxGroupId = useCallback(
-    (groupId: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, minimaxGroupId: groupId },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateXaiLanguage = useCallback(
-    (language: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, xaiLanguage: language },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateXaiCodec = useCallback(
-    (codec: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, xaiCodec: codec },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateXaiSampleRate = useCallback(
-    (sampleRate: number) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, xaiSampleRate: sampleRate },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updateXaiBitRate = useCallback(
-    (bitRate: number) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, xaiBitRate: bitRate },
-      }));
-    },
-    [setSettings],
-  );
-
   const updateTtsField = useCallback(
     <TKey extends keyof AppSettings['tts']>(
       key: TKey,
@@ -462,95 +262,9 @@ export function createTtsSettingsUpdaters(deps: TtsSettingsUpdaterDeps) {
     [setSettings],
   );
 
-  const updatePiperPlusBasePath = useCallback(
-    (basePath: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, piperPlusBasePath: basePath },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updatePiperPlusModelConfigFile = useCallback(
-    (modelConfigFile: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, piperPlusModelConfigFile: modelConfigFile },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updatePiperPlusModelFile = useCallback(
-    (modelFile: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, piperPlusModelFile: modelFile },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updatePiperPlusVoiceFile = useCallback(
-    (voiceFile: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, piperPlusVoiceFile: voiceFile },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updatePiperPlusSpeed = useCallback(
-    (speed: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, piperPlusSpeed: speed },
-      }));
-    },
-    [setSettings],
-  );
-
-  const updatePiperPlusNoiseScale = useCallback(
-    (noiseScale: string) => {
-      setSettings((prev) => ({
-        ...prev,
-        tts: { ...prev.tts, piperPlusNoiseScale: noiseScale },
-      }));
-    },
-    [setSettings],
-  );
-
   return {
     updateTTSEngine,
     updateTTSSpeaker,
-    updateOpenAiCompatibleApiKey,
-    updateOpenAiCompatibleApiUrl,
-    updateOpenAiCompatibleModel,
-    updateOpenAiCompatibleSpeed,
-    updateGeminiTtsModel,
-    updateGeminiTtsLanguageCode,
-    updateGeminiTtsPrompt,
-    updateVoicevoxApiUrl,
-    updateVoicepeakApiUrl,
-    updateAivisSpeechApiUrl,
-    updateAivisCloudApiKey,
-    updateAivisCloudModelUuid,
-    updateAivisCloudSpeakerUuid,
-    updateAivisCloudStyleId,
-    updateMinimaxApiKey,
-    updateMinimaxGroupId,
-    updateXaiLanguage,
-    updateXaiCodec,
-    updateXaiSampleRate,
-    updateXaiBitRate,
     updateTtsField,
-    updatePiperPlusBasePath,
-    updatePiperPlusModelConfigFile,
-    updatePiperPlusModelFile,
-    updatePiperPlusVoiceFile,
-    updatePiperPlusSpeed,
-    updatePiperPlusNoiseScale,
   };
 }

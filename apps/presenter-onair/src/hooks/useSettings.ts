@@ -15,7 +15,7 @@ import {
 } from '../lib/vrm/vrmModelStore';
 import { DEFAULT_VRM_MODEL_ID } from '../lib/vrm/vrmModelCatalog';
 import { createLlmSettingsUpdaters } from './settings/llmUpdaters';
-import { createTtsSettingsUpdaters } from './settings/ttsUpdaters';
+import { createTtsSettingsUpdaters } from './settings/tts';
 import { createVisualSettingsUpdaters } from './settings/visualUpdaters';
 import { createPresentSettingsUpdaters } from './settings/presentUpdaters';
 import { createStreamSettingsUpdaters } from './settings/streamUpdaters';
