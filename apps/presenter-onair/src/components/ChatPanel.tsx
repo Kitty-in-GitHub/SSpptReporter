@@ -23,6 +23,7 @@ interface ChatPanelProps {
   visual: VisualSettings;
   onEnterPresentMode?: () => void;
   onEnterEditMode?: () => void;
+  onEnterMocapMode?: () => void;
 }
 
 export function ChatPanel({
@@ -41,6 +42,7 @@ export function ChatPanel({
   visual,
   onEnterPresentMode,
   onEnterEditMode,
+  onEnterMocapMode,
 }: ChatPanelProps) {
   const isBroadcast = visual.layoutMode === 'broadcast';
   const shouldShowInput = !isBroadcast || visual.showInputInBroadcast;
@@ -86,6 +88,15 @@ export function ChatPanel({
             onClick={onEnterEditMode}
           >
             {UI_SESSION_MODES.edit}
+          </button>
+        )}
+        {onEnterMocapMode && (
+          <button
+            type="button"
+            className="chat-mode-button"
+            onClick={onEnterMocapMode}
+          >
+            {UI_SESSION_MODES.mocap}
           </button>
         )}
         <button

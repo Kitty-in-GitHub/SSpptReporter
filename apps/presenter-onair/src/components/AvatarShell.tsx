@@ -2,6 +2,8 @@ import type { RefObject } from 'react';
 import { AvatarBackground } from './AvatarPanel';
 import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import { toVrmReactionDraft } from '../lib/avatar';
+import type { FaceCaptureFrame } from '../lib/avatar/faceCaptureTypes';
+import type { FaceCaptureMouthDriver } from '../types/settings';
 import type { VrmAvatarReaction } from '../lib/vrmReactions';
 
 export interface AvatarShellProps {
@@ -14,6 +16,9 @@ export interface AvatarShellProps {
   backgroundImageUrl?: string | null;
   backgroundMode: 'default' | 'green' | 'transparent';
   showExpressionControls?: boolean;
+  faceCaptureRef?: RefObject<FaceCaptureFrame | null>;
+  faceCaptureActive?: boolean;
+  mouthDriver?: FaceCaptureMouthDriver;
 }
 
 export function AvatarShell({
@@ -26,6 +31,9 @@ export function AvatarShell({
   backgroundImageUrl,
   backgroundMode,
   showExpressionControls = true,
+  faceCaptureRef,
+  faceCaptureActive = false,
+  mouthDriver = 'faceCapture',
 }: AvatarShellProps) {
   const { reaction, emotionEffectReaction, visual, callbacks } = presenter;
 
@@ -72,6 +80,9 @@ export function AvatarShell({
       backgroundImageUrl={backgroundImageUrl}
       backgroundMode={backgroundMode}
       showExpressionControls={showExpressionControls}
+      faceCaptureRef={faceCaptureRef}
+      faceCaptureActive={faceCaptureActive}
+      mouthDriver={mouthDriver}
     />
   );
 }

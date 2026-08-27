@@ -153,6 +153,17 @@ export interface StreamSettings {
   twitchCommentIntervalMs: number;
 }
 
+export type FaceCaptureMouthDriver = 'faceCapture' | 'tts';
+export type FaceCaptureSource = 'webcam';
+
+export interface FaceCaptureSettings {
+  mouthDriver: FaceCaptureMouthDriver;
+  source: FaceCaptureSource;
+  deviceId: string;
+  showCameraPreview: boolean;
+  smoothing: number;
+}
+
 export interface CommentIntelligenceSettings {
   enabled: boolean;
   mode: 'rules' | 'hybrid' | 'llm-assisted';
@@ -211,6 +222,7 @@ export interface AppSettings {
   present: PresentSettings;
   screenVision: ScreenVisionSettings;
   stream: StreamSettings;
+  faceCapture: FaceCaptureSettings;
   commentIntelligence: CommentIntelligenceSettings;
   manneri: ManneriSettings;
 }

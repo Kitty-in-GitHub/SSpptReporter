@@ -7,6 +7,7 @@ import {
 } from './directorPlaybackError';
 
 const sampleAction = (utterance: string, actionId?: string): DirectorAction => ({
+  schema_version: '1.0',
   mode: 'present',
   utterance,
   action_id: actionId,

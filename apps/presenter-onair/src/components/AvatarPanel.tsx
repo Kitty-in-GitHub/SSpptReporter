@@ -67,6 +67,9 @@ import {
   type VrmCameraFraming,
   type VrmCameraFramingBase,
 } from '../lib/vrmCameraFraming';
+import { applyFaceCaptureToVrm } from '../lib/vrm/applyFaceCaptureToVrm';
+import type { FaceCaptureFrame } from '../lib/avatar/faceCaptureTypes';
+import type { FaceCaptureMouthDriver } from '../types/settings';
 import {
   UI_ANCHOR_TARGETS,
   UI_EMOTION_SHORT,
@@ -90,6 +93,9 @@ interface AvatarBackgroundProps {
   backgroundImageUrl?: string | null;
   backgroundMode?: 'default' | 'green' | 'transparent';
   showExpressionControls?: boolean;
+  faceCaptureRef?: RefObject<FaceCaptureFrame | null>;
+  faceCaptureActive?: boolean;
+  mouthDriver?: FaceCaptureMouthDriver;
 }
 
 interface CameraFramingState {
@@ -521,6 +527,9 @@ export function AvatarBackground({
   onVrmCameraFramingChange,
   backgroundMode: _backgroundMode = 'default',
   showExpressionControls = true,
+  faceCaptureRef,
+  faceCaptureActive = false,
+  mouthDriver = 'faceCapture',
 }: AvatarBackgroundProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -563,6 +572,12 @@ export function AvatarBackground({
   const [anchorTarget, setAnchorTarget] = useState<EffectAnchorTarget>('face');
   const mouthLevelRefRef = useRef(mouthLevelRef);
   mouthLevelRefRef.current = mouthLevelRef;
+  const faceCaptureRefRef = useRef(faceCaptureRef);
+  faceCaptureRefRef.current = faceCaptureRef;
+  const faceCaptureActiveRef = useRef(faceCaptureActive);
+  faceCaptureActiveRef.current = faceCaptureActive;
+  const mouthDriverRef = useRef(mouthDriver);
+  mouthDriverRef.current = mouthDriver;
   const showManualControls =
     showExpressionControls && reactionControlMode === 'manual';
   const activeEmotionEffectReaction =
@@ -1034,31 +1049,71 @@ export function AvatarBackground({
         mixer?.update(delta);
         const expressionController = expressionControllerRef.current;
         if (expressionController) {
-          maybeRunIdleMotion(
-            expressionController,
-            idleMotionState,
-            isSpeakingRef.current,
-          );
+          const useFaceCapture = faceCaptureActiveRef.current;
+          if (!useFaceCapture) {
+            maybeRunIdleMotion(
+              expressionController,
+              idleMotionState,
+              isSpeakingRef.current,
+            );
+          }
           expressionController.update(delta);
         }
 
-        if (mouthLevelRefRef.current) {
+        const frame = faceCaptureRefRef.current?.current;
+        const mouthFromFaceCapture =
+          faceCaptureActiveRef.current &&
+          mouthDriverRef.current === 'faceCapture' &&
+          frame;
+
+        if (mouthFromFaceCapture && frame) {
+          applyFaceCaptureToVrm(vrm, frame, expressionController, {
+            applyMouth: true,
+            applyHeadEyes: true,
+          });
+          targetMouthWeightRef.current = 0;
+          mouthWeightRef.current = 0;
+        } else if (faceCaptureActiveRef.current && frame) {
+          applyFaceCaptureToVrm(vrm, frame, expressionController, {
+            applyMouth: false,
+            applyHeadEyes: true,
+          });
+
+          if (mouthLevelRefRef.current) {
+            const level = isSpeakingRef.current
+              ? mouthLevelRefRef.current.current / MAX_MOUTH_LEVEL
+              : 0;
+            targetMouthWeightRef.current = Math.min(Math.max(level, 0), 1);
+          }
+
+          const nextWeight =
+            mouthWeightRef.current +
+            (targetMouthWeightRef.current - mouthWeightRef.current) * 0.35;
+          mouthWeightRef.current = nextWeight;
+
+          if (mouthExpressionNameRef.current) {
+            vrm.expressionManager?.setValue(
+              mouthExpressionNameRef.current,
+              nextWeight,
+            );
+          }
+        } else if (mouthLevelRefRef.current) {
           const level = isSpeakingRef.current
             ? mouthLevelRefRef.current.current / MAX_MOUTH_LEVEL
             : 0;
           targetMouthWeightRef.current = Math.min(Math.max(level, 0), 1);
-        }
 
-        const nextWeight =
-          mouthWeightRef.current +
-          (targetMouthWeightRef.current - mouthWeightRef.current) * 0.35;
-        mouthWeightRef.current = nextWeight;
+          const nextWeight =
+            mouthWeightRef.current +
+            (targetMouthWeightRef.current - mouthWeightRef.current) * 0.35;
+          mouthWeightRef.current = nextWeight;
 
-        if (mouthExpressionNameRef.current) {
-          vrm.expressionManager?.setValue(
-            mouthExpressionNameRef.current,
-            nextWeight,
-          );
+          if (mouthExpressionNameRef.current) {
+            vrm.expressionManager?.setValue(
+              mouthExpressionNameRef.current,
+              nextWeight,
+            );
+          }
         }
         vrm.expressionManager?.update();
         vrm.update(delta);

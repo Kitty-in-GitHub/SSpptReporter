@@ -67,6 +67,7 @@ export const UI_SESSION_MODES = {
   chat: '聊天',
   present: '汇报',
   edit: '讲稿导演台',
+  mocap: '面捕',
 } as const;
 
 export const UI_QA = {

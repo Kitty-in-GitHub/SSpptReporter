@@ -24,6 +24,22 @@
 
 ---
 
+---
+
+### 2026-08-27 · 面捕模式（Mocap Session）+ Kalidokit 摄像头跟踪
+
+- **做了什么**：
+  - 新增 `sessionMode: mocap`（面捕），与 chat/present/edit 并列；汇报模式不接入面捕
+  - `useFaceCapture` + Worker（MediaPipe Face Landmarker）+ Kalidokit `Face.solve`
+  - `AvatarPanel` 可选 `faceCaptureRef`；口型可切换面捕 / TTS（`faceCapture.mouthDriver`）
+  - 设置区「面捕（仅面捕模式）」；文档 `docs/face-capture.md`
+- **未做 / 阻塞**：`apps/mocap-gateway` UDP 外部源（M2 占位 README）
+- **下一台机器应优先**：OBS 手动验收；可选实现 iFacialMocap 桥
+- **相关文件**：`app/MocapSession.tsx` · `hooks/useFaceCapture.ts` · `lib/vrm/faceCaptureMapper.ts`
+- **验证方式**：切面捕模式 → 摄像头授权 → 头眼跟随；口型切换面捕/TTS
+
+---
+
 ### 2026-08-27 · 队列失败可见化 + 巨石拆分（settings / SettingsPanel / App session）
 
 - **做了什么**：

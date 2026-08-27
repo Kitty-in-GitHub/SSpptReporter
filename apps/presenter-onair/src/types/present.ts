@@ -1,4 +1,4 @@
-export type SessionMode = 'chat' | 'present' | 'edit';
+export type SessionMode = 'chat' | 'present' | 'edit' | 'mocap';
 
 export type PresentLayout =
   | 'split_slide_left'
@@ -81,6 +81,8 @@ const PIP_CORNERS: PipCorner[] = [
   'top-left',
 ];
 
+const SESSION_MODES: SessionMode[] = ['chat', 'present', 'edit', 'mocap'];
+
 export function normalizePresentSettings(
   partial?: Partial<PresentSettings> | null,
 ): PresentSettings {
@@ -89,10 +91,9 @@ export function normalizePresentSettings(
     ...DEFAULT_PRESENT_SETTINGS,
     ...partial,
     activeDeckId: activeDeckId || DEFAULT_PRESENT_SETTINGS.activeDeckId,
-    sessionMode:
-      partial?.sessionMode === 'present' || partial?.sessionMode === 'edit'
-        ? partial.sessionMode
-        : DEFAULT_PRESENT_SETTINGS.sessionMode,
+    sessionMode: SESSION_MODES.includes(partial?.sessionMode as SessionMode)
+      ? (partial!.sessionMode as SessionMode)
+      : DEFAULT_PRESENT_SETTINGS.sessionMode,
     presentLayout: partial?.presentLayout ?? DEFAULT_PRESENT_SETTINGS.presentLayout,
     pipCorner: PIP_CORNERS.includes(partial?.pipCorner as PipCorner)
       ? (partial!.pipCorner as PipCorner)

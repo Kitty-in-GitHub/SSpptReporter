@@ -46,6 +46,14 @@ export function SessionModeToolbar({
         >
           {UI_SESSION_MODES.edit}
         </button>
+        <button
+          type="button"
+          className={sessionMode === 'mocap' ? 'is-active' : undefined}
+          disabled={sessionMode === 'mocap'}
+          onClick={() => onSessionModeChange('mocap')}
+        >
+          {UI_SESSION_MODES.mocap}
+        </button>
       </div>
       {children}
       {title ? <div className="present-toolbar-title">{title}</div> : null}

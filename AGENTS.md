@@ -83,7 +83,8 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 |------|------|
 | 加载 VRM | `useResolvedVrmModel` · `AvatarPanel`（`vrmUrl` prop，切换时重载） |
 | 设置持久化 | `lib/settings/` · `hooks/useSettings` · `hooks/settings/*Updaters` |
-| 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession`） |
+| 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession` / `MocapSession`） |
+| 面捕直播皮套 | `MocapSession` · `useFaceCapture` · `docs/face-capture.md`（仅 `sessionMode=mocap`） |
 | Avatar 呈现层 | `lib/avatar/` · `useAvatarPresenter` · `AvatarShell`（Director/Brain 只产出 `AvatarReactionDraft`） |
 | Director 队列 | `hooks/useDirectorQueue`（`lastPlaybackError` 可见化） |
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |

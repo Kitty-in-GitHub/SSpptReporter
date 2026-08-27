@@ -11,6 +11,7 @@ import type { TwitchChatMessage } from '../services/twitch/twitchService';
 import type { YouTubeChatMessage } from '../services/youtube/youtubeService';
 import { ChatSession } from './ChatSession';
 import { EditSession } from './EditSession';
+import { MocapSession } from './MocapSession';
 import { PresentSession } from './PresentSession';
 import { SettingsDialog } from './SettingsDialog';
 import '../styles/app.css';
@@ -27,8 +28,10 @@ export default function App() {
   const [presentStageMode, setPresentStageMode] = useState(false);
   const backgroundObjectUrlRef = useRef<string | null>(null);
   const avatarPresenterRef = useRef<AvatarPresenterController | null>(null);
+  const mocapAvatarPresenterRef = useRef<AvatarPresenterController | null>(null);
 
   const sessionMode = settingsHook.settings.present.sessionMode;
+  const faceCaptureMouthDriver = settingsHook.settings.faceCapture.mouthDriver;
 
   useEffect(() => {
     if (sessionMode !== 'present') {
@@ -46,10 +49,19 @@ export default function App() {
 
   const handleAudioPlay = useCallback(
     async (arrayBuffer: ArrayBuffer) => {
+      if (
+        sessionMode === 'mocap' &&
+        faceCaptureMouthDriver === 'faceCapture'
+      ) {
+        return;
+      }
       await play(arrayBuffer);
     },
-    [play],
+    [faceCaptureMouthDriver, play, sessionMode],
   );
+
+  const activeAvatarPresenterRef =
+    sessionMode === 'mocap' ? mocapAvatarPresenterRef : avatarPresenterRef;
 
   const {
     messages,
@@ -59,8 +71,8 @@ export default function App() {
     processVisionChat,
   } = useAituberCore({
     onAudioPlay: handleAudioPlay,
-    onSpeechStart: () => avatarPresenterRef.current?.onSpeechStart(),
-    onSpeechEnd: () => avatarPresenterRef.current?.onSpeechEnd(),
+    onSpeechStart: (cue) => activeAvatarPresenterRef.current?.onSpeechStart(cue),
+    onSpeechEnd: () => activeAvatarPresenterRef.current?.onSpeechEnd(),
     settings: settingsHook.settings,
     getApiKeyForProvider: settingsHook.getApiKeyForProvider,
   });
@@ -208,6 +220,16 @@ export default function App() {
         <EditSession
           settingsHook={settingsHook}
           onToggleSettings={toggleSettingsDialog}
+        />
+      ) : sessionMode === 'mocap' ? (
+        <MocapSession
+          settingsHook={settingsHook}
+          onToggleSettings={toggleSettingsDialog}
+          avatarPresenterRef={mocapAvatarPresenterRef}
+          mouthLevelRef={mouthLevelRef}
+          isSpeaking={isSpeaking}
+          backgroundImageUrl={backgroundImageUrl}
+          partialCaption={partialResponse}
         />
       ) : sessionMode === 'present' ? (
         <PresentSession

@@ -1,39 +1,35 @@
 import { useEffect, type RefObject } from 'react';
-import { ChatPanel } from '../components/ChatPanel';
+import { MocapPanel } from '../components/mocap/MocapPanel';
 import { useAvatarPresenter } from '../hooks/useAvatarPresenter';
+import { useFaceCapture } from '../hooks/useFaceCapture';
 import { useResolvedVrmModel } from '../hooks/useResolvedVrmModel';
 import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import type { useSettings } from '../hooks/useSettings';
-import type { ChatMessage } from '../types/chat';
 import { getEmotionEffectAnchor } from '../lib/emotionEffectAnchor';
 
 type SettingsHook = ReturnType<typeof useSettings>;
 
-interface ChatSessionProps {
+interface MocapSessionProps {
   settingsHook: SettingsHook;
   onToggleSettings: () => void;
   avatarPresenterRef: RefObject<AvatarPresenterController | null>;
-  messages: ChatMessage[];
-  partialResponse: string;
-  isProcessing: boolean;
-  onSend: (text: string) => void;
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
   backgroundImageUrl: string | null;
+  partialCaption?: string;
 }
 
-export function ChatSession({
+export function MocapSession({
   settingsHook,
   onToggleSettings,
   avatarPresenterRef,
-  messages,
-  partialResponse,
-  isProcessing,
-  onSend,
   mouthLevelRef,
   isSpeaking,
   backgroundImageUrl,
-}: ChatSessionProps) {
+  partialCaption = '',
+}: MocapSessionProps) {
+  const faceCaptureSettings = settingsHook.settings.faceCapture;
+
   const {
     vrmUrl,
     isResolving: isVrmResolving,
@@ -43,7 +39,7 @@ export function ChatSession({
 
   const avatarPresenter = useAvatarPresenter(
     {
-      reactionControlMode: settingsHook.settings.visual.vrmReactionControlMode,
+      reactionControlMode: 'none',
       emotionEffectMap: settingsHook.settings.visual.vrmEmotionEffectMap,
       effectAnchor: getEmotionEffectAnchor(
         settingsHook.settings.visual.vrmEmotionEffectAnchors,
@@ -63,6 +59,12 @@ export function ChatSession({
     },
   );
 
+  const { faceCaptureRef, isRunning, error } = useFaceCapture({
+    enabled: faceCaptureSettings.source === 'webcam',
+    deviceId: faceCaptureSettings.deviceId,
+    smoothing: faceCaptureSettings.smoothing,
+  });
+
   useEffect(() => {
     avatarPresenterRef.current = avatarPresenter;
     return () => {
@@ -71,11 +73,9 @@ export function ChatSession({
   }, [avatarPresenter, avatarPresenterRef]);
 
   return (
-    <ChatPanel
-      messages={messages}
-      partialResponse={partialResponse}
-      isProcessing={isProcessing}
-      onSend={onSend}
+    <MocapPanel
+      onToggleSettings={onToggleSettings}
+      onSessionModeChange={settingsHook.updatePresentSessionMode}
       mouthLevelRef={mouthLevelRef}
       isSpeaking={isSpeaking}
       avatarPresenter={avatarPresenter}
@@ -84,12 +84,13 @@ export function ChatSession({
       vrmResolving={isVrmResolving}
       backgroundImageUrl={backgroundImageUrl}
       visual={settingsHook.settings.visual}
-      onToggleSettings={onToggleSettings}
-      onEnterPresentMode={() =>
-        settingsHook.updatePresentSessionMode('present')
-      }
-      onEnterEditMode={() => settingsHook.updatePresentSessionMode('edit')}
-      onEnterMocapMode={() => settingsHook.updatePresentSessionMode('mocap')}
+      faceCaptureRef={faceCaptureRef}
+      mouthDriver={faceCaptureSettings.mouthDriver}
+      onMouthDriverChange={settingsHook.updateFaceCaptureMouthDriver}
+      faceCaptureError={error}
+      faceCaptureRunning={isRunning}
+      showCameraPreview={faceCaptureSettings.showCameraPreview}
+      partialCaption={partialCaption}
     />
   );
 }

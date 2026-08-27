@@ -52,6 +52,7 @@ import {
   DEFAULT_PIPER_PLUS_VOICE_FILE,
   DEFAULT_UNREAL_SPEECH_TTS_ENDPOINT,
 } from './constants';
+import { normalizeFaceCaptureSettings, DEFAULT_FACE_CAPTURE_SETTINGS } from './faceCapture';
 
 export function getOrderedModels(provider: ChatProviderOption): string[] {
   const models = AITuberOnAirCore.getSupportedModels(provider);
@@ -247,6 +248,9 @@ export function getDefaultSettings(): AppSettings {
       twitchEnabled: false,
       twitchCommentIntervalMs: 20_000,
     },
+    faceCapture: {
+      ...DEFAULT_FACE_CAPTURE_SETTINGS,
+    },
     commentIntelligence: {
       enabled: true,
       mode: 'rules',
@@ -340,6 +344,7 @@ export function mergeLoadedSettings(saved: Partial<AppSettings>): AppSettings {
     present: normalizePresentSettings(saved.present),
     screenVision: { ...defaults.screenVision, ...saved.screenVision },
     stream: { ...defaults.stream, ...saved.stream },
+    faceCapture: normalizeFaceCaptureSettings(saved.faceCapture),
     commentIntelligence: {
       ...defaults.commentIntelligence,
       ...saved.commentIntelligence,

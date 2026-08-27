@@ -300,8 +300,8 @@ export function useDirectorQueue({
 
       if (playbackStateRef.current === 'playing') {
         return {
-          outcome: 'already_playing',
           ...getRunResult(),
+          outcome: 'already_playing',
         };
       }
 

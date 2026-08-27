@@ -8,6 +8,7 @@ import { LlmSettingsSection } from './settings/LlmSettingsSection';
 import { PresentQaSettingsSection } from './settings/PresentQaSettingsSection';
 import { TtsSettingsSection } from './settings/TtsSettingsSection';
 import { VisualSettingsSection } from './settings/VisualSettingsSection';
+import { FaceCaptureSettingsSection } from './settings/FaceCaptureSettingsSection';
 
 type SettingsHook = ReturnType<typeof useSettings>;
 type ScreenVisionController = ReturnType<typeof useScreenVisionController>;
@@ -28,6 +29,7 @@ type SectionKey =
   | 'visual'
   | 'emotionEffects'
   | 'stream'
+  | 'faceCapture'
   | 'commentIntelligence'
   | 'manneri';
 
@@ -54,6 +56,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
     visual: true,
     emotionEffects: true,
     stream: true,
+    faceCapture: true,
     commentIntelligence: true,
     manneri: true,
   });
@@ -127,6 +130,14 @@ export function SettingsPanel(props: SettingsPanelProps) {
           onAutoIntervalMsChange={settingsHook.updateScreenVisionAutoIntervalMs}
         />
       </div>
+
+      <FaceCaptureSettingsSection
+        {...settingsHook}
+        settings={settings}
+        disabled={disabled}
+        isExpanded={expandedSections.faceCapture}
+        onToggleExpand={() => toggleSection('faceCapture')}
+      />
 
       <StreamSettings
         stream={settings.stream}

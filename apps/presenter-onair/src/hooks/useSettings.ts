@@ -19,6 +19,7 @@ import { createTtsSettingsUpdaters } from './settings/ttsUpdaters';
 import { createVisualSettingsUpdaters } from './settings/visualUpdaters';
 import { createPresentSettingsUpdaters } from './settings/presentUpdaters';
 import { createStreamSettingsUpdaters } from './settings/streamUpdaters';
+import { createFaceCaptureUpdaters } from './settings/faceCaptureUpdaters';
 
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
@@ -103,6 +104,8 @@ export function useSettings() {
 
   const streamUpdaters = createStreamSettingsUpdaters({ setSettings });
 
+  const faceCaptureUpdaters = createFaceCaptureUpdaters({ setSettings });
+
   return {
     settings,
     availableModels,
@@ -115,5 +118,6 @@ export function useSettings() {
     ...visualUpdaters,
     ...presentUpdaters,
     ...streamUpdaters,
+    ...faceCaptureUpdaters,
   };
 }

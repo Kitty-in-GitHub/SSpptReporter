@@ -4,7 +4,7 @@ import type { DirectorAction } from '@ssreporter/director';
 import { useDirectorQueue } from './useDirectorQueue';
 
 function makeAction(utterance: string, id?: string): DirectorAction {
-  return { mode: 'present', utterance, action_id: id };
+  return { schema_version: '1.0', mode: 'present', utterance, action_id: id };
 }
 
 describe('useDirectorQueue', () => {
