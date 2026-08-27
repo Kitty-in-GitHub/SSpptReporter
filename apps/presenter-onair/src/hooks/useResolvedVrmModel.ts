@@ -3,6 +3,10 @@ import {
   resolveBuiltinVrmUrl,
   vrmEffectAnchorProfileId,
 } from '../lib/vrm/vrmModelCatalog';
+import {
+  builtinVrmMissingMessage,
+  probeBuiltinVrmUrl,
+} from '../lib/vrm/probeBuiltinVrmUrl';
 import { getImportedVrmModelBlob } from '../lib/vrm/vrmModelStore';
 import type { VisualSettings } from '../types/settings';
 
@@ -34,7 +38,18 @@ export function useResolvedVrmModel(
     };
 
     if (visual.vrmModelSource === 'builtin') {
-      finish(resolveBuiltinVrmUrl(visual.vrmModelId), null);
+      const url = resolveBuiltinVrmUrl(visual.vrmModelId);
+      void probeBuiltinVrmUrl(url)
+        .then((available) => {
+          if (available) {
+            finish(url, null);
+            return;
+          }
+          finish(null, builtinVrmMissingMessage(visual.vrmModelId));
+        })
+        .catch(() => {
+          finish(null, builtinVrmMissingMessage(visual.vrmModelId));
+        });
       return () => {
         revoked = true;
       };

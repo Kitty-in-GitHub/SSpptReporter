@@ -15,6 +15,10 @@ import {
   avatarReactionsFromDirectorResolved,
   type AvatarReactionDraft,
 } from '../lib/avatar';
+import {
+  formatDirectorPlaybackError,
+  isDirectorQueuePlaybackCompleted,
+} from '../lib/directorPlaybackError';
 import { mergePreemptiveDuringPlayback } from '../lib/directorQueueMerge';
 import { sleepMs } from '../lib/sleepMs';
 
@@ -26,6 +30,47 @@ export interface UseDirectorQueueOptions {
   onSlideAction?: (slideAction: SlideAction) => void | Promise<void>;
   resolvePerformance?: (action: DirectorAction) => ResolvedBeatPerformance;
   resumeDeckAfterQaInterrupt?: () => boolean;
+}
+
+export type DirectorQueueRunOutcome =
+  | 'completed'
+  | 'failed'
+  | 'stopped'
+  | 'empty'
+  | 'already_playing';
+
+export interface DirectorQueueRunResult {
+  outcome: DirectorQueueRunOutcome;
+  lastPlaybackError: string | null;
+  currentIndex: number;
+  queueLength: number;
+  playbackState: DirectorQueuePlaybackState;
+}
+
+function buildRunResult(
+  playbackState: DirectorQueuePlaybackState,
+  queueLength: number,
+  currentIndex: number,
+  lastPlaybackError: string | null,
+): DirectorQueueRunResult {
+  const completed = isDirectorQueuePlaybackCompleted(
+    playbackState,
+    queueLength,
+    currentIndex,
+    lastPlaybackError,
+  );
+  const outcome: DirectorQueueRunOutcome = completed
+    ? 'completed'
+    : lastPlaybackError
+      ? 'failed'
+      : 'stopped';
+  return {
+    outcome,
+    lastPlaybackError,
+    currentIndex,
+    queueLength,
+    playbackState,
+  };
 }
 
 export function useDirectorQueue({
@@ -42,6 +87,9 @@ export function useDirectorQueue({
   const [queue, setQueue] = useState<DirectorAction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [lastRejections, setLastRejections] = useState<string[]>([]);
+  const [lastPlaybackError, setLastPlaybackError] = useState<string | null>(
+    null,
+  );
 
   const queueRef = useRef<DirectorAction[]>([]);
   const playbackStateRef = useRef<DirectorQueuePlaybackState>('idle');
@@ -49,10 +97,16 @@ export function useDirectorQueue({
   const pausedRef = useRef(false);
   const pauseResolversRef = useRef<(() => void)[]>([]);
   const currentIndexRef = useRef(-1);
+  const lastPlaybackErrorRef = useRef<string | null>(null);
   const resumeDeckAfterQaRef = useRef(resumeDeckAfterQaInterrupt);
   const resolvePerformanceRef = useRef(resolvePerformance);
   resumeDeckAfterQaRef.current = resumeDeckAfterQaInterrupt;
   resolvePerformanceRef.current = resolvePerformance;
+
+  const syncLastPlaybackError = useCallback((error: string | null) => {
+    lastPlaybackErrorRef.current = error;
+    setLastPlaybackError(error);
+  }, []);
 
   const syncQueue = useCallback((items: DirectorAction[]) => {
     queueRef.current = items;
@@ -62,6 +116,15 @@ export function useDirectorQueue({
   const setPlayback = useCallback((state: DirectorQueuePlaybackState) => {
     playbackStateRef.current = state;
     setPlaybackState(state);
+  }, []);
+
+  const getRunResult = useCallback((): DirectorQueueRunResult => {
+    return buildRunResult(
+      playbackStateRef.current,
+      queueRef.current.length,
+      currentIndexRef.current,
+      lastPlaybackErrorRef.current,
+    );
   }, []);
 
   const waitWhilePaused = useCallback(async () => {
@@ -140,7 +203,10 @@ export function useDirectorQueue({
           if (resolved.timing.pause_after_ms) {
             await sleepMs(resolved.timing.pause_after_ms);
           }
-        } catch {
+        } catch (error) {
+          const message = formatDirectorPlaybackError(index, action, error);
+          syncLastPlaybackError(message);
+          setLastRejections((prev) => [...prev, message]);
           if (runIdRef.current === runId) {
             setPlayback('idle');
           }
@@ -156,6 +222,7 @@ export function useDirectorQueue({
       syncQueue([]);
       currentIndexRef.current = -1;
       setCurrentIndex(-1);
+      syncLastPlaybackError(null);
       setPlayback('idle');
     },
     [
@@ -165,6 +232,7 @@ export function useDirectorQueue({
       setPlayback,
       speak,
       stopSpeech,
+      syncLastPlaybackError,
       syncQueue,
       waitWhilePaused,
     ],
@@ -199,6 +267,7 @@ export function useDirectorQueue({
         stopSpeech();
         const nextRunId = runIdRef.current;
         syncQueue(merged);
+        syncLastPlaybackError(null);
         setPlayback('playing');
         void runFromIndex(0, nextRunId);
         return {
@@ -210,32 +279,50 @@ export function useDirectorQueue({
       syncQueue(merged);
       return { acceptedCount: accepted.length, rejectedCount: rejected.length };
     },
-    [runFromIndex, setPlayback, stopSpeech, syncQueue],
+    [runFromIndex, setPlayback, stopSpeech, syncLastPlaybackError, syncQueue],
   );
 
   const playQueue = useCallback(
-    async (inputs?: unknown[]) => {
+    async (inputs?: unknown[]): Promise<DirectorQueueRunResult> => {
       if (inputs?.length) {
         enqueueActions(inputs);
       }
 
       if (queueRef.current.length === 0) {
-        return;
+        return {
+          outcome: 'empty',
+          lastPlaybackError: lastPlaybackErrorRef.current,
+          currentIndex: currentIndexRef.current,
+          queueLength: 0,
+          playbackState: playbackStateRef.current,
+        };
       }
 
       if (playbackStateRef.current === 'playing') {
-        return;
+        return {
+          outcome: 'already_playing',
+          ...getRunResult(),
+        };
       }
 
       pausedRef.current = false;
       resumePausedWaiters();
+      syncLastPlaybackError(null);
       runIdRef.current += 1;
       const runId = runIdRef.current;
       setPlayback('playing');
       setCurrentIndex(0);
       await runFromIndex(0, runId);
+      return getRunResult();
     },
-    [enqueueActions, resumePausedWaiters, runFromIndex, setPlayback],
+    [
+      enqueueActions,
+      getRunResult,
+      resumePausedWaiters,
+      runFromIndex,
+      setPlayback,
+      syncLastPlaybackError,
+    ],
   );
 
   const pause = useCallback(() => {
@@ -274,6 +361,7 @@ export function useDirectorQueue({
       syncQueue([]);
       currentIndexRef.current = -1;
       setCurrentIndex(-1);
+      syncLastPlaybackError(null);
       setPlayback('idle');
       return;
     }
@@ -288,6 +376,7 @@ export function useDirectorQueue({
     runFromIndex,
     setPlayback,
     stopSpeech,
+    syncLastPlaybackError,
     syncQueue,
   ]);
 
@@ -300,14 +389,23 @@ export function useDirectorQueue({
     syncQueue([]);
     currentIndexRef.current = -1;
     setCurrentIndex(-1);
+    syncLastPlaybackError(null);
     setPlayback('idle');
-  }, [onResetEmotion, resumePausedWaiters, setPlayback, stopSpeech, syncQueue]);
+  }, [
+    onResetEmotion,
+    resumePausedWaiters,
+    setPlayback,
+    stopSpeech,
+    syncLastPlaybackError,
+    syncQueue,
+  ]);
 
   return {
     playbackState,
     queue,
     currentIndex,
     lastRejections,
+    lastPlaybackError,
     enqueueActions,
     playQueue,
     pause,

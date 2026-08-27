@@ -81,8 +81,11 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 
 | 用途 | 路径 |
 |------|------|
-| 加载 VRM | `apps/presenter-onair/src/components/AvatarPanel.tsx` → `VRM_FILE_URL` |
+| 加载 VRM | `useResolvedVrmModel` · `AvatarPanel`（`vrmUrl` prop，切换时重载） |
+| 设置持久化 | `lib/settings/` · `hooks/useSettings` · `hooks/settings/*Updaters` |
+| 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession`） |
 | Avatar 呈现层 | `lib/avatar/` · `useAvatarPresenter` · `AvatarShell`（Director/Brain 只产出 `AvatarReactionDraft`） |
+| Director 队列 | `hooks/useDirectorQueue`（`lastPlaybackError` 可见化） |
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |
 | Present 汇报 | `apps/presenter-onair/src/components/present/PresentShell.tsx` |
 | Q&A 面板 | `apps/presenter-onair/src/components/present/QaPanel.tsx` |
@@ -99,7 +102,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | 样例指令 | `apps/presenter-onair/src/fixtures/sample-action.json` |
 | emotion 映射 | `packages/director/src/index.ts` → `emotionToVrmExpression` |
 | 校验 | `packages/director/src/validate.ts` |
-| 表情锚点 profile | `apps/presenter-onair/src/App.tsx` → `VRM_EFFECT_ANCHOR_PROFILE_ID` |
+| 表情锚点 profile | `useResolvedVrmModel` → `effectAnchorProfileId`（每 VRM 模型独立） |
 
 ## 建议的下一步（优先级）
 

@@ -5,6 +5,7 @@ interface PresentScriptCueProps {
   currentAction: DirectorAction | null;
   currentIndex: number;
   queueLength: number;
+  error?: string | null;
   idleHint?: string;
 }
 
@@ -13,6 +14,7 @@ export function PresentScriptCue({
   currentAction,
   currentIndex,
   queueLength,
+  error = null,
   idleHint = '点击「播放讲稿」开始本场汇报',
 }: PresentScriptCueProps) {
   const isActive =
@@ -27,7 +29,9 @@ export function PresentScriptCue({
   return (
     <footer className="present-script-cue">
       <div className="present-script-cue-inner">
-        {hasCue ? (
+        {error ? (
+          <p className="present-script-cue-error">{error}</p>
+        ) : hasCue ? (
           <>
             <span className="present-script-cue-progress">{progress}</span>
             <p className="present-script-cue-text">{currentAction.utterance}</p>

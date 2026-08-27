@@ -16,6 +16,9 @@ const brainRoot = path.resolve(__dirname, '../../packages/brain/src');
 
 // https://vite.dev/config/
 export default defineConfig({
+  test: {
+    environment: 'happy-dom',
+  },
   resolve: {
     alias: [
       {

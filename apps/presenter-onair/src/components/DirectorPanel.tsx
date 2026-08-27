@@ -181,18 +181,23 @@ export function DirectorPanel({
     queue.playbackState === 'playing' || queue.playbackState === 'paused';
 
   const displayStatus = isPresentMode ? deckPlayback.status : status;
-  const displayErrors = isPresentMode
-    ? [...lastErrors, ...deckPlayback.lastErrors, ...queue.lastRejections]
-    : [...lastErrors, ...queue.lastRejections];
+  const playbackErrors = [
+    ...lastErrors,
+    ...(isPresentMode ? deckPlayback.lastErrors : []),
+    ...queue.lastRejections,
+    ...(queue.lastPlaybackError ? [queue.lastPlaybackError] : []),
+  ];
+  const displayErrors = [...new Set(playbackErrors.filter(Boolean))];
+  const hasPlaybackError = Boolean(queue.lastPlaybackError);
 
   if (isPresentMode && !expanded) {
     return (
       <div className="director-panel director-panel-present">
         <button
           type="button"
-          className={`director-panel-fab${isQueueBusy ? ' is-busy' : ''}`}
+          className={`director-panel-fab${isQueueBusy ? ' is-busy' : ''}${hasPlaybackError ? ' is-error' : ''}`}
           onClick={() => setExpanded(true)}
-          title="展开导演台"
+          title={hasPlaybackError ? '展开导演台查看播放错误' : '展开导演台'}
           aria-label="展开导演台"
         >
           ▶

@@ -22,6 +22,22 @@
 
 ---
 
+---
+
+### 2026-08-27 · 队列失败可见化 + 巨石拆分（settings / SettingsPanel / App session）
+
+- **做了什么**：
+  - **P0 Bug**：`useDirectorQueue` 增加 `lastPlaybackError`；`useDeckScriptPlayback` 修正误报「播放完成」；`PresentScriptCue` / 导演台 FAB 展示错误
+  - **P1 Bug**：导入 VRM stale 自动回退；builtin `HEAD` 探测与设置面板 `vrmResolveError` 提示
+  - **拆分**：`lib/settings/`；`hooks/settings/*Updaters`；`components/settings/*Section`；`app/PresentSession` 等 session 壳
+  - 文档：整理 `decisions.md` ADR 重复编号；更新 `AGENTS.md` 入口表
+- **未做 / 阻塞**：CI workflow；聊天模式接 Brain（仍为产品边界）
+- **下一台机器应优先**：Phase 2/3 人工验收；填 `content-private` 材料
+- **相关文件**：`useDirectorQueue.ts`、`directorPlaybackError.ts`、`lib/settings/`、`hooks/settings/`、`components/settings/`、`app/`
+- **验证方式**：`npm run typecheck`；`npm run test -w @ssreporter/presenter-onair`
+
+---
+
 ### 2026-08-27 · VRM 切换与导入（设置面板 + IndexedDB）
 
 - **设备/环境**：Win10 / presenter-onair

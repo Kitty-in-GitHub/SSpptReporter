@@ -46,7 +46,7 @@
   - `listSelectableProfiles` **不包含** `qa`（专用于问答 TTS，不出现在讲稿导演台 preset 列表）
 - **理由**：短答需要稳定、统一的语音基线；表情仍可随回答语义变化，与 Present 讲稿 preset 策略一致。
 
----
+## ADR-001 · 皮套路线
 
 - **日期**：2026-08-20
 - **状态**：accepted
@@ -110,7 +110,7 @@
   - **Phase 2**：Q&A + ASR + `barge_in` 打断
 - **理由**：先跑通身体，再叠大脑与答辩场景。
 
-## ADR-009 · Q&A ASR 多引擎
+## ADR-013 · Q&A ASR 多引擎
 
 - **日期**：2026-08-24
 - **状态**：accepted
@@ -121,7 +121,7 @@
 - **理由**：免终端用户可用 WASM；愿意装 Python 的用网关；云端作备选。
 - **不做（本期）**：流式逐字 ASR、把 Whisper 模型 commit 进 Git
 
-## ADR-010 · Brain Hybrid 检索（薄 RAG）
+## ADR-014 · Brain Hybrid 检索（薄 RAG）
 
 - **日期**：2026-08-24
 - **状态**：accepted
@@ -133,7 +133,7 @@
 - **理由**：材料规模小；检索是固定 LLM 下最值得投资的一层；少自维护基础设施
 - **文档**：[`brain-retrieval.md`](./brain-retrieval.md)
 
-## ADR-011 · 本机 CPU Embedding
+## ADR-015 · 本机 CPU Embedding
 
 - **日期**：2026-08-24
 - **状态**：accepted

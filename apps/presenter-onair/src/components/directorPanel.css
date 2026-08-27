@@ -34,6 +34,15 @@
   animation: director-fab-pulse 1.6s ease-in-out infinite;
 }
 
+.director-panel-fab.is-error {
+  background: #dc2626;
+  animation: none;
+}
+
+.director-panel-fab.is-error:hover {
+  background: #b91c1c;
+}
+
 @keyframes director-fab-pulse {
   0%,
   100% {

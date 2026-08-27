@@ -600,6 +600,7 @@ export function PresentShell({
               currentAction={currentAction ?? null}
               currentIndex={directorQueue.currentIndex}
               queueLength={directorQueue.queue.length}
+              error={directorQueue.lastPlaybackError}
             />
             <QaPanel
               brainQa={brainQa}

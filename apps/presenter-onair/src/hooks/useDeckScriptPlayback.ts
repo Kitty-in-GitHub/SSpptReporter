@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { resolveDeckPlaybackStatus } from '../lib/directorPlaybackError';
 import { loadDeckScript } from '../lib/content/loadDeckScript';
 import type { useDirectorQueue } from './useDirectorQueue';
 
@@ -27,15 +28,21 @@ export function useDeckScriptPlayback({
       const actions = await loadDeckScript(activeDeckId, deckScriptUrl);
       const playingStatus = `队列播放中：0 / ${actions.length}`;
       setStatus(playingStatus);
-      await queue.playQueue(actions);
-      const rejections = queue.lastRejections;
+      const runResult = await queue.playQueue(actions);
+      const rejections = [...queue.lastRejections];
+      if (runResult.lastPlaybackError) {
+        rejections.push(runResult.lastPlaybackError);
+      }
       if (rejections.length > 0) {
         setLastErrors(rejections);
       }
-      const doneStatus =
-        queue.playbackState === 'idle'
-          ? `本场讲稿播放完成（${actions.length} 条）`
-          : `队列状态：${queue.playbackState}`;
+      const doneStatus = resolveDeckPlaybackStatus(
+        actions.length,
+        runResult.playbackState,
+        runResult.queueLength,
+        runResult.currentIndex,
+        runResult.lastPlaybackError,
+      );
       setStatus(doneStatus);
       return {
         status: doneStatus,
