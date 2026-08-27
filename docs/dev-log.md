@@ -22,6 +22,23 @@
 
 ---
 
+### 2026-08-27 · VRM 切换与导入（设置面板 + IndexedDB）
+
+- **设备/环境**：Win10 / presenter-onair
+- **做了什么**：
+  - 新增 `lib/vrm/vrmModelCatalog.ts`：内置 `StarString1.0.vrm` / `miko.vrm` 列表、URL 解析、每模型表情锚点 profile id
+  - 新增 `lib/vrm/vrmModelStore.ts`：IndexedDB 存导入的 `.vrm`（不进 Git / localStorage）
+  - 新增 `hooks/useResolvedVrmModel.ts`：builtin → `public/avatar/` URL；imported → blob objectURL（切换时 revoke）
+  - `VisualSettings` 增加 `vrmModelSource` / `vrmModelId`；`useSettings` 持久化 + 导入/删除 API
+  - `AvatarBackground` 接 `vrmUrl`，`useEffect([vrmUrl])` 切换时 dispose 并重载场景
+  - `App.tsx` 按当前模型动态 `effectAnchorProfileId`；`SettingsPanel` 下拉选模型、导入、删除导入项
+- **未做 / 阻塞**：无；dev 下写 `public/avatar/` 的 Vite API 未做（以 IndexedDB 导入为主）
+- **下一台机器应优先**：`public/avatar/` 放皮套或设置里导入 → 切换模型验收；继续 Phase 2/3 人工验收
+- **相关文件**：`lib/vrm/vrmModelCatalog.ts`、`lib/vrm/vrmModelStore.ts`、`hooks/useResolvedVrmModel.ts`、`hooks/useSettings.ts`、`components/AvatarPanel.tsx`、`components/AvatarShell.tsx`、`components/SettingsPanel.tsx`、`App.tsx`、`types/settings.ts`
+- **验证方式**：`npm run test`；`npm run typecheck`；`npm run dev` → 设置 → 视觉 → 选内置 / 导入 VRM → 确认角色重载
+
+---
+
 ### 2026-08-26 · 打磨 Sprint：私有场次脚手架 + 导演台 Voice UI + ADR
 
 - **做了什么**：

@@ -20,6 +20,7 @@ import { usePerformanceCatalog } from './hooks/usePerformanceCatalog';
 import { useSlideDeck } from './hooks/useSlideDeck';
 import { useAituberCore } from './hooks/useAituberCore';
 import { useLiveCommentIntelligence } from './hooks/useLiveCommentIntelligence';
+import { useResolvedVrmModel } from './hooks/useResolvedVrmModel';
 import { useScreenVisionController } from './hooks/useScreenVisionController';
 import { useSettings } from './hooks/useSettings';
 import { useTwitchComments } from './hooks/useTwitchComments';
@@ -32,7 +33,6 @@ import './styles/app.css';
 import { UI_SETTINGS } from './constants/uiZh';
 
 const DEFAULT_SETTINGS_DIALOG_OFFSET: DialogDragPoint = { x: 0, y: 0 };
-const VRM_EFFECT_ANCHOR_PROFILE_ID = 'avatar/StarString1.0.vrm';
 
 interface SettingsDialogDragState {
   pointerId: number;
@@ -57,26 +57,31 @@ export default function App() {
   const settingsDialogRef = useRef<HTMLDivElement | null>(null);
   const settingsDialogDragRef = useRef<SettingsDialogDragState | null>(null);
 
+  const {
+    vrmUrl,
+    isResolving: isVrmResolving,
+    resolveError: vrmResolveError,
+    effectAnchorProfileId,
+  } = useResolvedVrmModel(settingsHook.settings.visual);
+
   const avatarPresenter = useAvatarPresenter(
     {
       reactionControlMode: settingsHook.settings.visual.vrmReactionControlMode,
       emotionEffectMap: settingsHook.settings.visual.vrmEmotionEffectMap,
       effectAnchor: getEmotionEffectAnchor(
         settingsHook.settings.visual.vrmEmotionEffectAnchors,
-        VRM_EFFECT_ANCHOR_PROFILE_ID,
+        effectAnchorProfileId,
       ),
       vrmCameraFraming: settingsHook.settings.visual.vrmCameraFraming,
     },
     {
       onEffectAnchorChange: (anchor) =>
         settingsHook.updateVisualVrmEmotionEffectAnchor(
-          VRM_EFFECT_ANCHOR_PROFILE_ID,
+          effectAnchorProfileId,
           anchor,
         ),
       onEffectAnchorReset: () =>
-        settingsHook.resetVisualVrmEmotionEffectAnchor(
-          VRM_EFFECT_ANCHOR_PROFILE_ID,
-        ),
+        settingsHook.resetVisualVrmEmotionEffectAnchor(effectAnchorProfileId),
       onVrmCameraFramingChange: settingsHook.updateVisualVrmCameraFraming,
     },
   );
@@ -410,6 +415,9 @@ export default function App() {
           mouthLevelRef={mouthLevelRef}
           isSpeaking={isSpeaking}
           avatarPresenter={avatarPresenter}
+          vrmUrl={vrmUrl}
+          vrmResolveError={vrmResolveError}
+          vrmResolving={isVrmResolving}
           backgroundImageUrl={backgroundImageUrl}
           backgroundMode={settingsHook.settings.visual.backgroundMode}
           onStageModeChange={setPresentStageMode}
@@ -438,6 +446,9 @@ export default function App() {
           mouthLevelRef={mouthLevelRef}
           isSpeaking={isSpeaking}
           avatarPresenter={avatarPresenter}
+          vrmUrl={vrmUrl}
+          vrmResolveError={vrmResolveError}
+          vrmResolving={isVrmResolving}
           backgroundImageUrl={backgroundImageUrl}
           visual={settingsHook.settings.visual}
           onToggleSettings={toggleSettingsDialog}

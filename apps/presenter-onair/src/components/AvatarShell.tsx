@@ -8,6 +8,9 @@ export interface AvatarShellProps {
   presenter: AvatarPresenterController;
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
+  vrmUrl: string | null;
+  vrmResolveError?: string | null;
+  vrmResolving?: boolean;
   backgroundImageUrl?: string | null;
   backgroundMode: 'default' | 'green' | 'transparent';
   showExpressionControls?: boolean;
@@ -17,6 +20,9 @@ export function AvatarShell({
   presenter,
   mouthLevelRef,
   isSpeaking,
+  vrmUrl,
+  vrmResolveError = null,
+  vrmResolving = false,
   backgroundImageUrl,
   backgroundMode,
   showExpressionControls = true,
@@ -27,8 +33,31 @@ export function AvatarShell({
     ? ({ ...toVrmReactionDraft(reaction), id: reaction.id } as VrmAvatarReaction)
     : null;
 
+  if (vrmResolveError && !vrmUrl) {
+    return (
+      <div className="avatar-background">
+        <div className="vrm-stage">
+          <div className="avatar-error">{vrmResolveError}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vrmUrl) {
+    return (
+      <div className="avatar-background">
+        <div className="vrm-stage">
+          <div className="avatar-status">
+            {vrmResolving ? '正在准备 VRM 模型…' : '未选择 VRM 模型。'}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AvatarBackground
+      vrmUrl={vrmUrl}
       mouthLevelRef={mouthLevelRef}
       isSpeaking={isSpeaking}
       reaction={vrmReaction}

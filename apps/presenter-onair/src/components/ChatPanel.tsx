@@ -16,6 +16,9 @@ interface ChatPanelProps {
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
   avatarPresenter: AvatarPresenterController;
+  vrmUrl: string | null;
+  vrmResolveError?: string | null;
+  vrmResolving?: boolean;
   backgroundImageUrl?: string | null;
   visual: VisualSettings;
   onEnterPresentMode?: () => void;
@@ -31,6 +34,9 @@ export function ChatPanel({
   mouthLevelRef,
   isSpeaking,
   avatarPresenter,
+  vrmUrl,
+  vrmResolveError,
+  vrmResolving,
   backgroundImageUrl,
   visual,
   onEnterPresentMode,
@@ -95,6 +101,9 @@ export function ChatPanel({
         presenter={avatarPresenter}
         mouthLevelRef={mouthLevelRef}
         isSpeaking={isSpeaking}
+        vrmUrl={vrmUrl}
+        vrmResolveError={vrmResolveError}
+        vrmResolving={vrmResolving}
         backgroundMode={visual.backgroundMode}
       />
       {isBroadcast ? (

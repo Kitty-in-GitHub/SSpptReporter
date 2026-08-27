@@ -73,6 +73,7 @@ import {
 } from '../constants/uiZh';
 
 interface AvatarBackgroundProps {
+  vrmUrl: string;
   /** @deprecated 优先使用 mouthLevelRef，避免口型驱动 React 整树重渲染 */
   mouthLevel?: number;
   mouthLevelRef?: RefObject<number>;
@@ -140,7 +141,6 @@ function readVrmCameraFramingFromControls(
 const VRM_AMBIENT_LIGHT_INTENSITY = 0.38;
 const VRM_DIRECTIONAL_LIGHT_INTENSITY = 0.7;
 const VRM_TONE_MAPPING_EXPOSURE = 0.86;
-const VRM_FILE_URL = `${import.meta.env.BASE_URL}avatar/StarString1.0.vrm`;
 const VRMA_FILE_URL = `${import.meta.env.BASE_URL}avatar/idle_loop.vrma`;
 const MAX_MOUTH_LEVEL = 4;
 const DEFAULT_VISIBLE_HEIGHT_RATIO = 0.39;
@@ -506,6 +506,7 @@ function createVrmEffectGeometry(
 }
 
 export function AvatarBackground({
+  vrmUrl,
   mouthLevel = 0,
   mouthLevelRef,
   isSpeaking,
@@ -739,7 +740,13 @@ export function AvatarBackground({
   useEffect(() => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
-    if (!container || !canvas) return;
+    if (!container || !canvas || !vrmUrl) {
+      setIsLoading(true);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadError(null);
 
     const idleMotionState = idleMotionStateRef.current;
     const scene = new Scene();
@@ -866,7 +873,7 @@ export function AvatarBackground({
     const loader = new GLTFLoader();
     loader.register((parser) => new VRMLoaderPlugin(parser));
     loader.load(
-      VRM_FILE_URL,
+      vrmUrl,
       (gltf) => {
         if (disposed) return;
         const vrm = gltf.userData.vrm as VRM | undefined;
@@ -1140,7 +1147,7 @@ export function AvatarBackground({
       disposeVrmBackEffectSprites(backEffectScene, backEffectSprites);
       renderer.dispose();
     };
-  }, []);
+  }, [vrmUrl]);
 
   return (
     <div className="avatar-background">

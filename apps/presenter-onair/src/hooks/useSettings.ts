@@ -51,6 +51,17 @@ import {
   type QaAsrEngine,
   type SessionMode,
 } from '../types/present';
+import {
+  DEFAULT_VRM_MODEL_ID,
+  normalizeVrmModelSelection,
+} from '../lib/vrm/vrmModelCatalog';
+import {
+  deleteImportedVrmModel,
+  listImportedVrmModels,
+  saveImportedVrmModel,
+  type ImportedVrmModelMeta,
+} from '../lib/vrm/vrmModelStore';
+import type { VrmModelSource } from '../types/settings';
 
 type ApiKeyProvider = Exclude<ChatProviderOption, 'gemini-nano'>;
 
@@ -253,6 +264,8 @@ function getDefaultSettings(): AppSettings {
       backgroundMode: 'default',
       layoutMode: 'chat',
       showInputInBroadcast: false,
+      vrmModelSource: 'builtin',
+      vrmModelId: DEFAULT_VRM_MODEL_ID,
       vrmCameraFraming: { ...DEFAULT_VRM_CAMERA_FRAMING },
       vrmEmotionEffectAnchors: {},
       vrmReactionControlMode: 'none',
@@ -354,6 +367,10 @@ function loadSettings(): AppSettings {
             saved.visual?.backgroundMode === 'transparent'
               ? saved.visual.backgroundMode
               : defaults.visual.backgroundMode,
+          ...normalizeVrmModelSelection(
+            saved.visual?.vrmModelSource,
+            saved.visual?.vrmModelId,
+          ),
           vrmCameraFraming: normalizeSavedVrmCameraFraming(saved.visual),
           vrmEmotionEffectAnchors: normalizeEmotionEffectAnchors(
             saved.visual?.vrmEmotionEffectAnchors,
@@ -389,6 +406,9 @@ function saveSettings(settings: AppSettings) {
 
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
+  const [importedVrmModels, setImportedVrmModels] = useState<
+    ImportedVrmModelMeta[]
+  >([]);
   const [openRouterRefreshError, setOpenRouterRefreshError] = useState('');
   const [
     isRefreshingOpenRouterFreeModels,
@@ -417,6 +437,21 @@ export function useSettings() {
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
+
+  const refreshImportedVrmModels = useCallback(async () => {
+    try {
+      const models = await listImportedVrmModels();
+      setImportedVrmModels(models);
+      return models;
+    } catch {
+      setImportedVrmModels([]);
+      return [];
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshImportedVrmModels();
+  }, [refreshImportedVrmModels]);
 
   const updateLLMProvider = useCallback(
     (provider: ChatProviderOption) => {
@@ -989,6 +1024,58 @@ export function useSettings() {
     [],
   );
 
+  const updateVisualVrmModel = useCallback(
+    (vrmModelSource: VrmModelSource, vrmModelId: string) => {
+      const normalized = normalizeVrmModelSelection(vrmModelSource, vrmModelId);
+      setSettings((prev) => ({
+        ...prev,
+        visual: {
+          ...prev.visual,
+          ...normalized,
+        },
+      }));
+    },
+    [],
+  );
+
+  const importVrmModelFile = useCallback(async (file: File) => {
+    const meta = await saveImportedVrmModel(file);
+    setSettings((prev) => ({
+      ...prev,
+      visual: {
+        ...prev.visual,
+        vrmModelSource: 'imported',
+        vrmModelId: meta.id,
+      },
+    }));
+    setImportedVrmModels((prev) => [meta, ...prev.filter((entry) => entry.id !== meta.id)]);
+    return meta;
+  }, []);
+
+  const removeImportedVrmModel = useCallback(
+    async (modelId: string) => {
+      await deleteImportedVrmModel(modelId);
+      setImportedVrmModels((prev) => prev.filter((entry) => entry.id !== modelId));
+      setSettings((prev) => {
+        if (
+          prev.visual.vrmModelSource !== 'imported' ||
+          prev.visual.vrmModelId !== modelId
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          visual: {
+            ...prev.visual,
+            vrmModelSource: 'builtin',
+            vrmModelId: DEFAULT_VRM_MODEL_ID,
+          },
+        };
+      });
+    },
+    [],
+  );
+
   const updateVisualLayoutMode = useCallback(
     (layoutMode: AppSettings['visual']['layoutMode']) => {
       setSettings((prev) => ({
@@ -1530,7 +1617,12 @@ export function useSettings() {
     updatePiperPlusVoiceFile,
     updatePiperPlusSpeed,
     updatePiperPlusNoiseScale,
+    importedVrmModels,
+    refreshImportedVrmModels,
     updateVisualBackgroundMode,
+    updateVisualVrmModel,
+    importVrmModelFile,
+    removeImportedVrmModel,
     updateVisualLayoutMode,
     updatePresentSessionMode,
     updatePresentLayout,

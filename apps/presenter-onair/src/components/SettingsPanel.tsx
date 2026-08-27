@@ -35,6 +35,10 @@ import {
 import type { useSettings } from '../hooks/useSettings';
 import type { ChatProviderOption, TTSEngineOption } from '../types/settings';
 import {
+  BUILTIN_VRM_MODELS,
+  formatVrmModelLabel,
+} from '../lib/vrm/vrmModelCatalog';
+import {
   QA_ASR_ENGINE_LABELS,
   type QaAsrEngine,
 } from '../types/present';
@@ -305,6 +309,10 @@ export function SettingsPanel({
   updatePiperPlusSpeed,
   updatePiperPlusNoiseScale,
   updateVisualBackgroundMode,
+  updateVisualVrmModel,
+  importVrmModelFile,
+  removeImportedVrmModel,
+  importedVrmModels,
   updateVisualLayoutMode,
   updateVisualVrmCameraFraming,
   resetVisualVrmCameraFraming,
@@ -348,9 +356,56 @@ export function SettingsPanel({
   onBackgroundImageChange,
 }: SettingsPanelProps) {
   const disabled = isProcessing;
+  const vrmFileInputRef = useRef<HTMLInputElement>(null);
+  const [vrmImportError, setVrmImportError] = useState('');
   const [systemPromptDraft, setSystemPromptDraft] = useState(
     settings.llm.systemPrompt,
   );
+
+  const selectedVrmKey = `${settings.visual.vrmModelSource}:${settings.visual.vrmModelId}`;
+  const activeImportedVrm = importedVrmModels.find(
+    (entry) => entry.id === settings.visual.vrmModelId,
+  );
+  const currentVrmLabel = formatVrmModelLabel(
+    settings.visual.vrmModelSource,
+    settings.visual.vrmModelId,
+    activeImportedVrm?.name,
+  );
+
+  const handleVrmModelSelect = (value: string) => {
+    const colonIndex = value.indexOf(':');
+    if (colonIndex <= 0) return;
+    const source = value.slice(0, colonIndex);
+    const modelId = value.slice(colonIndex + 1);
+    if (source !== 'builtin' && source !== 'imported') return;
+    updateVisualVrmModel(source, modelId);
+  };
+
+  const handleVrmImport = async (file: File | null) => {
+    if (!file) return;
+    setVrmImportError('');
+    try {
+      await importVrmModelFile(file);
+    } catch (error) {
+      setVrmImportError(
+        error instanceof Error ? error.message : 'VRM 导入失败。',
+      );
+    }
+    if (vrmFileInputRef.current) {
+      vrmFileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImportedVrm = async (modelId: string) => {
+    setVrmImportError('');
+    try {
+      await removeImportedVrmModel(modelId);
+    } catch (error) {
+      setVrmImportError(
+        error instanceof Error ? error.message : '无法删除导入的 VRM。',
+      );
+    }
+  };
 
   const commitSystemPrompt = () => {
     if (systemPromptDraft !== settings.llm.systemPrompt) {
@@ -2639,12 +2694,89 @@ export function SettingsPanel({
               </div>
             </div>
             <div className="settings-field">
-              <label>虚拟角色（VRM）</label>
+              <label htmlFor="vrm-model-select">虚拟角色（VRM）</label>
+              <select
+                id="vrm-model-select"
+                value={selectedVrmKey}
+                onChange={(event) => handleVrmModelSelect(event.target.value)}
+                disabled={disabled}
+              >
+                <optgroup label="内置（public/avatar/）">
+                  {BUILTIN_VRM_MODELS.map((model) => (
+                    <option
+                      key={`builtin:${model.id}`}
+                      value={`builtin:${model.id}`}
+                    >
+                      {model.label}
+                    </option>
+                  ))}
+                </optgroup>
+                {importedVrmModels.length > 0 ? (
+                  <optgroup label="已导入（本机 IndexedDB）">
+                    {importedVrmModels.map((model) => (
+                      <option
+                        key={`imported:${model.id}`}
+                        value={`imported:${model.id}`}
+                      >
+                        {model.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+              </select>
+              <div className="settings-file-picker-row">
+                <input
+                  ref={vrmFileInputRef}
+                  id="vrm-model-import"
+                  type="file"
+                  accept=".vrm"
+                  className="settings-file-input-hidden"
+                  disabled={disabled}
+                  onChange={(event) =>
+                    void handleVrmImport(event.target.files?.[0] ?? null)
+                  }
+                />
+                <label
+                  htmlFor="vrm-model-import"
+                  className={`settings-file-trigger${disabled ? ' is-disabled' : ''}`}
+                >
+                  导入 VRM
+                </label>
+                <span className="settings-file-hint">.vrm 文件</span>
+              </div>
+              {importedVrmModels.length > 0 ? (
+                <div className="settings-emotion-mapping-list">
+                  {importedVrmModels.map((model) => (
+                    <div
+                      key={model.id}
+                      className="settings-file-actions"
+                      style={{ justifyContent: 'space-between' }}
+                    >
+                      <span className="settings-file-status">{model.name}</span>
+                      <button
+                        type="button"
+                        className="settings-clear-button"
+                        onClick={() => void handleRemoveImportedVrm(model.id)}
+                        disabled={disabled}
+                      >
+                        删除
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               <div className="settings-file-actions">
                 <span className="settings-file-status">
-                  /avatar/StarString1.0.vrm 使用中
+                  当前：{currentVrmLabel}
                 </span>
               </div>
+              {vrmImportError ? (
+                <p className="settings-field-hint">{vrmImportError}</p>
+              ) : (
+                <p className="settings-field-hint">
+                  内置模型需放在 apps/presenter-onair/public/avatar/；导入模型仅存本机浏览器，换机需重新导入。
+                </p>
+              )}
             </div>
           </>
         )}

@@ -66,6 +66,9 @@ interface PresentShellProps {
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
   avatarPresenter: AvatarPresenterController;
+  vrmUrl: string | null;
+  vrmResolveError?: string | null;
+  vrmResolving?: boolean;
   backgroundImageUrl?: string | null;
   backgroundMode: 'default' | 'green' | 'transparent';
   activeDeckId: string;
@@ -135,6 +138,9 @@ export function PresentShell({
   mouthLevelRef,
   isSpeaking,
   avatarPresenter,
+  vrmUrl,
+  vrmResolveError,
+  vrmResolving,
   backgroundImageUrl,
   backgroundMode,
   activeDeckId,
@@ -441,6 +447,9 @@ export function PresentShell({
         presenter={avatarPresenter}
         mouthLevelRef={mouthLevelRef}
         isSpeaking={isSpeaking}
+        vrmUrl={vrmUrl}
+        vrmResolveError={vrmResolveError}
+        vrmResolving={vrmResolving}
         backgroundMode={backgroundMode}
         showExpressionControls={!stageMode}
       />

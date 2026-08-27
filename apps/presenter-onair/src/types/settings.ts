@@ -183,10 +183,14 @@ export {
   normalizeVrmCameraFraming,
 } from '../lib/vrmCameraFraming';
 
+export type VrmModelSource = 'builtin' | 'imported';
+
 export interface VisualSettings {
   backgroundMode: 'default' | 'green' | 'transparent';
   layoutMode: 'chat' | 'broadcast';
   showInputInBroadcast: boolean;
+  vrmModelSource: VrmModelSource;
+  vrmModelId: string;
   vrmCameraFraming: VrmCameraFraming;
   vrmEmotionEffectAnchors: Record<string, EmotionEffectAnchor>;
   vrmReactionControlMode: VrmReactionControlMode;
