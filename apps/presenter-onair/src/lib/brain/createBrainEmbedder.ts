@@ -73,11 +73,3 @@ export async function resolveBrainEmbedder(
     return createCloudBrainEmbedder(llmSettings, getApiKeyForProvider);
   }
 }
-
-/** @deprecated Use resolveBrainEmbedder (async, prefers local gateway). */
-export function createBrainEmbedder(
-  llmSettings: AppSettings['llm'],
-  getApiKeyForProvider: (provider: ChatProviderOption) => string,
-): BrainEmbedder | null {
-  return createCloudBrainEmbedder(llmSettings, getApiKeyForProvider);
-}

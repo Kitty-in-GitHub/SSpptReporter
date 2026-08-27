@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import {
   ACESFilmicToneMapping,
   AmbientLight,
@@ -44,7 +44,6 @@ import {
 } from '../lib/vrm/vrmIdleMotion';
 import {
   applyVrmMouthAndFaceCapture,
-  MAX_MOUTH_LEVEL,
   type VrmMouthDriveState,
 } from '../lib/vrm/vrmMouthAndFaceDrive';
 import { playVrmaGestureOneShot } from '../lib/vrmaGesturePlayback';
@@ -88,9 +87,7 @@ import {
 
 interface AvatarBackgroundProps {
   vrmUrl: string;
-  /** @deprecated 优先使用 mouthLevelRef，避免口型驱动 React 整树重渲染 */
-  mouthLevel?: number;
-  mouthLevelRef?: RefObject<number>;
+  mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
   reaction?: VrmAvatarReaction | null;
   emotionEffectReaction?: VrmEmotionEffectReaction | null;
@@ -514,7 +511,6 @@ function createVrmEffectGeometry(
 
 export function AvatarBackground({
   vrmUrl,
-  mouthLevel = 0,
   mouthLevelRef,
   isSpeaking,
   reaction,
@@ -651,18 +647,6 @@ export function AvatarBackground({
     },
     [anchorTarget, onEffectAnchorChange],
   );
-
-  const targetWeight = useMemo(() => {
-    if (!isSpeaking || mouthLevelRef) return 0;
-    const normalized = mouthLevel / MAX_MOUTH_LEVEL;
-    return Math.min(Math.max(normalized, 0), 1);
-  }, [isSpeaking, mouthLevel, mouthLevelRef]);
-
-  useEffect(() => {
-    if (!mouthLevelRef) {
-      mouthDriveStateRef.current.targetMouthWeight = targetWeight;
-    }
-  }, [mouthLevelRef, targetWeight]);
 
   useEffect(() => {
     isSpeakingRef.current = isSpeaking;

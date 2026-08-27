@@ -76,44 +76,6 @@ export async function saveSlidePageToDisk(
   }
 }
 
-/** @deprecated Use loadSlidePageDraftFromDisk */
-export async function loadSlideDraftFromDisk(
-  deckId: string,
-  page: number,
-): Promise<SlidePageDraft> {
-  return loadSlidePageDraftFromDisk(deckId, page);
-}
-
-/** @deprecated Use saveSlidePageToDisk */
-export async function saveSlideToDisk(
-  deckId: string,
-  draft: SlidePageDraft | (SlideBeatDraft & { page: number }),
-): Promise<void> {
-  const pageDraft: SlidePageDraft =
-    'beats' in draft && Array.isArray(draft.beats)
-      ? draft
-      : (() => {
-          const legacy = draft as SlideBeatDraft & { page: number };
-          return {
-            page: legacy.page,
-            beats: [
-              {
-                utterance: legacy.utterance,
-                profile: legacy.profile,
-                emotion: legacy.emotion,
-                gesture: legacy.gesture,
-                camera: legacy.camera,
-                action_id: legacy.action_id,
-                slide_action: legacy.slide_action,
-                voice: legacy.voice,
-                timing: legacy.timing,
-              },
-            ],
-          };
-        })();
-  await saveSlidePageToDisk(deckId, pageDraft);
-}
-
 export async function compileDeckOnDisk(
   deckId: string,
 ): Promise<{ count: number }> {

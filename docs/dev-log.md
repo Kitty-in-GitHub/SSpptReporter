@@ -26,6 +26,34 @@
 
 ---
 
+### 2026-08-27 · 小清理：弃用 API 删除 + gitignore + 口型 prop 收紧
+
+- **设备/环境**：Win10 / conda ssreporter
+- **做了什么**：
+  - 删除无引用的 `@deprecated` 包装：`slideScriptApi.loadSlideDraftFromDisk` / `saveSlideToDisk`；`createBrainEmbedder`（已统一 `resolveBrainEmbedder`）
+  - `AvatarBackground` 移除废弃 `mouthLevel` prop 与相关 `useMemo`/`useEffect`；`mouthLevelRef` 改为必填（调用方本就只传 ref）
+  - `.gitignore` 补充 `*.tsbuildinfo`、`**/.vite/`，避免 Vitest/TS 缓存误出现在 status
+- **未做 / 阻塞**：无；旧 `ttsUpdaters.ts` 已在上一轮删除，磁盘上不存在
+- **下一台机器应优先**：Phase 2/3 人工验收（无代码依赖变更）
+- **相关文件**：`components/AvatarPanel.tsx` · `lib/content/slideScriptApi.ts` · `lib/brain/createBrainEmbedder.ts` · `.gitignore`
+- **验证方式**：`npm run typecheck -w @ssreporter/presenter-onair`；`npm run test -w @ssreporter/presenter-onair`（45 passed）
+
+---
+
+### 2026-08-27 · 设置 / Stream / AvatarPanel 第二轮拆分（无 CI）
+
+- **设备/环境**：Win10 / conda ssreporter
+- **做了什么**：
+  - **TTS**：`TtsSettingsSection` 瘦身；各引擎字段拆到 `components/settings/tts/*Fields.tsx`；`useTtsSpeakerLists.ts` 独立；`hooks/settings/tts/`（`core` / `cloudUpdaters` / `localUpdaters`）替代单体 `ttsUpdaters`
+  - **Stream**：`StreamSettings` 改为组合器；子模块 `StreamPlatformSection` · `CommentIntelligenceSettingsSection` · `ManneriSettingsSection` · `streamSettingsConstants`
+  - **AvatarPanel**：空闲动作外提 `lib/vrm/vrmIdleMotion.ts`；口型 + 面捕合并外提 `lib/vrm/vrmMouthAndFaceDrive.ts`；动画循环改调 `applyVrmMouthAndFaceCapture`
+- **未做 / 阻塞**：GitHub Actions / CI（用户明确不需要）；`AvatarPanel` Three.js 场景初始化与背特效仍留组件内
+- **下一台机器应优先**：Phase 2/3 人工验收；可选继续拆 `AvatarPanel` 场景生命周期或 `PresentShell`
+- **相关文件**：`components/settings/tts/` · `hooks/settings/tts/` · `hooks/settings/useTtsSpeakerLists.ts` · `components/settings/Stream*.tsx` · `lib/vrm/vrmIdleMotion.ts` · `lib/vrm/vrmMouthAndFaceDrive.ts` · `components/AvatarPanel.tsx`
+- **验证方式**：`npm run typecheck -w @ssreporter/presenter-onair`；`npm run test -w @ssreporter/presenter-onair`（45 passed）
+
+---
+
 ### 2026-08-27 · 面捕模式（Mocap Session）+ Kalidokit 摄像头跟踪
 
 - **做了什么**：

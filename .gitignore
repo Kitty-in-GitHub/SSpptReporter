@@ -4,6 +4,8 @@ dist/
 .tools/
 .tmp/
 *.log
+*.tsbuildinfo
+**/.vite/
 .DS_Store
 
 # Secrets / local env
