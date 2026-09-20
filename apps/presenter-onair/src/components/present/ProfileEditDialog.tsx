@@ -5,7 +5,10 @@ import {
   type PerformanceProfile,
 } from '@ssreporter/director';
 import { EDGE_VOICE_OPTIONS } from '../../constants/performanceUi';
-import { resolveProfileDisplayName } from '../../hooks/usePerformanceCatalog';
+import {
+  buildProfileVoicePatch,
+  resolveProfileDisplayName,
+} from '../../hooks/usePerformanceCatalog';
 
 interface ProfileEditDialogProps {
   catalog: PerformanceCatalog;
@@ -27,30 +30,6 @@ function mergedVoiceField(
   }
   const base = merged?.voice?.[key];
   return base != null ? String(base) : '';
-}
-
-function buildVoicePatch(
-  speed: number,
-  speaker: string,
-  pitch: string,
-  volume: string,
-  styleHint: string,
-  includeSpeaker: boolean,
-): PerformanceProfile['voice'] {
-  const voice: NonNullable<PerformanceProfile['voice']> = { speed };
-  if (includeSpeaker && speaker.trim()) {
-    voice.speaker = speaker.trim();
-  }
-  if (pitch.trim()) {
-    voice.pitch = pitch.trim();
-  }
-  if (volume.trim()) {
-    voice.volume = volume.trim();
-  }
-  if (styleHint.trim()) {
-    voice.style_hint = styleHint.trim();
-  }
-  return voice;
 }
 
 export function ProfileEditDialog({
@@ -130,7 +109,7 @@ export function ProfileEditDialog({
       return;
     }
 
-    const voicePatch = buildVoicePatch(
+    const voicePatch = buildProfileVoicePatch(
       parsedSpeed,
       speaker,
       pitch,

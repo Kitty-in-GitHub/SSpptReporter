@@ -62,12 +62,6 @@ export const EDGE_VOICE_OPTIONS = [
   { id: 'zh-CN-XiaoyiNeural', label: '晓伊', hint: '女 · 温柔' },
 ] as const;
 
-export function formatSpeedLabel(speed: number): string {
-  if (speed < 0.9) return '偏慢';
-  if (speed > 1.05) return '偏快';
-  return '常速';
-}
-
 export function formatPauseLabel(ms: number): string {
   if (ms === 0) return '无';
   if (ms < 300) return '短';

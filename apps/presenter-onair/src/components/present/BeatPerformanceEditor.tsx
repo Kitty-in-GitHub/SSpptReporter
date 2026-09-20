@@ -16,11 +16,9 @@ import {
   GESTURE_ICONS,
   GESTURE_LABELS,
   formatPauseLabel,
-  formatSpeedLabel,
 } from '../../constants/performanceUi';
 import {
   resolveProfileColor,
-  resolveProfileDisplayHint,
   resolveProfileDisplayName,
 } from '../../hooks/usePerformanceCatalog';
 import { EmphasisTextEditor } from './EmphasisTextEditor';
@@ -53,11 +51,6 @@ function beatPreviewAction(beat: SlideBeatDraft): DirectorAction {
     timing: beat.timing,
     emphasis: beat.emphasis,
   };
-}
-
-function effectiveSpeed(beat: SlideBeatDraft, catalog: PerformanceCatalog | null): number {
-  return resolveBeatPerformance(beatPreviewAction(beat), catalog ?? undefined).voice
-    .speed ?? 1;
 }
 
 function effectivePause(
@@ -99,7 +92,6 @@ export function BeatPerformanceEditor({
   const mergedCatalog = catalog ?? { profiles: {} };
   const profileIds = listSelectableProfiles(mergedCatalog);
   const resolved = resolveBeatPerformance(beatPreviewAction(beat), catalog ?? undefined);
-  const speedValue = beat.voice?.speed ?? effectiveSpeed(beat, catalog);
   const pauseBefore =
     beat.timing?.pause_before_ms ?? effectivePause(beat, catalog, 'pause_before_ms');
   const pauseAfter =
@@ -155,12 +147,7 @@ export function BeatPerformanceEditor({
     <div className="beat-performance-editor">
       <section className="beat-performance-section">
         <div className="beat-performance-section-header">
-          <div>
-            <h3 className="beat-performance-heading">汇报情绪 · 表演预设</h3>
-            <p className="beat-performance-lead">
-              选择本节拍预设，或使用「新建预设」为本场次添加自定义卡片。
-            </p>
-          </div>
+          <h3 className="beat-performance-heading">汇报情绪</h3>
           <button
             type="button"
             className="profile-create-trigger"
@@ -174,17 +161,6 @@ export function BeatPerformanceEditor({
         <div className="profile-picker" role="listbox" aria-label="表演预设">
           {profileIds.map((profileId) => {
             const selected = profileName === profileId;
-            const preview = resolveBeatPerformance(
-              {
-                schema_version: '1.0',
-                mode: 'present',
-                utterance: '',
-                profile: profileId,
-                emotion: isEmotionProfile(profileId) ? profileId : beat.emotion,
-              },
-              catalog ?? undefined,
-            );
-            const speed = preview.voice.speed ?? 1;
             const color = resolveProfileColor(profileId, catalog);
             const isCustom = !isEmotionProfile(profileId);
             return (
@@ -205,14 +181,6 @@ export function BeatPerformanceEditor({
                   <span className="profile-card-dot" aria-hidden />
                   <span className="profile-card-label">
                     {resolveProfileDisplayName(profileId, catalog)}
-                  </span>
-                  <span className="profile-card-hint">
-                    {resolveProfileDisplayHint(profileId, catalog)}
-                  </span>
-                  <span className="profile-card-meta">
-                    {formatSpeedLabel(speed)} · ×{speed.toFixed(2)}
-                    {isCustom ? ' · 自定义' : ''}
-                    {hasDeckOverride(profileId) ? ' · 已覆盖' : ''}
                   </span>
                 </button>
                 <div className="profile-card-actions">
@@ -266,7 +234,7 @@ export function BeatPerformanceEditor({
       </section>
 
       <section className="beat-performance-section">
-        <h3 className="beat-performance-heading">汇报语速 · 音色</h3>
+        <h3 className="beat-performance-heading">汇报音色</h3>
         <div className="voice-picker">
           <button
             type="button"
@@ -298,50 +266,6 @@ export function BeatPerformanceEditor({
               <span className="voice-card-hint">{option.hint}</span>
             </button>
           ))}
-        </div>
-
-        <div className="slider-field">
-          <div className="slider-field-header">
-            <span>语速</span>
-            <span className="slider-field-value">
-              ×{speedValue.toFixed(2)}
-              <span className="slider-field-tag">{formatSpeedLabel(speedValue)}</span>
-              {beat.voice?.speed == null && (
-                <span className="slider-field-inherited">来自预设</span>
-              )}
-            </span>
-          </div>
-          <input
-            type="range"
-            min={0.5}
-            max={1.5}
-            step={0.05}
-            value={speedValue}
-            onChange={(event) => {
-              const value = Number.parseFloat(event.target.value);
-              onUpdate({
-                voice: { ...beat.voice, speed: value },
-              });
-            }}
-          />
-          <div className="slider-field-scale">
-            <span>慢 0.5</span>
-            <span>常速 1.0</span>
-            <span>快 1.5</span>
-          </div>
-          {beat.voice?.speed != null && (
-            <button
-              type="button"
-              className="slider-field-reset"
-              onClick={() =>
-                onUpdate({
-                  voice: { ...beat.voice, speed: undefined },
-                })
-              }
-            >
-              恢复预设语速
-            </button>
-          )}
         </div>
 
         <details className="beat-performance-advanced">

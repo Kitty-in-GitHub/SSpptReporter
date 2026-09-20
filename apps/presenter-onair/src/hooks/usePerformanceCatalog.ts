@@ -171,29 +171,6 @@ export function resolveProfileDisplayName(
   return profileId;
 }
 
-export function resolveProfileDisplayHint(
-  profileId: string,
-  catalog: PerformanceCatalog | null,
-): string {
-  const profile = catalog?.profiles[profileId];
-  if (profile?.hint?.trim()) {
-    return profile.hint.trim();
-  }
-  if (isBuiltInProfile(profileId)) {
-    const hints: Record<Emotion, string> = {
-      neutral: '平稳开场、过渡',
-      confident: '结论、亮点',
-      friendly: '问候、互动',
-      serious: '风险、限制',
-      thinking: '分析、犹豫',
-      apologetic: '致歉、不足',
-      emphatic: '关键数字、强调',
-    };
-    return hints[profileId as Emotion] ?? '';
-  }
-  return '自定义预设';
-}
-
 const CUSTOM_PROFILE_COLORS = [
   '#14b8a6',
   '#a855f7',
@@ -229,4 +206,28 @@ export function resolveProfileColor(
     hash = (hash * 31 + profileId.charCodeAt(index)) >>> 0;
   }
   return CUSTOM_PROFILE_COLORS[hash % CUSTOM_PROFILE_COLORS.length];
+}
+
+export function buildProfileVoicePatch(
+  speed: number,
+  speaker: string,
+  pitch: string,
+  volume: string,
+  styleHint: string,
+  includeSpeaker: boolean,
+): PerformanceProfile['voice'] {
+  const voice: NonNullable<PerformanceProfile['voice']> = { speed };
+  if (includeSpeaker && speaker.trim()) {
+    voice.speaker = speaker.trim();
+  }
+  if (pitch.trim()) {
+    voice.pitch = pitch.trim();
+  }
+  if (volume.trim()) {
+    voice.volume = volume.trim();
+  }
+  if (styleHint.trim()) {
+    voice.style_hint = styleHint.trim();
+  }
+  return voice;
 }
