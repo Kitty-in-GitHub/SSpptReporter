@@ -645,16 +645,6 @@
   accent-color: #3b82f6;
 }
 
-.slider-field-reset {
-  margin-top: 6px;
-  border: none;
-  background: none;
-  color: #93c5fd;
-  font-size: 11px;
-  cursor: pointer;
-  padding: 0;
-}
-
 .beat-performance-summary {
   border-radius: 10px;
   background: rgba(59, 130, 246, 0.1);
@@ -668,35 +658,6 @@
   display: block;
   font-weight: 600;
   margin-bottom: 4px;
-}
-
-.beat-performance-advanced {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.beat-performance-advanced-summary {
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  color: #cbd5e1;
-  margin-bottom: 8px;
-}
-
-.beat-performance-advanced-hint {
-  margin: 0 0 10px;
-  font-size: 11px;
-  color: #94a3b8;
-  line-height: 1.45;
-}
-
-.beat-performance-advanced .profile-create-field {
-  margin-bottom: 8px;
-}
-
-.beat-performance-advanced .slider-field-reset {
-  margin-bottom: 10px;
 }
 
 /* Emphasis editor */

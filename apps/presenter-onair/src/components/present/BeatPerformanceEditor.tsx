@@ -100,9 +100,6 @@ export function BeatPerformanceEditor({
     beat.timing?.pause_after_ms ?? effectivePause(beat, catalog, 'pause_after_ms');
   const speakerValue = beat.voice?.speaker ?? '';
   const presetSpeaker = effectiveSpeaker(beat, catalog);
-  const pitchOverride = beat.voice?.pitch;
-  const volumeOverride = beat.voice?.volume;
-  const styleHintOverride = beat.voice?.style_hint;
 
   const formatVoiceScalar = (value: number | string | undefined): string => {
     if (value == null || value === '') {
@@ -298,109 +295,6 @@ export function BeatPerformanceEditor({
         {voicePreview.error ? (
           <p className="voice-preview-error">{voicePreview.error}</p>
         ) : null}
-
-        <details className="beat-performance-advanced">
-          <summary className="beat-performance-advanced-summary">高级 Voice</summary>
-          <p className="beat-performance-advanced-hint">
-            覆盖本节拍 pitch / volume / style_hint；留空则跟随预设。
-          </p>
-
-          <label className="profile-create-field">
-            音高 pitch
-            <input
-              type="text"
-              value={pitchOverride != null ? String(pitchOverride) : ''}
-              placeholder={resolvedPitch || '-2Hz / +2Hz'}
-              maxLength={32}
-              onChange={(event) => {
-                const value = event.target.value;
-                onUpdate({
-                  voice: {
-                    ...beat.voice,
-                    pitch: value.trim() ? value : undefined,
-                  },
-                });
-              }}
-            />
-          </label>
-          {pitchOverride != null && pitchOverride !== '' ? (
-            <button
-              type="button"
-              className="slider-field-reset"
-              onClick={() =>
-                onUpdate({
-                  voice: { ...beat.voice, pitch: undefined },
-                })
-              }
-            >
-              恢复预设音高
-            </button>
-          ) : null}
-
-          <label className="profile-create-field">
-            音量 volume
-            <input
-              type="text"
-              value={volumeOverride != null ? String(volumeOverride) : ''}
-              placeholder={resolvedVolume || '-5% / +10%'}
-              maxLength={32}
-              onChange={(event) => {
-                const value = event.target.value;
-                onUpdate({
-                  voice: {
-                    ...beat.voice,
-                    volume: value.trim() ? value : undefined,
-                  },
-                });
-              }}
-            />
-          </label>
-          {volumeOverride != null && volumeOverride !== '' ? (
-            <button
-              type="button"
-              className="slider-field-reset"
-              onClick={() =>
-                onUpdate({
-                  voice: { ...beat.voice, volume: undefined },
-                })
-              }
-            >
-              恢复预设音量
-            </button>
-          ) : null}
-
-          <label className="profile-create-field">
-            语气 style_hint
-            <input
-              type="text"
-              value={styleHintOverride ?? ''}
-              placeholder={resolvedStyleHint || 'Gemini TTS 语气；Edge 忽略'}
-              maxLength={500}
-              onChange={(event) => {
-                const value = event.target.value;
-                onUpdate({
-                  voice: {
-                    ...beat.voice,
-                    style_hint: value.trim() ? value : undefined,
-                  },
-                });
-              }}
-            />
-          </label>
-          {styleHintOverride?.trim() ? (
-            <button
-              type="button"
-              className="slider-field-reset"
-              onClick={() =>
-                onUpdate({
-                  voice: { ...beat.voice, style_hint: undefined },
-                })
-              }
-            >
-              恢复预设语气
-            </button>
-          ) : null}
-        </details>
       </section>
 
       <section className="beat-performance-section">
