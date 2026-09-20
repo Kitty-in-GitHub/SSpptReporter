@@ -1,4 +1,4 @@
-import { UI_SESSION_MODES, UI_SETTINGS } from '../constants/uiZh';
+import { UI_SETTINGS } from '../constants/uiZh';
 import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import type { ChatMessage } from '../types/chat';
 import type { VisualSettings } from '../types/settings';
@@ -21,9 +21,6 @@ interface ChatPanelProps {
   vrmResolving?: boolean;
   backgroundImageUrl?: string | null;
   visual: VisualSettings;
-  onEnterPresentMode?: () => void;
-  onEnterEditMode?: () => void;
-  onEnterMocapMode?: () => void;
 }
 
 export function ChatPanel({
@@ -40,9 +37,6 @@ export function ChatPanel({
   vrmResolving,
   backgroundImageUrl,
   visual,
-  onEnterPresentMode,
-  onEnterEditMode,
-  onEnterMocapMode,
 }: ChatPanelProps) {
   const isBroadcast = visual.layoutMode === 'broadcast';
   const shouldShowInput = !isBroadcast || visual.showInputInBroadcast;
@@ -72,33 +66,6 @@ export function ChatPanel({
       style={panelStyle}
     >
       <div className="chat-panel-toolbar">
-        {onEnterPresentMode && (
-          <button
-            type="button"
-            className="chat-mode-button"
-            onClick={onEnterPresentMode}
-          >
-            汇报
-          </button>
-        )}
-        {onEnterEditMode && (
-          <button
-            type="button"
-            className="chat-mode-button"
-            onClick={onEnterEditMode}
-          >
-            {UI_SESSION_MODES.edit}
-          </button>
-        )}
-        {onEnterMocapMode && (
-          <button
-            type="button"
-            className="chat-mode-button"
-            onClick={onEnterMocapMode}
-          >
-            {UI_SESSION_MODES.mocap}
-          </button>
-        )}
         <button
           type="button"
           className="settings-button chat-settings-button"

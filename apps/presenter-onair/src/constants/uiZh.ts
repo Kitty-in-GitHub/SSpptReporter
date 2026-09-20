@@ -70,6 +70,11 @@ export const UI_SESSION_MODES = {
   mocap: '面捕',
 } as const;
 
+export const UI_SESSION_DRAWER = {
+  title: '界面',
+  toggleLabel: '展开界面切换',
+} as const;
+
 export const UI_QA = {
   panelTitle: '评委提问',
   inputPlaceholder: '输入评委问题，Enter 提交',

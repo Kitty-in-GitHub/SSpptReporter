@@ -8,10 +8,6 @@
   color: #e8eef8;
 }
 
-.session-mode-toolbar {
-  flex-wrap: wrap;
-}
-
 .script-editor-actions {
   display: flex;
   gap: 8px;

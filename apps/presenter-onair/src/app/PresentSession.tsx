@@ -132,7 +132,6 @@ export function PresentSession({
         onPipBorderlessChange={settingsHook.updatePresentPipBorderless}
         onPipSizeChange={settingsHook.updatePresentPipSize}
         onPipOffsetChange={settingsHook.updatePresentPipOffset}
-        onSessionModeChange={settingsHook.updatePresentSessionMode}
         onToggleSettings={onToggleSettings}
         mouthLevelRef={mouthLevelRef}
         isSpeaking={isSpeaking}

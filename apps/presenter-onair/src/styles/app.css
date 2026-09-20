@@ -615,19 +615,96 @@ body {
   align-items: center;
 }
 
-.chat-mode-button {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  background: rgba(22, 33, 62, 0.9);
-  color: #e8eef8;
-  padding: 6px 12px;
-  font-size: 13px;
+/* ── Session Drawer ── */
+
+.session-drawer-toggle {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  z-index: 60;
+  width: 22px;
+  height: 68px;
+  transform: translateY(-50%);
+  border: 1px solid #0f3460;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  background: rgba(22, 33, 62, 0.92);
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  line-height: 1;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.chat-mode-button:hover {
-  background: rgba(59, 130, 246, 0.85);
-  border-color: #3b82f6;
+.session-drawer-toggle:hover,
+.session-drawer-toggle[aria-expanded="true"] {
+  background: #0f3460;
+  border-color: #e94560;
+}
+
+.session-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.session-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 61;
+  width: min(240px, 72vw);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 12px;
+  background: #16213e;
+  border-right: 1px solid #0f3460;
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.45);
+  animation: session-drawer-slide-in 0.18s ease;
+}
+
+@keyframes session-drawer-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.session-drawer-title {
+  padding: 0 8px 6px;
+  color: #8899aa;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.session-drawer-tab {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #d3dde8;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.session-drawer-tab:hover {
+  background: rgba(15, 52, 96, 0.5);
+}
+
+.session-drawer-tab.is-active {
+  background: #0f3460;
+  border-color: #e94560;
+  color: #fff;
 }
 
 .chat-settings-button {

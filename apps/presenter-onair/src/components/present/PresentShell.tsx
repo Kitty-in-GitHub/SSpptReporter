@@ -21,7 +21,6 @@ import {
   type PipCorner,
   type PresentLayout,
   type QaAsrEngine,
-  type SessionMode,
 } from '../../types/present';
 import type { AvatarPresenterController } from '../../hooks/useAvatarPresenter';
 import { AvatarShell } from '../AvatarShell';
@@ -34,7 +33,7 @@ import { PresentScriptCue } from './PresentScriptCue';
 import { QaPanel } from './QaPanel';
 import { StageQaVoice } from './StageQaVoice';
 import { GatewayAsrSetupDialog } from './GatewayAsrSetupDialog';
-import { SessionModeToolbar } from './SessionModeToolbar';
+import { AppToolbar } from './AppToolbar';
 import { useBrainQa } from '../../hooks/useBrainQa';
 import { fetchGatewayAsrHealth } from '../../lib/voice/gatewayAsrHealth';
 import type { AppSettings, ChatProviderOption } from '../../types/settings';
@@ -59,7 +58,6 @@ interface PresentShellProps {
   onPipBorderlessChange: (borderless: boolean) => void;
   onPipSizeChange: (size: number) => void;
   onPipOffsetChange: (offsetX: number, offsetY: number) => void;
-  onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
   /** 演讲模式：隐藏导演台等外层面板 */
   onStageModeChange?: (active: boolean) => void;
@@ -132,7 +130,6 @@ export function PresentShell({
   onPipBorderlessChange,
   onPipSizeChange,
   onPipOffsetChange,
-  onSessionModeChange,
   onToggleSettings,
   onStageModeChange,
   mouthLevelRef,
@@ -492,9 +489,7 @@ export function PresentShell({
       }}
     >
       {!stageMode ? (
-        <SessionModeToolbar
-          sessionMode="present"
-          onSessionModeChange={onSessionModeChange}
+        <AppToolbar
           onToggleSettings={onToggleSettings}
           settingsAriaLabel={UI_SETTINGS.ariaLabel}
           title={deckTitle}
@@ -540,7 +535,7 @@ export function PresentShell({
           >
             演讲模式
           </button>
-        </SessionModeToolbar>
+        </AppToolbar>
       ) : (
         <div
           className={`present-stage-chrome${chromeRevealed ? ' is-visible' : ''}`}

@@ -85,11 +85,6 @@ export function ChatSession({
       backgroundImageUrl={backgroundImageUrl}
       visual={settingsHook.settings.visual}
       onToggleSettings={onToggleSettings}
-      onEnterPresentMode={() =>
-        settingsHook.updatePresentSessionMode('present')
-      }
-      onEnterEditMode={() => settingsHook.updatePresentSessionMode('edit')}
-      onEnterMocapMode={() => settingsHook.updatePresentSessionMode('mocap')}
     />
   );
 }

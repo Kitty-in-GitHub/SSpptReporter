@@ -4,11 +4,10 @@ import type { FaceCaptureMouthDriver, VisualSettings } from '../../types/setting
 import type { FaceCaptureFrame } from '../../lib/avatar/faceCaptureTypes';
 import type { RefObject } from 'react';
 import { AvatarShell } from '../AvatarShell';
-import { SessionModeToolbar } from '../present/SessionModeToolbar';
+import { AppToolbar } from '../present/AppToolbar';
 
 interface MocapPanelProps {
   onToggleSettings: () => void;
-  onSessionModeChange: (mode: 'chat' | 'present' | 'edit' | 'mocap') => void;
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
   avatarPresenter: AvatarPresenterController;
@@ -28,7 +27,6 @@ interface MocapPanelProps {
 
 export function MocapPanel({
   onToggleSettings,
-  onSessionModeChange,
   mouthLevelRef,
   isSpeaking,
   avatarPresenter,
@@ -60,9 +58,7 @@ export function MocapPanel({
 
   return (
     <div className="chat-panel chat-panel-broadcast mocap-panel" style={panelStyle}>
-      <SessionModeToolbar
-        sessionMode="mocap"
-        onSessionModeChange={onSessionModeChange}
+      <AppToolbar
         onToggleSettings={onToggleSettings}
         settingsAriaLabel={UI_SETTINGS.ariaLabel}
         title="直播皮套"
@@ -90,7 +86,7 @@ export function MocapPanel({
                 : '面捕准备中…'}
           </span>
         </div>
-      </SessionModeToolbar>
+      </AppToolbar>
 
       {showCameraPreview && (
         <div className="mocap-camera-preview-hint">

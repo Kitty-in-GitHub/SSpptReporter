@@ -4,19 +4,17 @@ import { UI_SESSION_MODES, UI_SETTINGS } from '../../constants/uiZh';
 import { usePerformanceCatalog } from '../../hooks/usePerformanceCatalog';
 import type { DeckScriptEditorController } from '../../hooks/useDeckScriptEditor';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
-import type { SessionMode } from '../../types/present';
 import { BeatPerformanceEditor } from './BeatPerformanceEditor';
 import { BeatTimelineStrip } from './BeatTimelineStrip';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentControls } from './PresentControls';
-import { SessionModeToolbar } from './SessionModeToolbar';
+import { AppToolbar } from './AppToolbar';
 import './scriptEditor.css';
 
 interface ScriptEditorShellProps {
   slideDeck: SlideDeckController;
   editor: DeckScriptEditorController;
   deckId: string;
-  onSessionModeChange: (mode: SessionMode) => void;
   onToggleSettings: () => void;
 }
 
@@ -30,7 +28,6 @@ export function ScriptEditorShell({
   slideDeck,
   editor,
   deckId,
-  onSessionModeChange,
   onToggleSettings,
 }: ScriptEditorShellProps) {
   const utteranceRef = useRef<HTMLTextAreaElement>(null);
@@ -77,9 +74,7 @@ export function ScriptEditorShell({
 
   return (
     <div className="script-editor-shell">
-      <SessionModeToolbar
-        sessionMode="edit"
-        onSessionModeChange={onSessionModeChange}
+      <AppToolbar
         onToggleSettings={onToggleSettings}
         settingsAriaLabel={UI_SETTINGS.ariaLabel}
         title={slideDeck.deck?.title ?? UI_SESSION_MODES.edit}
@@ -115,7 +110,7 @@ export function ScriptEditorShell({
             放弃草稿
           </button>
         </div>
-      </SessionModeToolbar>
+      </AppToolbar>
 
       {(editor.status || editor.error || performanceError) && (
         <div

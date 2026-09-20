@@ -13,6 +13,7 @@ import { ChatSession } from './ChatSession';
 import { EditSession } from './EditSession';
 import { MocapSession } from './MocapSession';
 import { PresentSession } from './PresentSession';
+import { SessionDrawer } from '../components/SessionDrawer';
 import { SettingsDialog } from './SettingsDialog';
 import '../styles/app.css';
 
@@ -216,6 +217,12 @@ export default function App() {
 
   return (
     <div className={`app${presentStageMode ? ' is-present-stage' : ''}`}>
+      <SessionDrawer
+        sessionMode={sessionMode}
+        onSessionModeChange={settingsHook.updatePresentSessionMode}
+        hidden={presentStageMode}
+      />
+
       {sessionMode === 'edit' ? (
         <EditSession
           settingsHook={settingsHook}

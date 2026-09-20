@@ -75,7 +75,6 @@ export function MocapSession({
   return (
     <MocapPanel
       onToggleSettings={onToggleSettings}
-      onSessionModeChange={settingsHook.updatePresentSessionMode}
       mouthLevelRef={mouthLevelRef}
       isSpeaking={isSpeaking}
       avatarPresenter={avatarPresenter}
