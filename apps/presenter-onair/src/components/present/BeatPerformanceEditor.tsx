@@ -21,6 +21,7 @@ import {
   resolveProfileColor,
   resolveProfileDisplayName,
 } from '../../hooks/usePerformanceCatalog';
+import { useVoicePreview } from '../../hooks/useVoicePreview';
 import { EmphasisTextEditor } from './EmphasisTextEditor';
 import { isEmotionProfile, ProfileCreateDialog } from './ProfileCreateDialog';
 import { ProfileEditDialog } from './ProfileEditDialog';
@@ -88,6 +89,7 @@ export function BeatPerformanceEditor({
 }: BeatPerformanceEditorProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editProfileId, setEditProfileId] = useState<string | null>(null);
+  const voicePreview = useVoicePreview();
   const profileName = beat.profile ?? beat.emotion;
   const mergedCatalog = catalog ?? { profiles: {} };
   const profileIds = listSelectableProfiles(mergedCatalog);
@@ -97,6 +99,7 @@ export function BeatPerformanceEditor({
   const pauseAfter =
     beat.timing?.pause_after_ms ?? effectivePause(beat, catalog, 'pause_after_ms');
   const speakerValue = beat.voice?.speaker ?? '';
+  const presetSpeaker = effectiveSpeaker(beat, catalog);
   const pitchOverride = beat.voice?.pitch;
   const volumeOverride = beat.voice?.volume;
   const styleHintOverride = beat.voice?.style_hint;
@@ -236,37 +239,65 @@ export function BeatPerformanceEditor({
       <section className="beat-performance-section">
         <h3 className="beat-performance-heading">汇报音色</h3>
         <div className="voice-picker">
-          <button
-            type="button"
-            className={`voice-card${speakerValue === '' ? ' is-selected' : ''}`}
-            onClick={() =>
-              onUpdate({
-                voice: { ...beat.voice, speaker: undefined },
-              })
-            }
-          >
-            <span className="voice-card-label">跟随预设</span>
-            <span className="voice-card-hint">
-              {EDGE_VOICE_OPTIONS.find((item) => item.id === effectiveSpeaker(beat, catalog))
-                ?.label ?? '默认'}
-            </span>
-          </button>
-          {EDGE_VOICE_OPTIONS.map((option) => (
+          <div className="voice-card-wrap">
             <button
-              key={option.id}
               type="button"
-              className={`voice-card${speakerValue === option.id ? ' is-selected' : ''}`}
+              className={`voice-card${speakerValue === '' ? ' is-selected' : ''}`}
               onClick={() =>
                 onUpdate({
-                  voice: { ...beat.voice, speaker: option.id },
+                  voice: { ...beat.voice, speaker: undefined },
                 })
               }
             >
-              <span className="voice-card-label">{option.label}</span>
-              <span className="voice-card-hint">{option.hint}</span>
+              <span className="voice-card-label">跟随预设</span>
+              <span className="voice-card-hint">
+                {EDGE_VOICE_OPTIONS.find((item) => item.id === presetSpeaker)
+                  ?.label ?? '默认'}
+              </span>
             </button>
+            <button
+              type="button"
+              className={`voice-card-preview${
+                voicePreview.activeVoice === presetSpeaker ? ' is-active' : ''
+              }`}
+              title="试听"
+              aria-label="试听预设音色"
+              onClick={() => void voicePreview.preview(presetSpeaker)}
+            >
+              {voicePreview.activeVoice === presetSpeaker ? '⏹' : '🔊'}
+            </button>
+          </div>
+          {EDGE_VOICE_OPTIONS.map((option) => (
+            <div key={option.id} className="voice-card-wrap">
+              <button
+                type="button"
+                className={`voice-card${speakerValue === option.id ? ' is-selected' : ''}`}
+                onClick={() =>
+                  onUpdate({
+                    voice: { ...beat.voice, speaker: option.id },
+                  })
+                }
+              >
+                <span className="voice-card-label">{option.label}</span>
+                <span className="voice-card-hint">{option.hint}</span>
+              </button>
+              <button
+                type="button"
+                className={`voice-card-preview${
+                  voicePreview.activeVoice === option.id ? ' is-active' : ''
+                }`}
+                title="试听"
+                aria-label={`试听${option.label}`}
+                onClick={() => void voicePreview.preview(option.id)}
+              >
+                {voicePreview.activeVoice === option.id ? '⏹' : '🔊'}
+              </button>
+            </div>
           ))}
         </div>
+        {voicePreview.error ? (
+          <p className="voice-preview-error">{voicePreview.error}</p>
+        ) : null}
 
         <details className="beat-performance-advanced">
           <summary className="beat-performance-advanced-summary">高级 Voice</summary>
