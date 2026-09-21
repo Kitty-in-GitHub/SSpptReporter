@@ -525,6 +525,19 @@
   border-color: #3b82f6;
 }
 
+.gesture-chip.is-pending {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.gesture-chip-badge {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0 5px;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
 .gesture-chip-icon {
   width: 18px;
   height: 18px;

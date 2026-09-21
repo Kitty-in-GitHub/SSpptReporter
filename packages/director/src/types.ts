@@ -14,13 +14,22 @@ export type Emotion =
 export type Gesture =
   | "none"
   | "idle"
+  /** 演讲语义手势：待自制 VRMA，当前为空实现（无动作） */
   | "bow"
   | "nod"
   | "think"
   | "explain"
   | "point_slide"
   | "open_hands"
-  | "emphasize";
+  | "emphasize"
+  /** hikari-archive 占位动作：名字即实际姿势 */
+  | "wave_both"
+  | "wave_left"
+  | "wave_right"
+  | "idle_stretch"
+  | "idle_shoot"
+  | "idle_vsign"
+  | "idle_sport";
 
 export type CameraShot = "bust" | "medium" | "wide";
 
@@ -92,6 +101,7 @@ export const EMOTIONS: readonly Emotion[] = [
 export const GESTURES: readonly Gesture[] = [
   "none",
   "idle",
+  // 演讲语义手势（待自制 VRMA）
   "bow",
   "nod",
   "think",
@@ -99,4 +109,12 @@ export const GESTURES: readonly Gesture[] = [
   "point_slide",
   "open_hands",
   "emphasize",
+  // 占位动作（hikari-archive，名字即实际姿势）
+  "wave_both",
+  "wave_left",
+  "wave_right",
+  "idle_stretch",
+  "idle_shoot",
+  "idle_vsign",
+  "idle_sport",
 ] as const;

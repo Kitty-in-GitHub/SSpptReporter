@@ -57,10 +57,17 @@
         "explain",
         "point_slide",
         "open_hands",
-        "emphasize"
+        "emphasize",
+        "wave_both",
+        "wave_left",
+        "wave_right",
+        "idle_stretch",
+        "idle_shoot",
+        "idle_vsign",
+        "idle_sport"
       ],
       "default": "none",
-      "description": "播放预置 VRMA/Mixamo 片段名；可覆盖 profile 默认手势"
+      "description": "播放预置 VRMA 片段名。bow/nod/think/explain/point_slide/open_hands/emphasize 为演讲语义手势（待自制 VRMA，当前无动作）；wave_*/idle_* 为 hikari-archive 占位动作（名字即实际姿势）"
     },
     "camera": {
       "type": "string",

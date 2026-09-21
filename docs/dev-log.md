@@ -26,6 +26,23 @@
 
 ---
 
+### 2026-09-02 · 手势改名 + 新增演讲语义手势（空实现）
+
+- **设备/环境**：Win / conda ssreporter
+- **做了什么**：
+  - 7 个 hikari 占位手势改名为**实际姿势名**：`bow→wave_both`、`nod→wave_left`、`think→idle_stretch`、`explain→wave_right`、`point_slide→idle_shoot`、`open_hands→idle_vsign`、`emphasize→idle_sport`（原先语义名与实际动作不符，如 `bow` 实为双手挥手）
+  - 新增 7 个**演讲语义手势**（沿用原语义名 `bow`/`nod`/`think`/`explain`/`point_slide`/`open_hands`/`emphasize`）：进入协议枚举与讲稿导演台选择器，但**无 VRMA、也不套表情兜底 → 播放时不做任何动作**，UI 标「待自制」
+  - 协议同步：`schemas/director-action.schema.json`、`packages/director/src/types.ts`；`validate.ts` 里重复的 gesture 内联枚举改为引用 `GESTURES`，消除不同步隐患
+  - 新建节拍默认手势改为有动作的占位名（第 1 页 `wave_both`，其余 `wave_right`）
+  - demo 讲稿 6 页改用占位名，并重新 `npm run compile:deck`
+  - 同步 `setup-gesture-vrma.mjs` 下载映射、fixtures、`buildQaPrompt.ts` 手势清单、相关测试与文档
+- **未做 / 阻塞**：`npm run setup:gestures` 尚未执行（需访问 raw.githubusercontent.com），因此当前演示仍**无身体动作**，只有面部表情
+- **下一台机器应优先**：跑 `npm run setup:gestures` 下载 7 个占位 VRMA → 验证手势播放链路；之后按 `docs/vrma-authoring.md` 自制语义手势
+- **相关文件**：`packages/director/src/{types,validate,slide-script-draft}.ts` · `apps/presenter-onair/src/lib/gestureToVrmReaction.ts` · `apps/presenter-onair/src/constants/performanceUi.ts` · `content/decks/demo/slides/*.md`
+- **验证方式**：`npm run typecheck`；`npm test`（director 36 / brain 13 / onair 53）；`npm run compile:deck`
+
+---
+
 ### 2026-08-27 · 小清理：弃用 API 删除 + gitignore + 口型 prop 收紧
 
 - **设备/环境**：Win10 / conda ssreporter

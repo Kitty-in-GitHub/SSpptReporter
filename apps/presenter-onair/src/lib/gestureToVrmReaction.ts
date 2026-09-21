@@ -12,18 +12,23 @@ export interface GestureVrmReactionSpec {
 
 const GESTURE_BASE = `${import.meta.env.BASE_URL}avatar/gestures`;
 
+/**
+ * 已实现的占位动作（hikari-archive，MIT），名字即实际姿势。
+ * 演讲语义手势（bow / nod / think / explain / point_slide / open_hands / emphasize）
+ * 暂无 VRMA，故意不在此表 —— 播放时不做任何动作。
+ */
 export const GESTURE_VRMA_URLS: Partial<Record<Gesture, string>> = {
-  bow: `${GESTURE_BASE}/bow.vrma`,
-  nod: `${GESTURE_BASE}/nod.vrma`,
-  think: `${GESTURE_BASE}/think.vrma`,
-  explain: `${GESTURE_BASE}/explain.vrma`,
-  point_slide: `${GESTURE_BASE}/point_slide.vrma`,
-  open_hands: `${GESTURE_BASE}/open_hands.vrma`,
-  emphasize: `${GESTURE_BASE}/emphasize.vrma`,
+  wave_both: `${GESTURE_BASE}/wave_both.vrma`,
+  wave_left: `${GESTURE_BASE}/wave_left.vrma`,
+  wave_right: `${GESTURE_BASE}/wave_right.vrma`,
+  idle_stretch: `${GESTURE_BASE}/idle_stretch.vrma`,
+  idle_shoot: `${GESTURE_BASE}/idle_shoot.vrma`,
+  idle_vsign: `${GESTURE_BASE}/idle_vsign.vrma`,
+  idle_sport: `${GESTURE_BASE}/idle_sport.vrma`,
 };
 
 const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
-  bow: {
+  wave_both: {
     parts: [
       { name: 'happy', intensity: 0.35 },
       { name: 'mouthSmileLeft', intensity: 0.28 },
@@ -34,9 +39,9 @@ const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
     ],
     fadeMs: 380,
     holdMs: 1400,
-    vrmaUrl: GESTURE_VRMA_URLS.bow,
+    vrmaUrl: GESTURE_VRMA_URLS.wave_both,
   },
-  nod: {
+  wave_left: {
     parts: [
       { name: 'browInnerUp', intensity: 0.38 },
       { name: 'eyeSquintLeft', intensity: 0.24 },
@@ -46,9 +51,9 @@ const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
     ],
     fadeMs: 180,
     holdMs: 520,
-    vrmaUrl: GESTURE_VRMA_URLS.nod,
+    vrmaUrl: GESTURE_VRMA_URLS.wave_left,
   },
-  think: {
+  idle_stretch: {
     parts: [
       { name: 'thinking', intensity: 0.5 },
       { name: 'relaxed', intensity: 0.22 },
@@ -58,9 +63,9 @@ const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
     ],
     fadeMs: 420,
     holdMs: 2800,
-    vrmaUrl: GESTURE_VRMA_URLS.think,
+    vrmaUrl: GESTURE_VRMA_URLS.idle_stretch,
   },
-  explain: {
+  wave_right: {
     parts: [
       { name: 'relaxed', intensity: 0.38 },
       { name: 'mouthSmileLeft', intensity: 0.32 },
@@ -70,9 +75,9 @@ const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
     ],
     fadeMs: 320,
     holdMs: 2200,
-    vrmaUrl: GESTURE_VRMA_URLS.explain,
+    vrmaUrl: GESTURE_VRMA_URLS.wave_right,
   },
-  point_slide: {
+  idle_shoot: {
     parts: [
       { name: 'surprised', intensity: 0.28 },
       { name: 'eyeWideLeft', intensity: 0.42 },
@@ -82,9 +87,9 @@ const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
     ],
     fadeMs: 280,
     holdMs: 1800,
-    vrmaUrl: GESTURE_VRMA_URLS.point_slide,
+    vrmaUrl: GESTURE_VRMA_URLS.idle_shoot,
   },
-  open_hands: {
+  idle_vsign: {
     parts: [
       { name: 'happy', intensity: 0.42 },
       { name: 'relaxed', intensity: 0.35 },
@@ -95,9 +100,9 @@ const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
     ],
     fadeMs: 360,
     holdMs: 2400,
-    vrmaUrl: GESTURE_VRMA_URLS.open_hands,
+    vrmaUrl: GESTURE_VRMA_URLS.idle_vsign,
   },
-  emphasize: {
+  idle_sport: {
     parts: [
       { name: 'surprised', intensity: 0.45 },
       { name: 'eyeWideLeft', intensity: 0.5 },
@@ -108,7 +113,7 @@ const GESTURE_REACTIONS: Partial<Record<Gesture, GestureVrmReactionSpec>> = {
     ],
     fadeMs: 220,
     holdMs: 1200,
-    vrmaUrl: GESTURE_VRMA_URLS.emphasize,
+    vrmaUrl: GESTURE_VRMA_URLS.idle_sport,
   },
 };
 
@@ -119,6 +124,13 @@ export function gestureToVrmReactionSpec(
     return null;
   }
   return GESTURE_REACTIONS[gesture] ?? null;
+}
+
+/** 演讲语义手势尚未实现：可选，但播放时不做任何动作 */
+export function isGesturePending(gesture: Gesture): boolean {
+  return (
+    gesture !== 'none' && gesture !== 'idle' && !GESTURE_REACTIONS[gesture]
+  );
 }
 
 export function gestureToVrmReactionDraft(

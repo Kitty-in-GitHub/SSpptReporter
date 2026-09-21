@@ -63,7 +63,7 @@ flowchart LR
 ```markdown
 ---
 emotion: friendly
-gesture: bow
+gesture: wave_both
 action_id: present-01
 slide_action: {"goto": 1}
 ---
@@ -76,7 +76,7 @@ slide_action: {"goto": 1}
 | （正文） | 是 | — | TTS 朗读全文 |
 | `profile` | 否 | — | 表演预设（`performance.json`）；与 `emotion` 二选一或并用 |
 | `emotion` | 否 | `neutral` | 等同 profile 名（兼容） |
-| `gesture` | 否 | 第 1 页 `bow`，其余 `explain` | schema 枚举 |
+| `gesture` | 否 | 第 1 页 `wave_both`，其余 `wave_right` | schema 枚举；语义手势（bow/nod/…）待自制 VRMA |
 | `camera` | 否 | `bust` | |
 | `action_id` | 否 | `p{NN}` | |
 | `slide_action` | 否 | `{"goto": 页码}` | JSON 字符串；跨页用 `{"next":true}` 等 |

@@ -34,6 +34,7 @@ export const PROFILE_COLORS: Record<Emotion, string> = {
 export const GESTURE_LABELS: Record<Gesture, string> = {
   none: '无',
   idle: '待机',
+  // 演讲语义手势（待自制 VRMA）
   bow: '鞠躬',
   nod: '点头',
   think: '思考',
@@ -41,6 +42,14 @@ export const GESTURE_LABELS: Record<Gesture, string> = {
   point_slide: '指幻灯',
   open_hands: '摊手',
   emphasize: '强调',
+  // hikari 占位动作（名字即实际姿势）
+  wave_both: '双手挥手',
+  wave_left: '左手挥',
+  wave_right: '右手挥',
+  idle_stretch: '伸懒腰',
+  idle_shoot: '比枪',
+  idle_vsign: '比 V',
+  idle_sport: '运动',
 };
 
 export const GESTURE_ICONS: Record<Gesture, string> = {
@@ -53,6 +62,13 @@ export const GESTURE_ICONS: Record<Gesture, string> = {
   point_slide: '指',
   open_hands: '摊',
   emphasize: '强',
+  wave_both: '挥',
+  wave_left: '左',
+  wave_right: '右',
+  idle_stretch: '伸',
+  idle_shoot: '枪',
+  idle_vsign: 'V',
+  idle_sport: '动',
 };
 
 export const EDGE_VOICE_OPTIONS = [

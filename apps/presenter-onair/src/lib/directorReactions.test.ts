@@ -27,15 +27,22 @@ describe('gestureToVrmReactionSpec', () => {
     },
   );
 
-  it('maps bow to gesture parts', () => {
-    const spec = gestureToVrmReactionSpec('bow');
+  it.each(['bow', 'nod', 'think', 'explain', 'point_slide', 'open_hands', 'emphasize'] as const)(
+    'returns null for pending gesture %s',
+    (gesture) => {
+      expect(gestureToVrmReactionSpec(gesture)).toBeNull();
+    },
+  );
+
+  it('maps wave_both to gesture parts', () => {
+    const spec = gestureToVrmReactionSpec('wave_both');
     expect(spec).not.toBeNull();
     expect(spec?.parts.length).toBeGreaterThan(0);
-    expect(spec?.vrmaUrl).toContain('bow.vrma');
+    expect(spec?.vrmaUrl).toContain('wave_both.vrma');
   });
 
-  it('maps point_slide to gesture parts', () => {
-    const draft = gestureToVrmReactionDraft('point_slide');
+  it('maps idle_shoot to gesture parts', () => {
+    const draft = gestureToVrmReactionDraft('idle_shoot');
     expect(draft?.type).toBe('gesture');
     if (draft?.type === 'gesture') {
       expect(draft.parts.some((part) => part.name === 'browOuterUpLeft')).toBe(
@@ -50,7 +57,7 @@ describe('toDirectorReactionDrafts', () => {
     const drafts = toDirectorReactionDrafts({
       ...baseAction,
       emotion: 'friendly',
-      gesture: 'bow',
+      gesture: 'wave_both',
     });
 
     expect(drafts.gesture?.type).toBe('gesture');
@@ -61,7 +68,7 @@ describe('toDirectorReactionDrafts', () => {
     const drafts = toDirectorReactionDrafts({
       ...baseAction,
       emotion: 'neutral',
-      gesture: 'explain',
+      gesture: 'wave_right',
     });
 
     expect(drafts.gesture?.type).toBe('gesture');
@@ -81,12 +88,20 @@ describe('toDirectorReactionDrafts', () => {
 });
 
 describe('toDirectorGestureDraft', () => {
-  it('maps explain gesture from action', () => {
+  it('maps implemented gesture from action', () => {
+    const draft = toDirectorGestureDraft({
+      ...baseAction,
+      gesture: 'wave_right',
+    });
+    expect(draft?.type).toBe('gesture');
+  });
+
+  it('returns null for pending semantic gesture', () => {
     const draft = toDirectorGestureDraft({
       ...baseAction,
       gesture: 'explain',
     });
-    expect(draft?.type).toBe('gesture');
+    expect(draft).toBeNull();
   });
 });
 

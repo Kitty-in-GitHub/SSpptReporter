@@ -26,7 +26,7 @@ export function buildQaSystemPrompt(
     "- emotion: neutral | confident | friendly | serious | thinking | apologetic | emphatic（控制虚拟人表情与默认手势；未设时默认 friendly）",
     "- 可选 profile: 与 emotion 同名的表演 preset，优先于 emotion 驱动表情/手势",
     "- 不要输出 voice：Q&A 的 TTS 音色/语速由系统 qa 基线统一处理",
-    '- gesture: none | nod | think | explain | point_slide 等（可覆盖 profile 默认手势）',
+    "- gesture: none | wave_both | wave_left | wave_right | idle_stretch | idle_shoot | idle_vsign | idle_sport（当前可用，名字即实际姿势）；bow | nod | think | explain | point_slide | open_hands | emphasize 为演讲语义手势，VRMA 待自制、暂不产生动作",
     "- 可选 timing: { pause_before_ms?, pause_after_ms? } 覆盖 qa 基线停顿",
     "- qa.question_summary: 问题摘要",
     "- qa.confidence: 0~1",

@@ -15,13 +15,13 @@ const BASE =
 
 /** Director gesture name → source file in hikari-archive */
 const GESTURE_SOURCES = {
-  bow: 'wave_both.vrma',
-  nod: 'wave_left.vrma',
-  think: 'idle_stretch.vrma',
-  explain: 'wave_right.vrma',
-  point_slide: 'idle_shoot.vrma',
-  open_hands: 'idle_vSign.vrma',
-  emphasize: 'idle_sport.vrma',
+  wave_both: 'wave_both.vrma',
+  wave_left: 'wave_left.vrma',
+  wave_right: 'wave_right.vrma',
+  idle_stretch: 'idle_stretch.vrma',
+  idle_shoot: 'idle_shoot.vrma',
+  idle_vsign: 'idle_vSign.vrma',
+  idle_sport: 'idle_sport.vrma',
 };
 
 fs.mkdirSync(OUT_DIR, { recursive: true });

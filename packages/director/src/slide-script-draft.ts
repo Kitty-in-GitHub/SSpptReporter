@@ -17,6 +17,10 @@ const CAMERA_SHOTS = new Set<CameraShot>(["bust", "medium", "wide"]);
 const BEAT_MARKER_RE = /<!--\s*beat\s*-->/gi;
 const META_KEY_RE = /^[a-z_][a-z0-9_]*$/i;
 
+/** 新建节拍默认手势：暂用有动作的 hikari 占位名，待自制 VRMA 就位后可换回语义手势 */
+const DEFAULT_OPENING_GESTURE: Gesture = "wave_both";
+const DEFAULT_GESTURE: Gesture = "wave_right";
+
 export interface SlideBeatDraft {
   utterance: string;
   profile?: string;
@@ -115,7 +119,7 @@ function defaultBeatDraft(page: number, beatIndex: number): SlideBeatDraft {
   return {
     utterance: "",
     emotion: page === 1 && isFirstBeat ? "friendly" : "neutral",
-    gesture: page === 1 && isFirstBeat ? "bow" : "explain",
+    gesture: page === 1 && isFirstBeat ? DEFAULT_OPENING_GESTURE : DEFAULT_GESTURE,
     camera: "bust",
     action_id:
       beatIndex === 0
@@ -341,9 +345,16 @@ export function serializeSlideMarkdown(pageDraft: SlidePageDraft): string {
       lines.push(`emotion: ${beat.emotion}`);
     }
 
-    if (beat.gesture !== "explain" && beat.gesture !== "bow") {
+    if (
+      beat.gesture !== DEFAULT_GESTURE &&
+      beat.gesture !== DEFAULT_OPENING_GESTURE
+    ) {
       lines.push(`gesture: ${beat.gesture}`);
-    } else if (pageDraft.page === 1 && index === 0 && beat.gesture === "bow") {
+    } else if (
+      pageDraft.page === 1 &&
+      index === 0 &&
+      beat.gesture === DEFAULT_OPENING_GESTURE
+    ) {
       lines.push(`gesture: ${beat.gesture}`);
     } else if (index > 0 || pageDraft.page !== 1) {
       if (beat.gesture !== defaultBeatDraft(pageDraft.page, index).gesture) {

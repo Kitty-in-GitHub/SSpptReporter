@@ -5,7 +5,7 @@
     "mode": "present",
     "utterance": "各位老师好，我是答辩助手。接下来由我介绍项目背景与目标。",
     "emotion": "friendly",
-    "gesture": "bow",
+    "gesture": "wave_both",
     "camera": "bust",
     "slide_action": { "goto": 1 }
   },
@@ -15,7 +15,7 @@
     "mode": "present",
     "utterance": "第二页我们来看整体技术架构，分为呈现层、导演层和知识库三层。",
     "emotion": "confident",
-    "gesture": "explain",
+    "gesture": "wave_right",
     "camera": "bust",
     "slide_action": { "next": true }
   },
@@ -25,7 +25,7 @@
     "mode": "present",
     "utterance": "第三页是 Phase 1 的落地计划：先做 Director 队列，再做 PDF 汇报呈现。",
     "emotion": "emphatic",
-    "gesture": "point_slide",
+    "gesture": "idle_shoot",
     "camera": "bust",
     "slide_action": { "goto": 3 }
   },
@@ -35,7 +35,7 @@
     "mode": "present",
     "utterance": "以上是我的阶段性汇报，谢谢各位老师。",
     "emotion": "friendly",
-    "gesture": "bow",
+    "gesture": "wave_both",
     "camera": "bust",
     "slide_action": { "next": true }
   }

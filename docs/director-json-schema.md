@@ -42,18 +42,29 @@ Brain / LLM **只输出**本协议；Body（VRM）、Voice（TTS）、UI（幻�
 | apologetic | sad 低权重 |
 | emphatic | surprised 极短脉冲 |
 
-### gesture 预置（Phase 0/1 最少集）
+### gesture 预置
+
+分两组：**演讲语义手势**（意图明确，VRMA 待自制，当前播放无动作）与 **hikari-archive 占位动作**（已可用，名字即实际姿势）。
 
 | gesture | 用途 |
 |---------|------|
 | idle | 待机呼吸 |
-| bow | 开场/结束致意 |
-| nod | 认同 |
-| think | 思考 |
-| explain | 讲解手势 |
-| point_slide | 指向幻灯 |
-| open_hands | 开放说明 |
-| emphasize | 强调一点 |
+| bow | 开场/结束致意（待自制） |
+| nod | 认同（待自制） |
+| think | 思考（待自制） |
+| explain | 讲解手势（待自制） |
+| point_slide | 指向幻灯（待自制） |
+| open_hands | 开放说明（待自制） |
+| emphasize | 强调一点（待自制） |
+| wave_both | 双手挥手（占位） |
+| wave_left | 左手挥（占位） |
+| wave_right | 右手挥（占位） |
+| idle_stretch | 伸懒腰（占位） |
+| idle_shoot | 比枪（占位） |
+| idle_vsign | 比 V（占位） |
+| idle_sport | 运动（占位） |
+
+占位动作由 `npm run setup:gestures` 下载（MIT，来自 hikari-archive）；要换成贴合语义的动作，用自制文件覆盖 `public/avatar/gestures/<gesture>.vrma` 即可，无需改代码 —— 见 [`vrma-authoring.md`](./vrma-authoring.md)。
 
 ---
 
@@ -68,7 +79,7 @@ Brain / LLM **只输出**本协议；Body（VRM）、Voice（TTS）、UI（幻�
   "mode": "present",
   "utterance": "本页说明系统的三层结构：大脑、导演与身体。",
   "emotion": "confident",
-  "gesture": "explain",
+  "gesture": "wave_right",
   "camera": "bust",
   "slide_action": { "goto": 12, "highlight": "架构图" },
   "emphasis": [[5, 9]]
@@ -83,7 +94,7 @@ Brain / LLM **只输出**本协议；Body（VRM）、Voice（TTS）、UI（幻�
   "action_id": "present-13-flip",
   "mode": "present",
   "utterance": "",
-  "gesture": "point_slide",
+  "gesture": "idle_shoot",
   "slide_action": { "next": true, "cite_only": true }
 }
 ```
@@ -97,7 +108,7 @@ Brain / LLM **只输出**本协议；Body（VRM）、Voice（TTS）、UI（幻�
   "mode": "qa",
   "utterance": "关于成本部分，材料在第 8 页有明细，我翻过去说明。",
   "emotion": "serious",
-  "gesture": "point_slide",
+  "gesture": "idle_shoot",
   "slide_action": { "goto": 8, "highlight": "成本表" },
   "qa": {
     "question_summary": "成本如何构成",

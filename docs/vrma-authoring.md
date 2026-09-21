@@ -12,11 +12,13 @@ SSreporter 播放管线已支持：Director `gesture` → 加载 `public/avatar/
 |----|------|
 | 目标文件 | `apps/presenter-onair/public/avatar/gestures/<gesture>.vrma` |
 | 文件名约定 | 与讲稿 `gesture` 字段一致，见下表 |
-| 开源占位 | `npm run setup:gestures`（MIT，来自 hikari-archive；语义仅为近似） |
+| 开源占位 | `npm run setup:gestures`（MIT，来自 hikari-archive；名字即实际姿势，仅用于打通管线） |
 | 自写覆盖 | 用自制文件覆盖同名 `.vrma` 即可，无需改代码 |
 | 皮套 | 本机 `StarString1.0.vrm`（不进 Git） |
 
-### 文件名 ↔ Director gesture
+### gesture ↔ 文件名
+
+**① 待你自制的演讲语义手势**（当前为空实现：无 VRMA、播放无动作；做出同名文件即生效）
 
 | 文件 | 用途 |
 |------|------|
@@ -27,6 +29,18 @@ SSreporter 播放管线已支持：Director `gesture` → 加载 `public/avatar/
 | `point_slide.vrma` | 指向幻灯 |
 | `open_hands.vrma` | 开放说明 |
 | `emphasize.vrma` | 强调 |
+
+**② 已下载的 hikari 占位动作**（名字即实际姿势，只用来验证播放管线）
+
+| 文件 | 实际动作 |
+|------|----------|
+| `wave_both.vrma` | 双手挥手 |
+| `wave_left.vrma` | 左手挥 |
+| `wave_right.vrma` | 右手挥 |
+| `idle_stretch.vrma` | 伸懒腰 |
+| `idle_shoot.vrma` | 比枪 |
+| `idle_vsign.vrma` | 比 V |
+| `idle_sport.vrma` | 运动 |
 
 映射代码：[`apps/presenter-onair/src/lib/gestureToVrmReaction.ts`](../apps/presenter-onair/src/lib/gestureToVrmReaction.ts)。
 
@@ -134,7 +148,10 @@ SSreporter 播放管线已支持：Director `gesture` → 加载 `public/avatar/
 Expression 只动面部 blendshape；VRMA 动骨骼（头、手、躯干）。二者可同时触发。
 
 **Q：开源占位动作「不像鞠躬」？**  
-正常。占位来自挥手 / 伸展等片段。要对齐语义请按本文自写 `bow.vrma` 等覆盖。
+占位动作的名字已经按实际姿势改了（`wave_both` = 双手挥手等），不再冒用 `bow` 之类的语义名。要让 `bow` 真的鞠躬，按本文自写 `bow.vrma` 覆盖即可。
+
+**Q：为什么选 `bow` 这类语义手势时模型不动？**  
+它们是在协议里预留的**演讲语义手势**，VRMA 还没做，因此当前播放无任何动作（讲稿导演台里标注「待自制」）。先用占位动作，或自己做完覆盖。
 
 **Q：AI 能直接生成精美 VRMA 吗？**  
 不能替代在 Blender / Unity 里精修。程序化关键帧最多做粗糙占位，答辩建议本机手 K 或改现成 Humanoid 动画。

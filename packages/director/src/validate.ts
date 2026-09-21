@@ -1,5 +1,5 @@
 import Ajv, { type ErrorObject, type ValidateFunction } from "ajv";
-import type { DirectorAction } from "./types.js";
+import { GESTURES, type DirectorAction } from "./types.js";
 
 /** Inline schema (kept in sync with schemas/director-action.schema.json). */
 const directorActionSchema = {
@@ -26,17 +26,7 @@ const directorActionSchema = {
     },
     gesture: {
       type: "string",
-      enum: [
-        "none",
-        "idle",
-        "bow",
-        "nod",
-        "think",
-        "explain",
-        "point_slide",
-        "open_hands",
-        "emphasize",
-      ],
+      enum: [...GESTURES],
     },
     camera: { type: "string", enum: ["bust", "medium", "wide"] },
     voice: {

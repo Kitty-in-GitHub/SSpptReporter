@@ -22,6 +22,7 @@ import {
   resolveProfileDisplayName,
 } from '../../hooks/usePerformanceCatalog';
 import { useVoicePreview } from '../../hooks/useVoicePreview';
+import { isGesturePending } from '../../lib/gestureToVrmReaction';
 import { EmphasisTextEditor } from './EmphasisTextEditor';
 import { isEmotionProfile, ProfileCreateDialog } from './ProfileCreateDialog';
 import { ProfileEditDialog } from './ProfileEditDialog';
@@ -214,19 +215,26 @@ export function BeatPerformanceEditor({
         <div className="gesture-picker" role="listbox" aria-label="手势">
           {GESTURES.map((gesture) => {
             const selected = beat.gesture === gesture;
+            const pending = isGesturePending(gesture);
             return (
               <button
                 key={gesture}
                 type="button"
                 role="option"
                 aria-selected={selected}
-                className={`gesture-chip${selected ? ' is-selected' : ''}`}
+                className={`gesture-chip${selected ? ' is-selected' : ''}${
+                  pending ? ' is-pending' : ''
+                }`}
+                title={pending ? '待自制 VRMA，当前无动作' : undefined}
                 onClick={() => onUpdate({ gesture: gesture as Gesture })}
               >
                 <span className="gesture-chip-icon" aria-hidden>
                   {GESTURE_ICONS[gesture]}
                 </span>
                 {GESTURE_LABELS[gesture]}
+                {pending ? (
+                  <span className="gesture-chip-badge">待自制</span>
+                ) : null}
               </button>
             );
           })}
