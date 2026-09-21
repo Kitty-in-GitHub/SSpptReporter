@@ -26,6 +26,40 @@
 
 ---
 
+### 2026-09-02 · 落实 ADR-013：呈现层表情 / 动作分槽（修复手势被覆盖）
+
+- **设备/环境**：Win / conda ssreporter
+- **做了什么**：
+  - `useAvatarPresenter` 拆两槽：`reaction`（动作事件槽）+ `expressionReaction`（情绪状态槽）；新增 `applyPerformance({gesture, emotion})` 一次提交、`resetExpression()` 只清表情、`reset()` 清两槽
+  - 聊天语音路径（`onSpeechStart` / `onSpeechEnd`）改投**情绪槽**，不再占用动作槽
+  - `AvatarShell` 用 `useMemo` 稳定两槽对象身份（沿用上次修的重播问题），`AvatarBackground` 拆成两个 effect
+  - **动作槽不再 `controller.reset()`**：`gesture` 分支改为只清「上一次动作占用的通道」——`VrmExpressionController.gesture()` 现返回实际占用的通道名；表情通道的清零只由情绪槽执行
+  - `useDirectorQueue` / `DirectorPanel` 由「连发 reset→手势→表情」改为一次 `onApplyPerformance(pair)`；`PresentSession` 的 `onResetEmotion` 改用 `resetExpression(280)`
+  - 新增回归测试 `apps/presenter-onair/src/hooks/useAvatarPresenter.test.ts`（4 条，锁住双槽契约）
+- **未做 / 阻塞**：无。**汇报播放现在应能同时出现身体动作与面部表情**
+- **下一台机器应优先**：跑 `npm run dev` → 汇报模式播 demo 讲稿，确认占位手势（wave_both / wave_right / …）与情绪表情同时生效
+- **相关文件**：`apps/presenter-onair/src/hooks/{useAvatarPresenter,useDirectorQueue}.ts` · `src/components/{AvatarShell,AvatarPanel,DirectorPanel}.tsx` · `src/lib/vrmExpressionController.ts` · `src/app/PresentSession.tsx`
+- **验证方式**：`npm run typecheck`；`npm test`（director 36 / brain 13 / onair 57）
+- **决策记录**：[`decisions.md` ADR-013](./decisions.md)
+
+---
+
+### 2026-09-02 · 已知问题记录：手势在汇报播放中被表情覆盖（已修）
+
+- **设备/环境**：Win / conda ssreporter
+- **现象**：汇报播放时只看到面部表情，看不到身体动作 —— 即使 7 个占位 VRMA 已下载到位
+- **根因**：`useDirectorQueue` 对同一节拍**先后调用 3 次 reaction setter**（`reset` → 手势 → 表情），而 presenter 只有**一个** reaction 槽位；三者在同一批次内被 React 合并，只保留最后一次 → **手势被丢弃**
+  - 位置：`apps/presenter-onair/src/hooks/useDirectorQueue.ts:185-196`
+  - demo 8 条节拍的 emotion 均解析出非 neutral 的表情，所以**每条节拍的手势都不生效**
+  - 讲稿导演台的「动作预览」窗不受影响（它只发一次 reaction）
+- **顺带修正一个错误认知**：之前把「傻笑」归因于手势的表情兜底 parts，实际不对 —— 兜底也随手势一起被丢弃，傻笑纯来自 emotion 映射出的 `happy`
+- **未做 / 阻塞**：本条目仅为当时记录；**同日已按 ADR-013 修复**（见上方条目）
+- **修复方向（二选一）**：① 把手势 parts 与表情 blendshape 合并成一次 `applyReaction`（改动最小）；② presenter 改为「手势槽 + 表情槽」双槽，渲染层分别应用（更贴合身体/表情分层）
+- **附：表情链路确认正常**：情绪 → `emotionToVrmExpression` → `VrmExpressionController.emote/gesture`（含淡入淡出、hold 回落、多候选名兜底），另有内置预设 `vrm.intensity` 与 `IDLE_MOTIONS` 待机微表情；「表情特效」叠加层需 `reactionControlMode === 'linked'` 或手动触发
+- **相关文件**：`apps/presenter-onair/src/hooks/useDirectorQueue.ts` · `apps/presenter-onair/src/lib/avatar/fromDirector.ts` · `apps/presenter-onair/src/hooks/useAvatarPresenter.ts`
+
+---
+
 ### 2026-09-02 · 讲稿导演台：手势动作预览窗
 
 - **设备/环境**：Win / conda ssreporter

@@ -6,6 +6,29 @@
 
 ---
 
+## ADR-013 · 表情（状态）与肢体动作（事件）在呈现层分槽
+
+- **日期**：2026-09-02
+- **状态**：accepted（已于 2026-09-02 实现）
+- **决策**：
+  - **协议层保持合一**：`DirectorAction` 仍由一条指令同时携带 `emotion` 与 `gesture`，作者 / LLM 的心智模型是「一个节拍 = 一次表演」
+  - **呈现层分槽**：`useAvatarPresenter` 提供两个槽 —— **动作事件槽**（`gesture` / `animation`，播完即止）与 **情绪状态槽**（`emote`，`holdMs` 后自动回落）；`AvatarBackground` 用两个 effect 分别驱动，各自管生命周期
+  - **清零职责唯一**：只有情绪槽可以清零情绪 blendshape 通道；动作槽只叠加自己的 parts，不得 reset 全局通道
+- **理由**：
+  - 肢体动作是**事件**（VRMA 一次性；新指令应**打断**旧动作）；面部表情是**状态**（需持续一段；新指令应**替换**而非清零）。二者生命周期与打断语义不同，压进同一个 reaction 槽必然互相打架
+  - 单槽下 `gesture` 分支的前置 `controller.reset(160)` 会误清表情；且 `emote()` 会主动清零其余情绪通道而 `gesture()` 不会 —— 合并后无法给出统一的清零策略
+  - 保留「一个持续表情 + N 个动作」的表达能力（分槽后表情槽不动、动作槽可连发）
+  - `lib/avatar` 已有 `AvatarReactionPair { gesture, emotion }`，本意就是两件事，只是 presenter 只有单槽把它俩压扁了
+- **实现（2026-09-02）**：
+  - `useAvatarPresenter` 拆为 `reaction`（动作事件槽）+ `expressionReaction`（情绪状态槽），新增 `applyPerformance({ gesture, emotion })` 一次提交、`resetExpression()` 只清表情
+  - `AvatarShell` 用 `useMemo` 稳定两个槽的对象身份并分别下发；`AvatarBackground` 拆成两个 effect
+  - 动作槽的 `gesture` 分支**不再 `controller.reset()`**，改为只清理「上一次动作占用的通道」（`VrmExpressionController.gesture()` 返回实占通道名）；表情清零只由情绪槽执行
+  - `useDirectorQueue` / `DirectorPanel` 由「连发两次」改为一次 `onApplyPerformance(pair)`；`PresentSession` 的 `onResetEmotion` 改用 `resetExpression`
+  - 回归测试：`apps/presenter-onair/src/hooks/useAvatarPresenter.test.ts`
+- **相关文件**：`apps/presenter-onair/src/hooks/{useDirectorQueue,useAvatarPresenter}.ts` · `src/components/{AvatarShell,AvatarPanel,DirectorPanel}.tsx` · `src/lib/vrmExpressionController.ts`
+
+---
+
 ## ADR-009 · Present 节拍与 Performance Profile
 
 - **日期**：2026-08-26

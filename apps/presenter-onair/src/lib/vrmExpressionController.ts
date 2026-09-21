@@ -94,19 +94,27 @@ export class VrmExpressionController {
     }
   }
 
+  /** 应用一组表情片段，返回本次实际占用的通道名（供调用方做「打断上一次」清理） */
   gesture(
     parts: readonly VrmExpressionPart[],
     fadeMs = 200,
     holdMs: number | null = null,
-  ) {
+  ): string[] {
+    const applied: string[] = [];
     for (const part of parts) {
+      const name = this.resolveExpressionName(part.name);
+      if (!name) {
+        continue;
+      }
       this.set(
-        part.name,
+        name,
         part.intensity ?? 1,
         part.fadeMs ?? fadeMs,
         part.holdMs ?? holdMs,
       );
+      applied.push(name);
     }
+    return applied;
   }
 
   reset(fadeMs = 200) {

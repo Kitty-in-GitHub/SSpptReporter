@@ -96,8 +96,8 @@ export function PresentSession({
   const directorQueue = useDirectorQueue({
     speak: speakDirector,
     stopSpeech: onStop,
-    onApplyReaction: avatarPresenter.applyReaction,
-    onResetEmotion: () => avatarPresenter.reset(280),
+    onApplyPerformance: avatarPresenter.applyPerformance,
+    onResetEmotion: () => avatarPresenter.resetExpression(280),
     onSlideAction: slideDeck.applyDirectorSlideAction,
     resolvePerformance: performanceCatalog.resolvePerformance,
     resumeDeckAfterQaInterrupt: () => resumeDeckAfterQaRef.current,
@@ -168,8 +168,8 @@ export function PresentSession({
           queue={directorQueue}
           deckPlayback={deckScriptPlayback}
           onSpeak={speakDirector}
-          onApplyReaction={avatarPresenter.applyReaction}
-          onResetEmotion={() => avatarPresenter.reset(280)}
+          onApplyPerformance={avatarPresenter.applyPerformance}
+          onResetEmotion={() => avatarPresenter.resetExpression(280)}
         />
       ) : null}
     </>

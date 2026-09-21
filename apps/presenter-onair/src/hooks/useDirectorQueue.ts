@@ -13,7 +13,7 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import {
   avatarReactionsFromDirectorResolved,
-  type AvatarReactionDraft,
+  type AvatarReactionPair,
 } from '../lib/avatar';
 import {
   formatDirectorPlaybackError,
@@ -25,7 +25,8 @@ import { sleepMs } from '../lib/sleepMs';
 export interface UseDirectorQueueOptions {
   speak: (text: string, directive?: VoiceDirective) => Promise<void>;
   stopSpeech: () => void;
-  onApplyReaction: (draft: AvatarReactionDraft) => void;
+  /** 一次提交「动作 + 表情」，由呈现层分槽应用（ADR-013） */
+  onApplyPerformance: (pair: AvatarReactionPair) => void;
   onResetEmotion: () => void;
   onSlideAction?: (slideAction: SlideAction) => void | Promise<void>;
   resolvePerformance?: (action: DirectorAction) => ResolvedBeatPerformance;
@@ -76,7 +77,7 @@ function buildRunResult(
 export function useDirectorQueue({
   speak,
   stopSpeech,
-  onApplyReaction,
+  onApplyPerformance,
   onResetEmotion,
   onSlideAction,
   resolvePerformance,
@@ -183,17 +184,9 @@ export function useDirectorQueue({
           }
 
           onResetEmotion();
-          const { gesture, emotion } = avatarReactionsFromDirectorResolved(
-            action,
-            resolved,
+          onApplyPerformance(
+            avatarReactionsFromDirectorResolved(action, resolved),
           );
-
-          if (gesture) {
-            onApplyReaction(gesture);
-          }
-          if (emotion) {
-            onApplyReaction(emotion);
-          }
 
           const utterance = action.utterance.trim();
           if (utterance) {
@@ -226,7 +219,7 @@ export function useDirectorQueue({
       setPlayback('idle');
     },
     [
-      onApplyReaction,
+      onApplyPerformance,
       onResetEmotion,
       onSlideAction,
       setPlayback,

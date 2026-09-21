@@ -35,7 +35,8 @@ export function AvatarShell({
   faceCaptureActive = false,
   mouthDriver = 'faceCapture',
 }: AvatarShellProps) {
-  const { reaction, emotionEffectReaction, visual, callbacks } = presenter;
+  const { reaction, expressionReaction, emotionEffectReaction, visual, callbacks } =
+    presenter;
 
   // 必须 memo：AvatarBackground 按对象引用判断 reaction 是否变化，
   // 每次渲染新建对象会导致无关重渲染时重播上一次动作。
@@ -48,6 +49,17 @@ export function AvatarShell({
           } as VrmAvatarReaction)
         : null,
     [reaction],
+  );
+
+  const vrmExpressionReaction: VrmAvatarReaction | null = useMemo(
+    () =>
+      expressionReaction
+        ? ({
+            ...toVrmReactionDraft(expressionReaction),
+            id: expressionReaction.id,
+          } as VrmAvatarReaction)
+        : null,
+    [expressionReaction],
   );
 
   if (vrmResolveError && !vrmUrl) {
@@ -78,6 +90,7 @@ export function AvatarShell({
       mouthLevelRef={mouthLevelRef}
       isSpeaking={isSpeaking}
       reaction={vrmReaction}
+      expressionReaction={vrmExpressionReaction}
       emotionEffectReaction={emotionEffectReaction}
       reactionControlMode={visual.reactionControlMode}
       emotionEffectMap={visual.emotionEffectMap}

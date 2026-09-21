@@ -6,7 +6,7 @@ import {
 import sampleAction from '../fixtures/sample-action.json';
 import sampleQueue from '../fixtures/sample-queue.json';
 import { toDirectorReactionDrafts } from '../lib/directorReactions';
-import type { AvatarReactionDraft } from '../lib/avatar';
+import type { AvatarReactionPair } from '../lib/avatar';
 import type { useDirectorQueue } from '../hooks/useDirectorQueue';
 import type { useDeckScriptPlayback } from '../hooks/useDeckScriptPlayback';
 import type { SessionMode } from '../types/present';
@@ -24,7 +24,8 @@ interface DirectorPanelProps {
   queue: DirectorQueueApi;
   deckPlayback: DeckScriptPlaybackApi;
   onSpeak: (text: string) => Promise<void>;
-  onApplyReaction: (draft: AvatarReactionDraft) => void;
+  /** 一次提交「动作 + 表情」，由呈现层分槽应用（ADR-013） */
+  onApplyPerformance: (pair: AvatarReactionPair) => void;
   onResetEmotion: () => void;
 }
 
@@ -69,7 +70,7 @@ export function DirectorPanel({
   queue,
   deckPlayback,
   onSpeak,
-  onApplyReaction,
+  onApplyPerformance,
   onResetEmotion,
 }: DirectorPanelProps) {
   const isPresentMode = sessionMode === 'present';
@@ -100,13 +101,7 @@ export function DirectorPanel({
     const action = result.action;
     queue.stop();
     onResetEmotion();
-    const { gesture, emotion } = toDirectorReactionDrafts(action);
-    if (gesture) {
-      onApplyReaction(gesture);
-    }
-    if (emotion) {
-      onApplyReaction(emotion);
-    }
+    onApplyPerformance(toDirectorReactionDrafts(action));
 
     setStatus(`播放中：${action.action_id ?? 'fixture'} / ${action.mode}`);
     try {
@@ -118,7 +113,7 @@ export function DirectorPanel({
       onResetEmotion();
     }
   }, [
-    onApplyReaction,
+    onApplyPerformance,
     onResetEmotion,
     onSpeak,
     queue,

@@ -15,14 +15,14 @@ describe('useDirectorQueue', () => {
       }
     });
     const stopSpeech = vi.fn();
-    const onApplyReaction = vi.fn();
+    const onApplyPerformance = vi.fn();
     const onResetEmotion = vi.fn();
 
     const { result } = renderHook(() =>
       useDirectorQueue({
         speak,
         stopSpeech,
-        onApplyReaction,
+        onApplyPerformance,
         onResetEmotion,
       }),
     );

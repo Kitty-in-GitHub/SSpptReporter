@@ -89,7 +89,10 @@ interface AvatarBackgroundProps {
   vrmUrl: string;
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
+  /** 动作事件槽：肢体动作（VRMA 一次性） */
   reaction?: VrmAvatarReaction | null;
+  /** 情绪状态槽：面部表情（按 holdMs 持续后回落） */
+  expressionReaction?: VrmAvatarReaction | null;
   emotionEffectReaction?: VrmEmotionEffectReaction | null;
   reactionControlMode: VrmReactionControlMode;
   emotionEffectMap: VrmEmotionEffectMap;
@@ -514,6 +517,7 @@ export function AvatarBackground({
   mouthLevelRef,
   isSpeaking,
   reaction,
+  expressionReaction,
   emotionEffectReaction,
   reactionControlMode,
   emotionEffectMap,
@@ -540,6 +544,9 @@ export function AvatarBackground({
   const expressionControllerRef = useRef<VrmExpressionController | null>(null);
   const mouthExpressionNameRef = useRef<string | null>(null);
   const animationTokenRef = useRef(0);
+  const expressionAnimationTokenRef = useRef(0);
+  /** 动作槽当前占用的表情通道，用于「新动作打断旧动作」 */
+  const actionChannelsRef = useRef<string[]>([]);
   const mixerRef = useRef<AnimationMixer | null>(null);
   const idleActionRef = useRef<AnimationAction | null>(null);
   const idleMotionStateRef = useRef(createIdleMotionState());
@@ -658,60 +665,29 @@ export function AvatarBackground({
     }
   }, [isSpeaking]);
 
+  // 动作事件槽：肢体动作 + 其 blendshape 兜底。
+  // 不得 reset 全局通道 —— 表情归情绪槽管（ADR-013）。
   useEffect(() => {
     const controller = expressionControllerRef.current;
-    if (!controller) return;
-
-    if (!reaction) {
-      animationTokenRef.current += 1;
-      controller.reset(220);
-      return;
-    }
+    if (!controller || !reaction) return;
 
     suppressIdleMotion(
       idleMotionStateRef.current,
       reaction.type === 'reset' ? 1600 : IDLE_MOTION_AFTER_REACTION_DELAY_MS,
     );
 
-    if (reaction.type === 'animation') {
-      const token = animationTokenRef.current + 1;
-      animationTokenRef.current = token;
-      controller.reset(160);
-
-      void runVrmOneShotAnimation(
-        reaction.name,
-        (name, intensity, fadeMs) => {
-          controller.set(name, intensity, fadeMs);
-        },
-        () =>
-          expressionControllerRef.current === controller &&
-          animationTokenRef.current === token,
-      ).then(() => {
-        if (
-          expressionControllerRef.current === controller &&
-          animationTokenRef.current === token
-        ) {
-          controller.reset(280);
-        }
-      });
-      return;
-    }
-
     animationTokenRef.current += 1;
 
-    if (reaction.type === 'emote') {
-      controller.emote(
-        reaction.name,
-        reaction.intensity,
+    if (reaction.type === 'gesture') {
+      // 新动作打断旧动作：先清掉上一次动作占用的通道（属自己的残留，不动情绪通道）
+      for (const name of actionChannelsRef.current) {
+        controller.set(name, 0, 160);
+      }
+      actionChannelsRef.current = controller.gesture(
+        reaction.parts,
         reaction.fadeMs,
         reaction.holdMs,
       );
-      return;
-    }
-
-    if (reaction.type === 'gesture') {
-      controller.reset(160);
-      controller.gesture(reaction.parts, reaction.fadeMs, reaction.holdMs);
 
       const vrmaUrl = reaction.vrmaUrl;
       const mixer = mixerRef.current;
@@ -726,15 +702,103 @@ export function AvatarBackground({
           vrmaUrl,
         ).then((played) => {
           if (!played && expressionControllerRef.current === controller) {
-            controller.gesture(reaction.parts, reaction.fadeMs, reaction.holdMs);
+            actionChannelsRef.current = controller.gesture(
+              reaction.parts,
+              reaction.fadeMs,
+              reaction.holdMs,
+            );
           }
         });
       }
       return;
     }
 
-    controller.reset(reaction.fadeMs);
+    if (reaction.type === 'emote') {
+      controller.emote(
+        reaction.name,
+        reaction.intensity,
+        reaction.fadeMs,
+        reaction.holdMs,
+      );
+      return;
+    }
+
+    if (reaction.type === 'animation') {
+      const token = animationTokenRef.current + 1;
+      animationTokenRef.current = token;
+
+      void runVrmOneShotAnimation(
+        reaction.name,
+        (name, intensity, fadeMs) => {
+          controller.set(name, intensity, fadeMs);
+        },
+        () =>
+          expressionControllerRef.current === controller &&
+          animationTokenRef.current === token,
+      );
+      return;
+    }
+
+    // reset：仅作废未完成的动作，不动表情通道
   }, [reaction, isLoading]);
+
+  // 情绪状态槽：面部表情的唯一拥有者，也是唯一有权清零情绪通道的一方（ADR-013）。
+  useEffect(() => {
+    const controller = expressionControllerRef.current;
+    if (!controller || !expressionReaction) return;
+
+    suppressIdleMotion(
+      idleMotionStateRef.current,
+      expressionReaction.type === 'reset'
+        ? 1600
+        : IDLE_MOTION_AFTER_REACTION_DELAY_MS,
+    );
+
+    if (expressionReaction.type === 'emote') {
+      controller.emote(
+        expressionReaction.name,
+        expressionReaction.intensity,
+        expressionReaction.fadeMs,
+        expressionReaction.holdMs,
+      );
+      return;
+    }
+
+    if (expressionReaction.type === 'gesture') {
+      controller.gesture(
+        expressionReaction.parts,
+        expressionReaction.fadeMs,
+        expressionReaction.holdMs,
+      );
+      return;
+    }
+
+    if (expressionReaction.type === 'animation') {
+      const token = expressionAnimationTokenRef.current + 1;
+      expressionAnimationTokenRef.current = token;
+      controller.reset(160);
+
+      void runVrmOneShotAnimation(
+        expressionReaction.name,
+        (name, intensity, fadeMs) => {
+          controller.set(name, intensity, fadeMs);
+        },
+        () =>
+          expressionControllerRef.current === controller &&
+          expressionAnimationTokenRef.current === token,
+      ).then(() => {
+        if (
+          expressionControllerRef.current === controller &&
+          expressionAnimationTokenRef.current === token
+        ) {
+          controller.reset(280);
+        }
+      });
+      return;
+    }
+
+    controller.reset(expressionReaction.fadeMs);
+  }, [expressionReaction, isLoading]);
 
   useEffect(() => {
     const container = containerRef.current;

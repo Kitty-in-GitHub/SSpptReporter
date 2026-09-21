@@ -9,7 +9,7 @@ import {
   type VrmEmotionEffectReactionDraft,
   type VrmReactionControlMode,
 } from '../lib/vrmReactions';
-import type { AvatarReaction, AvatarReactionDraft, ScreenplayCue } from '../lib/avatar';
+import type { AvatarReaction, AvatarReactionDraft, AvatarReactionPair, ScreenplayCue } from '../lib/avatar';
 import {
   createReactionFromScreenplay,
   sustainReactionForSpeech,
@@ -34,9 +34,14 @@ export function useAvatarPresenter(
   callbacks: AvatarPresenterCallbacks,
 ) {
   const reactionIdRef = useRef(0);
+  const expressionIdRef = useRef(0);
   const emotionEffectIdRef = useRef(0);
 
+  /** 动作事件槽：肢体动作（VRMA 一次性），新指令打断旧动作 */
   const [reaction, setReaction] = useState<AvatarReaction | null>(null);
+  /** 情绪状态槽：面部表情，新指令替换旧表情并按其 holdMs 持续 */
+  const [expressionReaction, setExpressionReaction] =
+    useState<AvatarReaction | null>(null);
   const [emotionEffectReaction, setEmotionEffectReaction] =
     useState<VrmEmotionEffectReaction | null>(null);
 
@@ -45,9 +50,41 @@ export function useAvatarPresenter(
     setReaction(withAvatarReactionId(draft, reactionIdRef.current));
   }, []);
 
-  const reset = useCallback((fadeMs = 280) => {
-    applyReaction({ type: 'reset', fadeMs });
-  }, [applyReaction]);
+  const applyExpression = useCallback((draft: AvatarReactionDraft) => {
+    expressionIdRef.current += 1;
+    setExpressionReaction(withAvatarReactionId(draft, expressionIdRef.current));
+  }, []);
+
+  /**
+   * 一次提交「动作 + 表情」。
+   * 两槽独立，避免此前单槽下先后 setState 导致手势被表情覆盖（ADR-013）。
+   */
+  const applyPerformance = useCallback(
+    (pair: AvatarReactionPair) => {
+      if (pair.gesture) {
+        applyReaction(pair.gesture);
+      }
+      if (pair.emotion) {
+        applyExpression(pair.emotion);
+      }
+    },
+    [applyExpression, applyReaction],
+  );
+
+  const resetExpression = useCallback(
+    (fadeMs = 280) => {
+      applyExpression({ type: 'reset', fadeMs });
+    },
+    [applyExpression],
+  );
+
+  const reset = useCallback(
+    (fadeMs = 280) => {
+      applyReaction({ type: 'reset', fadeMs });
+      applyExpression({ type: 'reset', fadeMs });
+    },
+    [applyExpression, applyReaction],
+  );
 
   const applyEmotionEffect = useCallback(
     (draft: VrmEmotionEffectReactionDraft) => {
@@ -65,11 +102,12 @@ export function useAvatarPresenter(
 
   const onSpeechStart = useCallback(
     (cue: ScreenplayCue) => {
+      // 语音表情属于「情绪状态槽」，不动动作槽
       const nativeReaction = createReactionFromScreenplay(cue);
       if (nativeReaction) {
-        applyReaction(sustainReactionForSpeech(nativeReaction));
+        applyExpression(sustainReactionForSpeech(nativeReaction));
       } else {
-        applyReaction({ type: 'reset', fadeMs: 220 });
+        applyExpression({ type: 'reset', fadeMs: 220 });
       }
 
       const effectDraft = createLinkedVrmEmotionEffectReaction(
@@ -85,7 +123,7 @@ export function useAvatarPresenter(
     },
     [
       applyEmotionEffect,
-      applyReaction,
+      applyExpression,
       clearEmotionEffect,
       visual.emotionEffectMap,
       visual.reactionControlMode,
@@ -93,15 +131,19 @@ export function useAvatarPresenter(
   );
 
   const onSpeechEnd = useCallback(() => {
-    applyReaction({ type: 'reset', fadeMs: 360 });
+    applyExpression({ type: 'reset', fadeMs: 360 });
     clearEmotionEffect();
-  }, [applyReaction, clearEmotionEffect]);
+  }, [applyExpression, clearEmotionEffect]);
 
   return {
     reaction,
+    expressionReaction,
     emotionEffectReaction,
     applyReaction,
+    applyExpression,
+    applyPerformance,
     reset,
+    resetExpression,
     onSpeechStart,
     onSpeechEnd,
     clearEmotionEffect,
