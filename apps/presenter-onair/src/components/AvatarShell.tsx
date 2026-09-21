@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useMemo, type RefObject } from 'react';
 import { AvatarBackground } from './AvatarPanel';
 import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import { toVrmReactionDraft } from '../lib/avatar';
@@ -37,9 +37,18 @@ export function AvatarShell({
 }: AvatarShellProps) {
   const { reaction, emotionEffectReaction, visual, callbacks } = presenter;
 
-  const vrmReaction: VrmAvatarReaction | null = reaction
-    ? ({ ...toVrmReactionDraft(reaction), id: reaction.id } as VrmAvatarReaction)
-    : null;
+  // 必须 memo：AvatarBackground 按对象引用判断 reaction 是否变化，
+  // 每次渲染新建对象会导致无关重渲染时重播上一次动作。
+  const vrmReaction: VrmAvatarReaction | null = useMemo(
+    () =>
+      reaction
+        ? ({
+            ...toVrmReactionDraft(reaction),
+            id: reaction.id,
+          } as VrmAvatarReaction)
+        : null,
+    [reaction],
+  );
 
   if (vrmResolveError && !vrmUrl) {
     return (
