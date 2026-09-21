@@ -23,6 +23,7 @@ export function EditSession({ settingsHook, onToggleSettings }: EditSessionProps
       slideDeck={slideDeck}
       editor={scriptEditor}
       deckId={activeDeckId}
+      visual={settingsHook.settings.visual}
       onToggleSettings={onToggleSettings}
     />
   );

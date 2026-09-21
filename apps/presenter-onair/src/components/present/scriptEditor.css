@@ -507,6 +507,11 @@
   gap: 6px;
 }
 
+.gesture-chip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .gesture-chip {
   display: inline-flex;
   align-items: center;
@@ -518,6 +523,36 @@
   padding: 5px 10px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.gesture-chip.has-preview {
+  padding-right: 26px;
+}
+
+.gesture-chip-preview {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-size: 8px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gesture-chip-preview:hover,
+.gesture-chip-preview:focus-visible {
+  background: #3b82f6;
+  outline: none;
 }
 
 .gesture-chip.is-selected {
@@ -548,6 +583,72 @@
   justify-content: center;
   font-size: 10px;
   font-weight: 700;
+}
+
+/* ── Gesture preview（讲稿导演台右下角浮窗） ── */
+
+.gesture-preview {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: #101725;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.gesture-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 5px 5px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.gesture-preview-title {
+  flex: 1;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.gesture-preview-action {
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.gesture-preview-action:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.gesture-preview-body {
+  position: relative;
+  height: 260px;
+  background: #0f141d;
+}
+
+.gesture-preview.is-collapsed .gesture-preview-body {
+  display: none;
+}
+
+/* 小窗内去掉底部留白与拖拽提示 */
+.gesture-preview .avatar-background {
+  padding-bottom: 0;
+}
+
+.gesture-preview .avatar-guide {
+  display: none;
 }
 
 .voice-picker {

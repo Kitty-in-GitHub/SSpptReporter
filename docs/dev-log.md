@@ -26,6 +26,22 @@
 
 ---
 
+### 2026-09-02 · 讲稿导演台：手势动作预览窗
+
+- **设备/环境**：Win / conda ssreporter
+- **做了什么**：
+  - 新增 `GesturePreviewStage`：讲稿导演台右下角悬浮小窗，**复用汇报同一套呈现层**（`useResolvedVrmModel` → `useAvatarPresenter` → `AvatarShell`），保证「预览所见 = 汇报所得」，不做预渲染素材
+  - 手势 chip 右侧加 ▶ 按钮（与音色卡片 🔊 对称）触发预览；`none`/`idle` 不显示按钮
+  - 预览走 `avatarGestureFromDirector`，与 Director 队列播放路径一致
+  - 加载策略：**首次点 ▶ 才挂载并加载 VRM**；小窗可折叠（保留模型实例）或关闭（卸载）
+  - `ScriptEditorShell` 新增 `visual` prop；`EditSession` 透传 `settings.visual`
+- **未做 / 阻塞**：`npm run setup:gestures` 仍未执行，因此点 ▶ 播占位动作时**看不到身体动作**（语义手势更是故意为空）
+- **下一台机器应优先**：`npm run setup:gestures` → 在讲稿导演台点 ▶ 逐个试听 7 个占位动作
+- **相关文件**：`apps/presenter-onair/src/components/present/{GesturePreviewStage.tsx,ScriptEditorShell.tsx,BeatPerformanceEditor.tsx,scriptEditor.css}` · `apps/presenter-onair/src/app/EditSession.tsx`
+- **验证方式**：`npm run typecheck`；`npm test`（36/13/53）；`npm run dev` → 讲稿导演台 → 手势 ▶
+
+---
+
 ### 2026-09-02 · 手势改名 + 新增演讲语义手势（空实现）
 
 - **设备/环境**：Win / conda ssreporter

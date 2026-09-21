@@ -1,11 +1,16 @@
-import { useRef } from 'react';
-import type { SlideAction } from '@ssreporter/director';
+import { useRef, useState } from 'react';
+import type { Gesture, SlideAction } from '@ssreporter/director';
 import { UI_SESSION_MODES, UI_SETTINGS } from '../../constants/uiZh';
 import { usePerformanceCatalog } from '../../hooks/usePerformanceCatalog';
 import type { DeckScriptEditorController } from '../../hooks/useDeckScriptEditor';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
+import type { VisualSettings } from '../../types/settings';
 import { BeatPerformanceEditor } from './BeatPerformanceEditor';
 import { BeatTimelineStrip } from './BeatTimelineStrip';
+import {
+  GesturePreviewStage,
+  type GesturePreviewRequest,
+} from './GesturePreviewStage';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentControls } from './PresentControls';
 import { AppToolbar } from './AppToolbar';
@@ -15,6 +20,7 @@ interface ScriptEditorShellProps {
   slideDeck: SlideDeckController;
   editor: DeckScriptEditorController;
   deckId: string;
+  visual: VisualSettings;
   onToggleSettings: () => void;
 }
 
@@ -28,9 +34,18 @@ export function ScriptEditorShell({
   slideDeck,
   editor,
   deckId,
+  visual,
   onToggleSettings,
 }: ScriptEditorShellProps) {
   const utteranceRef = useRef<HTMLTextAreaElement>(null);
+  const previewIdRef = useRef(0);
+  const [previewRequest, setPreviewRequest] =
+    useState<GesturePreviewRequest | null>(null);
+
+  const handlePreviewGesture = (gesture: Gesture) => {
+    previewIdRef.current += 1;
+    setPreviewRequest({ gesture, id: previewIdRef.current });
+  };
   const {
     catalog,
     deckOverlay,
@@ -188,6 +203,7 @@ export function ScriptEditorShell({
                 isSavingProfile={isSavingProfile}
                 hasDeckOverride={hasDeckOverride}
                 onUpdate={(patch) => editor.updateBeat(editor.activeBeatIndex, patch)}
+                onPreviewGesture={handlePreviewGesture}
                 onAddProfile={addDeckProfile}
                 onUpdateProfile={updateDeckProfile}
                 onRemoveProfile={removeDeckProfile}
@@ -264,6 +280,14 @@ export function ScriptEditorShell({
           )}
         </div>
       </div>
+
+      {previewRequest ? (
+        <GesturePreviewStage
+          visual={visual}
+          request={previewRequest}
+          onClose={() => setPreviewRequest(null)}
+        />
+      ) : null}
     </div>
   );
 }

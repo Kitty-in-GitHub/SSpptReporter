@@ -35,6 +35,7 @@ interface BeatPerformanceEditorProps {
   isSavingProfile?: boolean;
   hasDeckOverride: (profileId: string) => boolean;
   onUpdate: (patch: Partial<SlideBeatDraft>) => void;
+  onPreviewGesture?: (gesture: Gesture) => void;
   onAddProfile: (profileId: string, profile: PerformanceProfile) => Promise<void>;
   onUpdateProfile: (profileId: string, profile: PerformanceProfile) => Promise<void>;
   onRemoveProfile: (profileId: string) => Promise<void>;
@@ -83,6 +84,7 @@ export function BeatPerformanceEditor({
   isSavingProfile = false,
   hasDeckOverride,
   onUpdate,
+  onPreviewGesture,
   onAddProfile,
   onUpdateProfile,
   onRemoveProfile,
@@ -216,26 +218,40 @@ export function BeatPerformanceEditor({
           {GESTURES.map((gesture) => {
             const selected = beat.gesture === gesture;
             const pending = isGesturePending(gesture);
+            const previewable =
+              gesture !== 'none' && gesture !== 'idle' && Boolean(onPreviewGesture);
             return (
-              <button
-                key={gesture}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                className={`gesture-chip${selected ? ' is-selected' : ''}${
-                  pending ? ' is-pending' : ''
-                }`}
-                title={pending ? '待自制 VRMA，当前无动作' : undefined}
-                onClick={() => onUpdate({ gesture: gesture as Gesture })}
-              >
-                <span className="gesture-chip-icon" aria-hidden>
-                  {GESTURE_ICONS[gesture]}
-                </span>
-                {GESTURE_LABELS[gesture]}
-                {pending ? (
-                  <span className="gesture-chip-badge">待自制</span>
+              <span key={gesture} className="gesture-chip-wrap">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`gesture-chip${selected ? ' is-selected' : ''}${
+                    pending ? ' is-pending' : ''
+                  }${previewable ? ' has-preview' : ''}`}
+                  title={pending ? '待自制 VRMA，当前无动作' : undefined}
+                  onClick={() => onUpdate({ gesture: gesture as Gesture })}
+                >
+                  <span className="gesture-chip-icon" aria-hidden>
+                    {GESTURE_ICONS[gesture]}
+                  </span>
+                  {GESTURE_LABELS[gesture]}
+                  {pending ? (
+                    <span className="gesture-chip-badge">待自制</span>
+                  ) : null}
+                </button>
+                {previewable ? (
+                  <button
+                    type="button"
+                    className="gesture-chip-preview"
+                    title="预览动作"
+                    aria-label={`预览${GESTURE_LABELS[gesture]}`}
+                    onClick={() => onPreviewGesture?.(gesture as Gesture)}
+                  >
+                    ▶
+                  </button>
                 ) : null}
-              </button>
+              </span>
             );
           })}
         </div>
