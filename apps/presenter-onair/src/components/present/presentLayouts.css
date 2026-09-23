@@ -160,6 +160,17 @@
   opacity: 1;
 }
 
+/* 无边框画中画：拖拽/缩放提示仅在悬停时出现，避免干扰画面 */
+.present-avatar-stage.is-pip-borderless .avatar-guide {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.present-avatar-stage.is-pip-borderless:hover .avatar-guide,
+.present-avatar-stage.is-pip-borderless:focus-within .avatar-guide {
+  opacity: 1;
+}
+
 .present-pip-controls {
   display: flex;
   align-items: center;
