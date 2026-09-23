@@ -23,6 +23,10 @@ apps/presenter-onair/public/avatar/*.vrm
 apps/presenter-onair/public/avatar/gestures/*.vrma
 apps/presenter-web/public/avatars/*.vrm
 
+# MediaPipe wasm：由 vite-mediapipe-plugin 从 node_modules 同步生成，不入库
+# （models/face_landmarker.task 是 vendored 资源，需要入库，故只 ignore wasm 子目录）
+apps/presenter-onair/public/mediapipe/wasm/
+
 # Optional local media / large binaries
 *.wav
 *.mp3

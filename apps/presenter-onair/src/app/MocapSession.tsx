@@ -1,6 +1,7 @@
 import { useEffect, type RefObject } from 'react';
 import { MocapPanel } from '../components/mocap/MocapPanel';
 import { useAvatarPresenter } from '../hooks/useAvatarPresenter';
+import { useCameraDevices } from '../hooks/useCameraDevices';
 import { useFaceCapture } from '../hooks/useFaceCapture';
 import { useResolvedVrmModel } from '../hooks/useResolvedVrmModel';
 import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
@@ -59,11 +60,15 @@ export function MocapSession({
     },
   );
 
-  const { faceCaptureRef, isRunning, error } = useFaceCapture({
+  const { faceCaptureRef, stream, isRunning, error } = useFaceCapture({
     enabled: faceCaptureSettings.source === 'webcam',
     deviceId: faceCaptureSettings.deviceId,
     smoothing: faceCaptureSettings.smoothing,
   });
+
+  // 面捕页里直接换摄像头：改 deviceId 会让 useFaceCapture 重开流，预览随之刷新
+  const { devices: cameraDevices, labelsHidden: cameraLabelsHidden } =
+    useCameraDevices(true);
 
   useEffect(() => {
     avatarPresenterRef.current = avatarPresenter;
@@ -88,7 +93,17 @@ export function MocapSession({
       onMouthDriverChange={settingsHook.updateFaceCaptureMouthDriver}
       faceCaptureError={error}
       faceCaptureRunning={isRunning}
+      captureStream={stream}
       showCameraPreview={faceCaptureSettings.showCameraPreview}
+      onToggleCameraPreview={() =>
+        settingsHook.updateFaceCaptureShowCameraPreview(
+          !faceCaptureSettings.showCameraPreview,
+        )
+      }
+      cameraDevices={cameraDevices}
+      cameraLabelsHidden={cameraLabelsHidden}
+      faceCaptureDeviceId={faceCaptureSettings.deviceId}
+      onFaceCaptureDeviceChange={settingsHook.updateFaceCaptureDeviceId}
       partialCaption={partialCaption}
     />
   );

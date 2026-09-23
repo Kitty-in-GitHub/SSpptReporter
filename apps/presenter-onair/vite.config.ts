@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { serveMonorepoContent } from './vite-content-plugin';
 import { contentDeckApi } from './vite-content-api-plugin';
+import { mediapipeWasmAssets } from './vite-mediapipe-plugin';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // npm workspaces hoist three to the monorepo root
@@ -36,11 +37,18 @@ export default defineConfig({
       },
     ],
   },
-  plugins: [react(), serveMonorepoContent(), contentDeckApi()],
+  plugins: [
+    react(),
+    serveMonorepoContent(),
+    contentDeckApi(),
+    mediapipeWasmAssets(),
+  ],
   optimizeDeps: {
     exclude: ['@huggingface/transformers', '@mediapipe/tasks-vision'],
   },
   worker: {
+    // 与 useFaceCapture.ts 的 `{ type: 'module' }` 保持一致：MediaPipe 的 wasm glue
+    // 在 ESM 下需要垫片才能挂上全局，垫片由 vite-mediapipe-plugin 注入
     format: 'es',
   },
   server: {

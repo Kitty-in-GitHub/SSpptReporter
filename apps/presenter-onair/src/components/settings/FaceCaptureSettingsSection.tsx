@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import type { AppSettings } from '../../types/settings';
+import { useCameraDevices } from '../../hooks/useCameraDevices';
 import type { SettingsHook } from './SettingsSectionShell';
 import { SettingsSectionShell } from './SettingsSectionShell';
 
@@ -20,42 +20,7 @@ export function FaceCaptureSettingsSection({
   updateFaceCaptureShowCameraPreview,
   updateFaceCaptureSmoothing,
 }: FaceCaptureSettingsSectionProps) {
-  const [cameraOptions, setCameraOptions] = useState<
-    Array<{ deviceId: string; label: string }>
-  >([]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadDevices = async () => {
-      if (!navigator.mediaDevices?.enumerateDevices) {
-        return;
-      }
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        if (cancelled) return;
-        const videoInputs = devices
-          .filter((device) => device.kind === 'videoinput')
-          .map((device, index) => ({
-            deviceId: device.deviceId,
-            label: device.label || `摄像头 ${index + 1}`,
-          }));
-        setCameraOptions(videoInputs);
-      } catch {
-        if (!cancelled) {
-          setCameraOptions([]);
-        }
-      }
-    };
-
-    void loadDevices();
-    navigator.mediaDevices?.addEventListener('devicechange', loadDevices);
-
-    return () => {
-      cancelled = true;
-      navigator.mediaDevices?.removeEventListener('devicechange', loadDevices);
-    };
-  }, []);
+  const { devices: cameraOptions, labelsHidden } = useCameraDevices(isExpanded);
 
   return (
     <SettingsSectionShell
@@ -101,6 +66,12 @@ export function FaceCaptureSettingsSection({
           ))}
         </select>
       </div>
+      {labelsHidden ? (
+        <p className="settings-field-hint">
+          现在只显示「摄像头 1 / 2 / 3」这类占位名：浏览器在授权前不返回设备名称。
+          先切到「面捕」页面走一次授权，再回来展开本分区，就能看到真实设备名。
+        </p>
+      ) : null}
 
       <div className="settings-field">
         <label htmlFor="face-capture-smoothing">
@@ -127,8 +98,12 @@ export function FaceCaptureSettingsSection({
           onChange={(e) => updateFaceCaptureShowCameraPreview(e.target.checked)}
           disabled={disabled}
         />
-        <span>显示摄像头预览提示</span>
+        <span>显示摄像头预览</span>
       </label>
+      <p className="settings-field-hint">
+        预览画面出现在「面捕」页面上、「摄像头」按钮的正上方（该按钮也可随时开关）。
+        画面下方会标出实际使用的设备名与分辨率，用来确认选中的是不是想要的摄像头。
+      </p>
     </SettingsSectionShell>
   );
 }

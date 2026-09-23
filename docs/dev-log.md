@@ -26,6 +26,71 @@
 
 ---
 
+### 2026-09-02 · 修面捕：wasm 不再打 CDN（原 URL 版本号不存在）
+
+- **设备/环境**：Win / conda ssreporter
+- **现象**：面捕模式报 `Failed to fetch dynamically imported module: https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm/vision_wasm_internal.js`
+- **根因**：**不是网络问题** —— Worker 里 CDN 版本号写死 `0.10.22`，而 npm 上根本没有这个版本
+  - 实测 `registry.npmjs.org/@mediapipe/tasks-vision/0.10.22` → 404（0.10.21 / 0.10.35 均 200）
+  - `package.json` 写的是区间 `^0.10.22`，实际装的是 **0.10.35**，CDN 版本与本地包也不一致
+  - 即该 URL 自写下起必然 404
+- **做了什么**：
+  - 新增 `vite-mediapipe-plugin.ts`：dev / build 启动时把 `node_modules/@mediapipe/tasks-vision/wasm/` 同步到 `public/mediapipe/wasm/`（仅在缺失或大小变化时覆盖）
+  - 插件同时注册 dev 中间件，**拦下 `/mediapipe/wasm/*` 并忽略查询串**（见下方第二个根因）
+  - Worker 的 `WASM_BASE` 改为 `${import.meta.env.BASE_URL}mediapipe/wasm`
+  - **模型 `face_landmarker.task`（3.6 MB）也本地化**：vendored 到 `public/mediapipe/models/` 并**入库**（外部 URL 不可靠；公开授权、体积可接受）；`.gitignore` 只忽略 `public/mediapipe/wasm/` 生成物
+  - 面捕 Worker 现在**完全不依赖外网**
+  - 同步 `docs/face-capture.md`
+- **第二个根因（改完上一项后仍报错才暴露）**：MediaPipe 在 module worker 里走 `await import(<wasmLoaderPath>)` 兜底，而 **Vite dev 会给动态 import 的 URL 追加 `?import`**；`public/` 下的文件不在 Vite 模块图里，带该查询会被判定为「public 文件不可被 import」而返回 **500**
+  - 实测：`/mediapipe/wasm/vision_wasm_internal.js` → 200，但 `...js?import` → **500**（报错文案正是 `Failed to fetch dynamically imported module: ...js?import`）
+  - 修法：插件在 `configureServer` 里注册中间件（早于 Vite 内部中间件），对该前缀的请求**剥掉查询串**直接返回静态文件
+  - 修复后实测 `...js`、`...js?import`、`...wasm?import`、`nosimd...js?import` 均 200（5173 / 5174 两个实例都验证过）
+- **第三个根因（改完前两项后报 `ModuleFactory not set.`）**：
+  - MediaPipe 加载 wasm glue 的逻辑是：`importScripts(url)` 失败则退化为 `await import(url)`；之后断言 `self.ModuleFactory`，否则抛 `ModuleFactory not set.`
+  - glue（`vision_wasm_internal.js`）**只有 UMD 导出**（末尾 `module.exports = ModuleFactory`）、没有 ES6 export，顶层只有 `var ModuleFactory = (() => {...})()`
+    - `importScripts`（classic script）：顶层 `var` 成为全局 → `self.ModuleFactory` 可用
+    - `await import`（ES module）：`var` 是模块作用域 → `self.ModuleFactory === undefined` → 报错
+  - 而 module worker 里 `importScripts` 是「存在但调用即 TypeError」，必然落到 `await import` 分支
+  - **试过的弯路**：改成 classic worker（去掉 `{ type: 'module' }` + `worker.format: 'iife'`）**不可行** —— Vite dev 恒按 ESM 提供 worker 脚本（`worker.format` 只影响 build），classic worker 里那段 `import "/@vite/env"` 之外的 ESM `import` 语句会直接语法报错
+  - 试过的修法（后被推翻）：给 glue 末尾追加垫片 `self.ModuleFactory = ModuleFactory;`，让 ESM 路径也能拿到工厂函数 —— 这确实过了 `ModuleFactory not set.`，但立刻撞上第四个根因
+- **第四个根因（改完前三项后报 `custom_dbg is not defined`）**：
+  - glue 的 `custom_emscripten_dbgn` 在 `if` 块内用**函数声明**定义 `custom_dbg`，靠 Annex B 提升到函数作用域；**ES module 一律严格模式**，块级函数不外泄 → 调用时报 `custom_dbg is not defined`
+  - 也就是说 glue 是 sloppy mode 的经典脚本，**本质上不能按 ESM 求值**，追加垫片属于治错了层
+  - 修法：Worker 里把 `self.import` 换成「fetch + 间接 eval」的加载器 —— MediaPipe 的顺序是 `importScripts` → `self.import` → `import`，module worker 里第一条必抛 TypeError，正好落到第二条；间接 eval 在全局、非严格模式执行，语义等同 `importScripts`
+  - 插件回退为纯拷贝（去掉垫片），dev 中间件保留为兜底
+- **未做 / 阻塞**：无
+- **下一台机器应优先**：进面捕模式确认摄像头画面与头眼/口型驱动正常（首次需允许摄像头权限）
+- **相关文件**：`apps/presenter-onair/vite-mediapipe-plugin.ts` · `vite.config.ts` · `src/hooks/useFaceCapture.ts` · `src/workers/faceCapture.worker.ts` · `public/mediapipe/models/face_landmarker.task` · `.gitignore` · `docs/face-capture.md`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）；dev 下 `/mediapipe/wasm/vision_wasm_internal.js?import` 返回 200、`useFaceCapture.ts` 转译为 `type=module`（已实测）
+
+---
+
+### 2026-09-02 · 面捕：摄像头预览 + 「准备中」阶段可见化
+
+- **设备/环境**：Win / conda ssreporter
+- **起因**：用户反馈「面捕一直卡在面捕准备中…，不确定连到的是不是正确的摄像头」，要求提供摄像头画面预览
+- **做了什么**：
+  - `useFaceCapture` 追加导出 `stream`（已获取的 MediaStream）——**不新开 `getUserMedia`**，同一设备通常不允许被两个流独占
+  - `MocapPanel` 新增**摄像头预览浮层**（`CameraPreview`）：镜像显示实时画面，下方标注**实际设备名 + 分辨率**，用于确认是否选对摄像头；无流时提示去「设置 → 面捕」检查设备。位置在「摄像头」按钮正上方（该页工具条由 `justify-content: flex-end` 压在底部，预览随之贴在其上，**不是**页面顶部/右上角）
+  - 该页工具条新增「摄像头」按钮（`is-active` 同步状态），与设置里的「显示摄像头预览」开关共用 `faceCapture.showCameraPreview`；**该设置默认关闭**，需手动打开
+  - 状态文案由二态改三态，让「卡住」停在哪个环节可见：
+    - 有 error → 显示错误
+    - `isRunning` → 面捕运行中
+    - 有 `stream` 但未 running → **摄像头已连接，等待面捕引擎…**（说明卡在 Worker/模型侧，不是摄像头）
+    - 无 `stream` → **正在连接摄像头…**（说明卡在设备/权限侧）
+  - 设置项文案「显示摄像头预览提示」→「显示摄像头预览」（原先只是个占位提示，现已落实为真预览）
+  - **预览窗里可直接换摄像头**（下拉）+ 显示当前设备名与分辨率；`useFaceCapture` 的 effect 依赖 `deviceId`，改选即重开流、预览随之刷新
+  - 抽 `useCameraDevices(enabled)` 供设置页与面捕页共用；**关键陷阱**：浏览器在**授权前**把 `enumerateDevices()` 的 `label`/`deviceId` 都返回空串，此时下拉只剩「摄像头 1/2/3」占位名，选中等于回到系统默认 —— 因此设置页在 `labelsHidden` 时给出提示，并在展开分区 / `devicechange` 时重新枚举
+  - `app.css` 补 mocap 工具条控件与预览浮层样式（此前 `.mocap-status` 等类完全没有样式）
+- **未做 / 阻塞**：**未经视觉验收**（AI 无法看图）；预览窗位置（贴「摄像头」按钮上方）若挡住皮套可再调
+- **下一台机器应优先**：进面捕模式，按状态文案判断卡点 ——
+  - 停在「正在连接摄像头…」→ 查设备/权限（用预览窗里的下拉直接换摄像头）
+  - 停在「摄像头已连接，等待面捕引擎…」→ 摄像头正常，问题在 MediaPipe 模型/GPU 初始化，看浏览器控制台 Worker 侧日志
+- **相关文件**：`apps/presenter-onair/src/hooks/{useFaceCapture,useCameraDevices}.ts` · `src/app/MocapSession.tsx` · `src/components/mocap/MocapPanel.tsx` · `src/components/settings/FaceCaptureSettingsSection.tsx` · `src/styles/app.css`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
+---
+
 ### 2026-09-02 · 汇报页收纳：工具条瘦身 + 底部合并底栏
 
 - **设备/环境**：Win / conda ssreporter

@@ -18,6 +18,8 @@ export function useFaceCapture(options: UseFaceCaptureOptions) {
   const smoothedRef = useRef<FaceCaptureFrame | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** 已获取的摄像头流：供界面挂预览用，避免再开一次 getUserMedia 抢占设备 */
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -45,6 +47,7 @@ export function useFaceCapture(options: UseFaceCaptureOptions) {
       }
       streamRef.current = null;
     }
+    setStream(null);
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -97,7 +100,11 @@ export function useFaceCapture(options: UseFaceCaptureOptions) {
 
         streamRef.current = stream;
         videoRef.current = video;
+        setStream(stream);
 
+        // module worker 是 Vite dev 唯一可用形态（dev 下 worker 脚本始终按 ESM 提供）。
+        // MediaPipe 的 wasm glue 需要在 classic script / 非严格模式下求值，
+        // Worker 里为此替换了 `self.import`，见 faceCapture.worker.ts 的说明。
         const worker = new Worker(
           new URL('../workers/faceCapture.worker.ts', import.meta.url),
           { type: 'module' },
@@ -196,6 +203,7 @@ export function useFaceCapture(options: UseFaceCaptureOptions) {
   return {
     faceCaptureRef,
     videoRef,
+    stream,
     isRunning,
     error,
     stopCapture,

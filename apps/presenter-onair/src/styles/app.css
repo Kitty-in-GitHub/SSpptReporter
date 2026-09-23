@@ -752,6 +752,89 @@ body {
   margin-bottom: 12px;
 }
 
+/* ── Mocap（直播皮套）：工具条控件与摄像头预览 ── */
+
+.mocap-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.mocap-mouth-driver {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mocap-status {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #8899aa;
+  font-size: 12px;
+}
+
+.mocap-status.is-active {
+  border-color: rgba(74, 222, 128, 0.5);
+  color: #86efac;
+}
+
+.mocap-status.is-error {
+  border-color: rgba(233, 69, 96, 0.6);
+  color: #fca5a5;
+}
+
+.mocap-camera-preview {
+  /* 仍在文档流里（贴在工具条上方），但需要高于绝对定位的 VRM 舞台 */
+  position: relative;
+  z-index: 5;
+  align-self: flex-end;
+  margin: 0 16px 8px;
+  width: min(280px, 42vw);
+  border: 1px solid rgba(15, 52, 96, 0.9);
+  border-radius: 10px;
+  background: rgba(10, 17, 32, 0.9);
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.mocap-camera-preview-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #000;
+  /* 镜像显示：与照镜子的直觉一致 */
+  transform: scaleX(-1);
+}
+
+.mocap-camera-preview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  color: #aabbcc;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.mocap-camera-preview-meta select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.mocap-camera-preview-meta em {
+  color: #f0c674;
+  font-style: normal;
+}
+
 /* ── Chat Log ── */
 
 .chat-log {
