@@ -21,6 +21,8 @@ interface QaPanelProps {
   onQaAsrEngineChange: (engine: QaAsrEngine) => void;
   getCloudAsrApiKey: () => string;
   onGatewayAsrUnavailable?: (message: string) => void;
+  /** 嵌入底部底栏时隐藏自带标题（标题与折叠由底栏统一提供） */
+  hideHeader?: boolean;
 }
 
 function formatConfidence(value: number | undefined): string {
@@ -40,6 +42,7 @@ export function QaPanel({
   onQaAsrEngineChange,
   getCloudAsrApiKey,
   onGatewayAsrUnavailable,
+  hideHeader = false,
 }: QaPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const composingRef = useRef(false);
@@ -73,7 +76,7 @@ export function QaPanel({
 
   return (
     <section className={`present-qa-panel${collapsed ? ' is-collapsed' : ''}`}>
-      <header className="present-qa-header">
+      <header className="present-qa-header" hidden={hideHeader}>
         <button
           type="button"
           className="present-qa-toggle"

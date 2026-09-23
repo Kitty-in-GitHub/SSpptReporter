@@ -58,6 +58,70 @@
   line-height: 1;
 }
 
+/* ── 视图参数弹层（布局 + 画中画） ── */
+
+.present-view-menu {
+  position: relative;
+}
+
+.present-view-trigger {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.present-view-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.present-view-trigger.is-open {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.present-view-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  min-width: 248px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: #121a28;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.present-view-popover .present-pip-controls {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.present-view-popover .present-pip-size {
+  justify-content: space-between;
+}
+
+.present-view-popover .present-pip-size input[type='range'] {
+  flex: 1;
+  width: auto;
+}
+
+.present-view-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
 .present-body {
   display: flex;
   flex-direction: column;
@@ -322,11 +386,100 @@
   font-weight: 600;
 }
 
-.present-script-cue {
+/* ── 底部统一底栏（讲稿 / 评委提问） ── */
+
+.present-dock {
   flex-shrink: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(8, 12, 20, 0.94);
   backdrop-filter: blur(8px);
+}
+
+.present-dock-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  min-height: 38px;
+}
+
+.present-dock-tab {
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #93a4b8;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.present-dock-tab:hover {
+  color: #dbeafe;
+}
+
+.present-dock-tab.is-active {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.18);
+  color: #dbeafe;
+  font-weight: 600;
+}
+
+.present-dock-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #7d8ea3;
+}
+
+.present-dock-summary.is-error {
+  color: #fca5a5;
+}
+
+.present-dock-toggle {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #93a4b8;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.present-dock-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #dbeafe;
+}
+
+.present-dock-body {
+  max-height: 42vh;
+  overflow-y: auto;
+  /* 给左下角固定的 Director 试播按钮留出空位，避免遮住面板内容 */
+  padding-bottom: 56px;
+}
+
+.present-dock:not(.is-expanded) .present-dock-body {
+  display: none;
+}
+
+.present-dock-pane {
+  display: none;
+}
+
+.present-dock-pane.is-active {
+  display: block;
+}
+
+/* 嵌入底栏后，边框与背景统一由底栏提供 */
+.present-dock .present-qa-panel {
+  border-top: none;
+  background: transparent;
 }
 
 .present-script-cue-inner {

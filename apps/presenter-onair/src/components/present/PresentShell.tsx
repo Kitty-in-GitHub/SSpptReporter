@@ -7,7 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
-import { UI_SETTINGS } from '../../constants/uiZh';
+import { UI_QA, UI_SETTINGS } from '../../constants/uiZh';
 import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
 import {
@@ -17,7 +17,6 @@ import {
   subscribeFullscreenChange,
 } from '../../lib/browserFullscreen';
 import {
-  PRESENT_LAYOUT_LABELS,
   type PipCorner,
   type PresentLayout,
   type QaAsrEngine,
@@ -27,9 +26,13 @@ import { AvatarShell } from '../AvatarShell';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentDeckSelect } from './PresentDeckSelect';
 import { PresentControls } from './PresentControls';
-import { PresentPipControls } from './PresentPipControls';
 import { PresentPlaybackControls } from './PresentPlaybackControls';
-import { PresentScriptCue } from './PresentScriptCue';
+import {
+  PresentScriptCue,
+  resolveScriptCueSummary,
+} from './PresentScriptCue';
+import { PresentBottomDock } from './PresentBottomDock';
+import { PresentViewMenu } from './PresentViewMenu';
 import { QaPanel } from './QaPanel';
 import { StageQaVoice } from './StageQaVoice';
 import { GatewayAsrSetupDialog } from './GatewayAsrSetupDialog';
@@ -215,6 +218,19 @@ export function PresentShell({
     directorQueue.currentIndex >= 0
       ? directorQueue.queue[directorQueue.currentIndex]
       : null;
+
+  const scriptCueSummary = resolveScriptCueSummary({
+    playbackState: directorQueue.playbackState,
+    currentAction: currentAction ?? null,
+    currentIndex: directorQueue.currentIndex,
+    error: directorQueue.lastPlaybackError,
+  });
+
+  const qaStatus = brainQa.knowledgeError
+    ? brainQa.knowledgeError
+    : brainQa.knowledgeReady
+      ? null
+      : UI_QA.knowledgeLoading;
 
   const slideControlsDisabled =
     !slideDeck.pdfUrl ||
@@ -499,32 +515,18 @@ export function PresentShell({
             onDeckChange={onDeckChange}
             disabled={playbackDisabled}
           />
-          <label className="present-toolbar-layout">
-            布局
-            <select
-              value={presentLayout}
-              onChange={(event) =>
-                onPresentLayoutChange(event.target.value as PresentLayout)
-              }
-            >
-              {Object.entries(PRESENT_LAYOUT_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {isPipLayout ? (
-            <PresentPipControls
-              pipCorner={pipCorner}
-              pipBorderless={pipBorderless}
-              pipSize={pipSize}
-              onPipCornerChange={onPipCornerChange}
-              onPipBorderlessChange={onPipBorderlessChange}
-              onPipSizeChange={onPipSizeChange}
-              onResetPipOffset={() => onPipOffsetChange(0, 0)}
-            />
-          ) : null}
+          <PresentViewMenu
+            presentLayout={presentLayout}
+            onPresentLayoutChange={onPresentLayoutChange}
+            isPipLayout={isPipLayout}
+            pipCorner={pipCorner}
+            pipBorderless={pipBorderless}
+            pipSize={pipSize}
+            onPipCornerChange={onPipCornerChange}
+            onPipBorderlessChange={onPipBorderlessChange}
+            onPipSizeChange={onPipSizeChange}
+            onResetPipOffset={() => onPipOffsetChange(0, 0)}
+          />
           {pageControls}
           {playbackControls}
           <button
@@ -589,30 +591,39 @@ export function PresentShell({
         </div>
 
         {!stageMode ? (
-          <>
-            <PresentScriptCue
-              playbackState={directorQueue.playbackState}
-              currentAction={currentAction ?? null}
-              currentIndex={directorQueue.currentIndex}
-              queueLength={directorQueue.queue.length}
-              error={directorQueue.lastPlaybackError}
-            />
-            <QaPanel
-              brainQa={brainQa}
-              directorQueue={directorQueue}
-              disabled={playbackDisabled}
-              resumeDeckAfterQaInterrupt={resumeDeckAfterQaInterrupt}
-              onResumeDeckAfterQaInterruptChange={
-                onResumeDeckAfterQaInterruptChange
-              }
-              qaAsrEngine={qaAsrEngine}
-              onQaAsrEngineChange={(engine) => {
-                void handleQaAsrEngineChange(engine);
-              }}
-              getCloudAsrApiKey={getCloudAsrApiKey}
-              onGatewayAsrUnavailable={openGatewaySetupDialog}
-            />
-          </>
+          <PresentBottomDock
+            scriptSummary={scriptCueSummary.text}
+            scriptHasError={scriptCueSummary.isError}
+            qaStatus={qaStatus}
+            qaStatusIsError={Boolean(brainQa.knowledgeError)}
+            script={
+              <PresentScriptCue
+                playbackState={directorQueue.playbackState}
+                currentAction={currentAction ?? null}
+                currentIndex={directorQueue.currentIndex}
+                queueLength={directorQueue.queue.length}
+                error={directorQueue.lastPlaybackError}
+              />
+            }
+            qa={
+              <QaPanel
+                hideHeader
+                brainQa={brainQa}
+                directorQueue={directorQueue}
+                disabled={playbackDisabled}
+                resumeDeckAfterQaInterrupt={resumeDeckAfterQaInterrupt}
+                onResumeDeckAfterQaInterruptChange={
+                  onResumeDeckAfterQaInterruptChange
+                }
+                qaAsrEngine={qaAsrEngine}
+                onQaAsrEngineChange={(engine) => {
+                  void handleQaAsrEngineChange(engine);
+                }}
+                getCloudAsrApiKey={getCloudAsrApiKey}
+                onGatewayAsrUnavailable={openGatewaySetupDialog}
+              />
+            }
+          />
         ) : null}
       </div>
 

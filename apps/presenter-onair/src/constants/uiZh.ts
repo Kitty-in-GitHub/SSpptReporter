@@ -114,4 +114,7 @@ export const UI_PRESENT = {
   deckLabel: '场次',
   deckPrivateSuffix: '（私有）',
   resumeDeckAfterQa: '问答打断后自动续播讲稿',
+  scriptDockTab: '讲稿',
+  scriptCueIdle: '点击「▶ 播放讲稿」开始本场汇报',
+  scriptCueNoUtterance: '（本节拍无朗读文本）',
 };
