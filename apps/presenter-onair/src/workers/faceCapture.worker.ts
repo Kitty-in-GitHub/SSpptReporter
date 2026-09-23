@@ -126,13 +126,11 @@ self.onmessage = async (event: MessageEvent<FaceCaptureWorkerRequest>) => {
       message.image.close();
 
       const landmarks = toLandmarkPoints(result);
-      if (!landmarks) {
-        return;
-      }
-
+      // 没检测到人脸也必须回一条消息：主线程靠消息来解「本帧已处理」的锁，
+      // 少回一次就会永久卡住，面捕再也不出新帧。
       self.postMessage({
         type: 'landmarks',
-        landmarks,
+        landmarks: landmarks ?? [],
         width: message.width,
         height: message.height,
         timestampMs: message.timestampMs,

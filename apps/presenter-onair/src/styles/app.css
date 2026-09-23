@@ -830,6 +830,13 @@ body {
   font-size: 12px;
 }
 
+.mocap-camera-preview-stats {
+  color: #7f93a8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
 .mocap-camera-preview-meta em {
   color: #f0c674;
   font-style: normal;

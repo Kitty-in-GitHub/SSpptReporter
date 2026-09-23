@@ -51,6 +51,7 @@ export function useFaceCapture(options: UseFaceCaptureOptions) {
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
+      videoRef.current.remove();
       videoRef.current = null;
     }
 
@@ -84,6 +85,16 @@ export function useFaceCapture(options: UseFaceCaptureOptions) {
           audio: false,
         };
 
+        // 先让出一次微任务：React 严格模式在开发下会「挂载 → 卸载 → 再挂载」，
+        // 而 getUserMedia 不可取消。若不让路，两次挂载会各发一次请求，
+        // 摄像头被同时打开两路、第一路随即被关 —— Windows 上这种时序容易让
+        // 后一路采集中途卡死（现象是出十几帧后停在某个时间点）。
+        // 让出微任务后，第一次挂载会在请求前就发现自己已 disposed，直接放弃。
+        await Promise.resolve();
+        if (disposed) {
+          return;
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (disposed) {
           for (const track of stream.getTracks()) {
@@ -95,11 +106,18 @@ export function useFaceCapture(options: UseFaceCaptureOptions) {
         const video = document.createElement('video');
         video.playsInline = true;
         video.muted = true;
+        // 必须挂进 DOM（不可见即可）：Chromium 对「不在文档里」的媒体元素出帧并不可靠，
+        // 而它是我们唯一的帧源；官方 MediaPipe 示例同样是先入文档再取帧。
+        // 注意不要用 display:none —— 那会让元素完全不渲染。
+        video.style.cssText =
+          'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+        document.body.appendChild(video);
+        // 先记下引用：play() 一旦抛错，外层 catch 走 stopCapture() 也能把它摘掉
+        videoRef.current = video;
         video.srcObject = stream;
         await video.play();
 
         streamRef.current = stream;
-        videoRef.current = video;
         setStream(stream);
 
         // module worker 是 Vite dev 唯一可用形态（dev 下 worker 脚本始终按 ESM 提供）。

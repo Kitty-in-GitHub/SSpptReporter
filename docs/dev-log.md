@@ -65,6 +65,36 @@
 
 ---
 
+### 2026-09-02 · 修面捕卡死：Worker 漏回消息导致主线程锁死 + 预览读数误报
+
+- **设备/环境**：Win / conda ssreporter
+- **起因**：用户反馈「预览窗口里画面是静止的」，且预览读数显示 `画面静止：摄像头没有输出新帧`（设备为内置 `Integrated Camera`，640×480）
+- **根因一（确定，影响大）**：**Worker 漏回消息 → 主线程帧泵永久锁死**
+  - 主线程 `pump` 发帧前置 `inFlightRef.current = true`，只在收到 Worker 的 `landmarks` / `error` 消息时才解
+  - 而 Worker 里 `toLandmarkPoints()` 返回 null（**该帧没检测到人脸**）时直接 `return`，什么都不回
+  - 于是一旦有**任意一帧没检测到脸**（开机第一帧几乎必然如此），锁就永远解不开 → `pump` 之后每帧都在门口 return → 面捕彻底不出新帧，直到重进模式
+  - 修法：没检测到脸也回一条 `{type:'landmarks', landmarks: []}`；`landmarksToFaceCaptureFrame` 对 `<468` 点本来就返回 null，故行为不变
+- **根因二**：**读数本身不可靠** —— 原先只用 `video.currentTime` 判「是否在出帧」，而该字段在 MediaStream 源上未必推进，会误报静止（小尺寸镜像预览里人不动，肉眼看也像静止，两个信号一起把人带偏）
+  - 改为三个与场景无关的信号取或：`requestVideoFrameCallback` 呈现帧计数 / `getVideoPlaybackQuality().totalVideoFrames` / `currentTime`
+  - 另加 `track.muted` 提示（设备被其他程序占用时的典型信号）
+  - 出帧异常时（`isFlowing=false`）额外显示一行原始读数 `paused / readyState / 呈现帧 / 解码帧 / t / 轨道状态`，用于区分「播放被暂停」「一帧都没解码」「解码过又停住」三种情况；正常时隐藏
+- **根因三（开发模式特有）**：**React 严格模式让摄像头被打开两次**
+  - 用户提供的读数：`paused=false readyState=4 呈现帧=3 解码帧=11 t=0.8s 轨道=live`，且预览里**有图像** → 帧来过，然后在 0.8s 处停住（不是"从未出帧"）
+  - `main.tsx` 开着 `StrictMode`，它会「挂载 → 卸载 → 再挂载」跑两遍 effect，而 `getUserMedia` **不可取消**：第一次挂载的请求已经发出去了，卸载只能置 `disposed`；第二次挂载又发一次 → 摄像头同时开两路，第一路随即被关。Windows 上这种时序容易让后一路中途卡死
+  - 修法：`start()` 在发起请求**之前**先 `await Promise.resolve()` 让出一次微任务，使第一次挂载在请求前就发现自己已 disposed 并放弃 → 全程只开一次摄像头
+  - 顺带去掉 `CameraPreview` 里 `srcObject = null` 的清理（同样会被严格模式跑两遍，让同一个 video 反复脱/接流）
+  - **约束已排除**：约束只在打开设备时参与协商，既然已有十几帧抵达，说明协商出的模式可用，`ideal` 约束不可能在 0.8s 后掐断流
+- **根因四（待验证）**：**采集用的 `<video>` 从未挂进 DOM**
+  - 用户复测：读数仍是 `t=0.8s` 处停住（两次完全相同的停点，稳定复现），且**皮套不随头部转动** → 整条采集都停了，不只是预览
+  - Chromium 对「不在文档里」的媒体元素出帧并不可靠，而它是唯一帧源；两个 video 共享同一条 track，这个 sink 异常可能拖住整条源。官方 MediaPipe 示例都是先入文档再取帧
+  - 修法：`document.createElement('video')` 后 `document.body.appendChild(video)`，用 `position:fixed;1px;opacity:0`（**不能用 `display:none`**，那会完全不渲染）；`stopCapture` 里 `remove()`。并提前记 `videoRef.current`，保证 `play()` 抛错时也能摘掉
+- **未做 / 阻塞**：待人工确认 —— 同一个摄像头在 Windows「相机」应用里是否也卡（区分「设备/驱动」还是「Chromium 这一侧」）
+- **下一台机器应优先**：进面捕模式看两处 —— ① 预览读数是否转为「画面流动中」② 转动头部时皮套的脸是否跟随。若读数仍是「画面静止」且没有 muted 提示，说明是驱动/设备层问题（换设备或重启摄像头相关软件）
+- **相关文件**：`apps/presenter-onair/src/hooks/useFaceCapture.ts` · `src/workers/faceCapture.worker.ts` · `src/components/mocap/MocapPanel.tsx`
+- **验证方式**：`npx tsc -b`；`npx vitest run`
+
+---
+
 ### 2026-09-02 · 面捕：摄像头预览 + 「准备中」阶段可见化
 
 - **设备/环境**：Win / conda ssreporter
@@ -81,6 +111,7 @@
   - 设置项文案「显示摄像头预览提示」→「显示摄像头预览」（原先只是个占位提示，现已落实为真预览）
   - **预览窗里可直接换摄像头**（下拉）+ 显示当前设备名与分辨率；`useFaceCapture` 的 effect 依赖 `deviceId`，改选即重开流、预览随之刷新
   - 抽 `useCameraDevices(enabled)` 供设置页与面捕页共用；**关键陷阱**：浏览器在**授权前**把 `enumerateDevices()` 的 `label`/`deviceId` 都返回空串，此时下拉只剩「摄像头 1/2/3」占位名，选中等于回到系统默认 —— 因此设置页在 `labelsHidden` 时给出提示，并在展开分区 / `devicechange` 时重新枚举
+  - 预览窗底部新增**双诊断读数**：`画面流动中 / 画面静止：摄像头没有输出新帧`（判断依据是 video 的 `currentTime` 是否推进，与「人不动」无关）+ `预览播放失败：<原因>`（原先 `play()` 的异常被静默吞掉，会表现为「只有首帧的静止画面」）
   - `app.css` 补 mocap 工具条控件与预览浮层样式（此前 `.mocap-status` 等类完全没有样式）
 - **未做 / 阻塞**：**未经视觉验收**（AI 无法看图）；预览窗位置（贴「摄像头」按钮上方）若挡住皮套可再调
 - **下一台机器应优先**：进面捕模式，按状态文案判断卡点 ——
