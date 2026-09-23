@@ -1,5 +1,4 @@
 import { useCallback, useRef, type RefObject } from 'react';
-import { DirectorPanel } from '../components/DirectorPanel';
 import { PresentShell } from '../components/present/PresentShell';
 import { useAvatarPresenter } from '../hooks/useAvatarPresenter';
 import { useDeckScriptPlayback } from '../hooks/useDeckScriptPlayback';
@@ -17,7 +16,6 @@ interface PresentSessionProps {
   settingsHook: SettingsHook;
   onToggleSettings: () => void;
   onStageModeChange: (active: boolean) => void;
-  presentStageMode: boolean;
   isProcessing: boolean;
   isSpeaking: boolean;
   mouthLevelRef: RefObject<number>;
@@ -30,7 +28,6 @@ export function PresentSession({
   settingsHook,
   onToggleSettings,
   onStageModeChange,
-  presentStageMode,
   isProcessing,
   isSpeaking,
   mouthLevelRef,
@@ -74,12 +71,11 @@ export function PresentSession({
     [onPlay],
   );
 
-  const { speak: speakDirector, supportsLipSync, engine: directorTtsEngine } =
-    useDirectorSpeech({
-      settings: settingsHook.settings,
-      getApiKeyForProvider: settingsHook.getApiKeyForProvider,
-      onPlay: handleAudioPlay,
-    });
+  const { speak: speakDirector } = useDirectorSpeech({
+    settings: settingsHook.settings,
+    getApiKeyForProvider: settingsHook.getApiKeyForProvider,
+    onPlay: handleAudioPlay,
+  });
 
   const slideDeck = useSlideDeck(settingsHook.settings.present.activeDeckId);
 
@@ -114,64 +110,46 @@ export function PresentSession({
     directorQueue.playbackState === 'paused';
 
   return (
-    <>
-      <PresentShell
-        presentLayout={settingsHook.settings.present.presentLayout}
-        pipCorner={settingsHook.settings.present.pipCorner}
-        pipBorderless={settingsHook.settings.present.pipBorderless}
-        pipOffsetX={settingsHook.settings.present.pipOffsetX}
-        pipOffsetY={settingsHook.settings.present.pipOffsetY}
-        pipSize={settingsHook.settings.present.pipSize}
-        slideDeck={slideDeck}
-        directorQueue={directorQueue}
-        playbackDisabled={isProcessing || isSpeaking || isDirectorBusy}
-        isDeckScriptLoading={deckScriptPlayback.isLoading}
-        onPlayDeckScript={() => void deckScriptPlayback.playDeckScript()}
-        onPresentLayoutChange={settingsHook.updatePresentLayout}
-        onPipCornerChange={settingsHook.updatePresentPipCorner}
-        onPipBorderlessChange={settingsHook.updatePresentPipBorderless}
-        onPipSizeChange={settingsHook.updatePresentPipSize}
-        onPipOffsetChange={settingsHook.updatePresentPipOffset}
-        onToggleSettings={onToggleSettings}
-        mouthLevelRef={mouthLevelRef}
-        isSpeaking={isSpeaking}
-        avatarPresenter={avatarPresenter}
-        vrmUrl={vrmUrl}
-        vrmResolveError={vrmResolveError}
-        vrmResolving={isVrmResolving}
-        backgroundImageUrl={backgroundImageUrl}
-        backgroundMode={settingsHook.settings.visual.backgroundMode}
-        onStageModeChange={onStageModeChange}
-        activeDeckId={settingsHook.settings.present.activeDeckId}
-        onDeckChange={settingsHook.updatePresentActiveDeckId}
-        resumeDeckAfterQaInterrupt={
-          settingsHook.settings.present.resumeDeckAfterQaInterrupt
-        }
-        onResumeDeckAfterQaInterruptChange={
-          settingsHook.updatePresentResumeDeckAfterQaInterrupt
-        }
-        qaAsrEngine={settingsHook.settings.present.qaAsrEngine}
-        onQaAsrEngineChange={settingsHook.updatePresentQaAsrEngine}
-        getCloudAsrApiKey={() =>
-          settingsHook.getApiKeyForProvider('openai')
-        }
-        llmSettings={settingsHook.settings.llm}
-        getApiKeyForProvider={settingsHook.getApiKeyForProvider}
-      />
-
-      {!presentStageMode ? (
-        <DirectorPanel
-          sessionMode="present"
-          disabled={isProcessing || isSpeaking || isDirectorBusy}
-          supportsLipSync={supportsLipSync}
-          ttsEngine={directorTtsEngine}
-          queue={directorQueue}
-          deckPlayback={deckScriptPlayback}
-          onSpeak={speakDirector}
-          onApplyPerformance={avatarPresenter.applyPerformance}
-          onResetEmotion={() => avatarPresenter.resetExpression(280)}
-        />
-      ) : null}
-    </>
+    <PresentShell
+      presentLayout={settingsHook.settings.present.presentLayout}
+      pipCorner={settingsHook.settings.present.pipCorner}
+      pipBorderless={settingsHook.settings.present.pipBorderless}
+      pipOffsetX={settingsHook.settings.present.pipOffsetX}
+      pipOffsetY={settingsHook.settings.present.pipOffsetY}
+      pipSize={settingsHook.settings.present.pipSize}
+      slideDeck={slideDeck}
+      directorQueue={directorQueue}
+      playbackDisabled={isProcessing || isSpeaking || isDirectorBusy}
+      isDeckScriptLoading={deckScriptPlayback.isLoading}
+      onPlayDeckScript={() => void deckScriptPlayback.playDeckScript()}
+      onPresentLayoutChange={settingsHook.updatePresentLayout}
+      onPipCornerChange={settingsHook.updatePresentPipCorner}
+      onPipBorderlessChange={settingsHook.updatePresentPipBorderless}
+      onPipSizeChange={settingsHook.updatePresentPipSize}
+      onPipOffsetChange={settingsHook.updatePresentPipOffset}
+      onToggleSettings={onToggleSettings}
+      mouthLevelRef={mouthLevelRef}
+      isSpeaking={isSpeaking}
+      avatarPresenter={avatarPresenter}
+      vrmUrl={vrmUrl}
+      vrmResolveError={vrmResolveError}
+      vrmResolving={isVrmResolving}
+      backgroundImageUrl={backgroundImageUrl}
+      backgroundMode={settingsHook.settings.visual.backgroundMode}
+      onStageModeChange={onStageModeChange}
+      activeDeckId={settingsHook.settings.present.activeDeckId}
+      onDeckChange={settingsHook.updatePresentActiveDeckId}
+      resumeDeckAfterQaInterrupt={
+        settingsHook.settings.present.resumeDeckAfterQaInterrupt
+      }
+      onResumeDeckAfterQaInterruptChange={
+        settingsHook.updatePresentResumeDeckAfterQaInterrupt
+      }
+      qaAsrEngine={settingsHook.settings.present.qaAsrEngine}
+      onQaAsrEngineChange={settingsHook.updatePresentQaAsrEngine}
+      getCloudAsrApiKey={() => settingsHook.getApiKeyForProvider('openai')}
+      llmSettings={settingsHook.settings.llm}
+      getApiKeyForProvider={settingsHook.getApiKeyForProvider}
+    />
   );
 }

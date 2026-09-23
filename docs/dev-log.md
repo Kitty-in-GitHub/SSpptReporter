@@ -33,10 +33,13 @@
   - **工具条瘦身**：新增 `PresentViewMenu`，把「布局」与「画中画（角落/大小/无边框/复位）」收进「视图 ▾」弹层。此前画中画控件只在 pip 布局下出现/消失，导致工具条宽度突变、整页换行跳动；现在工具条组数恒定
   - **底部合并**：新增 `PresentBottomDock`，把讲稿条与评委提问面板合成一个可收起的底栏（`讲稿 / 评委提问` 两个 Tab），**默认收起只占一行**，收起时标题行仍显示当前讲稿摘要与错误
   - `PresentScriptCue` 改为纯内容组件（外框/背景由底栏提供），新增 `resolveScriptCueSummary()` 供底栏收起态复用；`QaPanel` 新增 `hideHeader`（嵌入底栏时不重复标题）
-  - 底栏展开高度上限 42vh，并为左下角 Director 试播按钮留 56px 底部空位，避免遮挡
+  - 底栏展开高度上限 42vh
+  - **汇报模式移除 DirectorPanel**（左下角「Director 试播」FAB）：它只服务 Phase 0/1 的 fixture 试播，与工具条「▶ 播放讲稿」语义重叠；连带移除 `PresentSession` 的 `presentStageMode` prop 与 `supportsLipSync`/`ttsEngine` 取值
   - dev-log/dev 工具条文案统一收进 `UI_PRESENT`
-- **未做 / 阻塞**：**未经视觉验收**（AI 无法看画面）。浮层是否更清爽需人工确认
-- **下一台机器应优先**：`npm run dev` → 汇报页确认：① 工具条不再换行跳动 ② 底部默认只有一行、点 Tab 展开 ③ 画中画各布局切回正常
+- **未做 / 阻塞**：
+  - **未经视觉验收**（AI 无法看画面）。浮层是否更清爽需人工确认
+  - `DirectorPanel.tsx` / `directorPanel.css` / 两个 `sample-*.json` fixture 现已**无任何引用**（保留未删，等确认后再决定）；`docs/phase0-acceptance.md` 等文档仍以「左下角 Director」为验收入口，若确定不要该面板需一并修订文档
+- **下一台机器应优先**：`npm run dev` → 汇报页确认：① 工具条不再换行跳动 ② 底部默认只有一行、点 Tab 展开 ③ 画中画各布局切回正常 ④ 左下角已无试播圆钮
 - **相关文件**：`apps/presenter-onair/src/components/present/{PresentViewMenu,PresentBottomDock,PresentScriptCue,QaPanel,PresentShell}.tsx` · `presentLayouts.css` · `src/constants/uiZh.ts`
 - **验证方式**：`npm run typecheck`；`npm test`（36/13/57）
 

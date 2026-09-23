@@ -243,7 +243,6 @@ export default function App() {
           settingsHook={settingsHook}
           onToggleSettings={toggleSettingsDialog}
           onStageModeChange={setPresentStageMode}
-          presentStageMode={presentStageMode}
           isProcessing={isProcessing}
           isSpeaking={isSpeaking}
           mouthLevelRef={mouthLevelRef}

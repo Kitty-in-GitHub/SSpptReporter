@@ -460,8 +460,6 @@
 .present-dock-body {
   max-height: 42vh;
   overflow-y: auto;
-  /* 给左下角固定的 Director 试播按钮留出空位，避免遮住面板内容 */
-  padding-bottom: 56px;
 }
 
 .present-dock:not(.is-expanded) .present-dock-body {
