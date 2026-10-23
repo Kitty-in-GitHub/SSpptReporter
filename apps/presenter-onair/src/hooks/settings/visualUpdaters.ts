@@ -31,7 +31,7 @@ export interface VisualSettingsUpdaterDeps {
   setImportedVrmModels: Dispatch<SetStateAction<ImportedVrmModelMeta[]>>;
 }
 
-export function createVisualSettingsUpdaters(deps: VisualSettingsUpdaterDeps) {
+export function useVisualSettingsUpdaters(deps: VisualSettingsUpdaterDeps) {
   const { setSettings, setImportedVrmModels } = deps;
 
   const updateVisualBackgroundMode = useCallback(

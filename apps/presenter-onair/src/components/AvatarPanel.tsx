@@ -528,7 +528,6 @@ export function AvatarBackground({
   onEffectAnchorReset,
   vrmCameraFraming,
   onVrmCameraFramingChange,
-  backgroundMode: _backgroundMode = 'default',
   renderPaused = false,
   showExpressionControls = true,
   faceCaptureRef,

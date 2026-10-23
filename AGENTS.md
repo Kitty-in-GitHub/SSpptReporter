@@ -11,14 +11,16 @@
 - **Q&A**：评委提问短答
 - LLM **只输出** `DirectorAction` JSON，不直接控骨骼
 
-## 当前阶段（截至 2026-08-26）
+## 当前阶段（截至 2026-10-23）
 
 | 项 | 状态 |
 |----|------|
 | Phase 0 | **已通过本机验收**（见 `docs/phase0-acceptance.md`） |
 | Phase 1 | **已通过本机验收**（见 `docs/phase1-acceptance.md`） |
-| Phase 2 | **功能完成、待正式验收**：Brain RAG + Q&A 分层 profile + 汇报面板（见 `docs/phase2-acceptance.md`） |
-| Phase 3 Present | **功能完成、待验收**：多 beat + performance profile + 讲稿导演台 Voice 字段（见 `docs/phase3-present-director.md`） |
+| Phase 2 | **已通过本机验收**：Brain RAG + Q&A 分层 profile + 汇报面板（见 `docs/phase2-acceptance.md`） |
+| Phase 2.5 ASR | **已通过本机验收**：Web Speech / 浏览器内 Whisper / 本机网关 / 云端四引擎（见 `docs/phase2-5-asr.md`） |
+| Phase 3 Present | **已通过本机验收**：多 beat + performance profile + 讲稿导演台 Voice 字段（见 `docs/phase3-present-director.md`） |
+| 工程健康 | `typecheck` / `lint` / `test`（106 项）/ `build` 全绿；CI 见 `.github/workflows/ci.yml`；依赖风险见 `docs/dependency-security.md` |
 | Avatar 呈现层 | **`lib/avatar` + `AvatarShell`**（ADR-011） |
 | Q&A TTS 基线 | **`qa` profile** 分层（ADR-012；见 `docs/content-qa.md`） |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
@@ -110,7 +112,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 ## 建议的下一步（优先级）
 
 1. **填真实材料**：`npm run scaffold:deck` → 编辑 `content-private/` → 拷贝 PDF → `npm run compile:deck`
-2. **Phase 2 / 3 正式验收**：`docs/phase2-acceptance.md` · `docs/phase3-present-director.md`
+2. **工程守护**：提交前跑 `npm run typecheck && npm run test && npm run lint -w @ssreporter/presenter-onair`；CI 见 `.github/workflows/ci.yml`
 3. （可选）本机 embedding：`npm run setup:embed`；`npm run build:brain-vectors -- --deck demo`
 4. （可选）VRMA 手势：`npm run setup:gestures` 或 [`docs/vrma-authoring.md`](docs/vrma-authoring.md)
 
@@ -137,5 +139,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | `docs/phase2-5-asr.md` | Phase 2.5 ASR（语音转文字）三引擎 |
 | `docs/content-qa.md` | persona / FAQ 知识库规范 |
 | `docs/brain-retrieval.md` | Hybrid 检索 + brain-vectors 缓存 |
+| `docs/face-capture.md` | 面捕模式（采集 / 引擎两段、Firefox 限定） |
+| `docs/dependency-security.md` | npm audit 基线与剩余风险处置 |
 | `docs/vrma-authoring.md` | 自制 VRMA（Blender / Unity）下载与教程 |
 | `docs/tts-selection.md` | TTS 选型（云端 / 本机 / 核显兜底） |

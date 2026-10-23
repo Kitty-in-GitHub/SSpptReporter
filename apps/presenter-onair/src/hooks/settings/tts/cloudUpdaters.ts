@@ -5,7 +5,7 @@ export interface TtsCloudUpdaterDeps {
   setSettings: SetSettings;
 }
 
-export function createTtsCloudUpdaters(deps: TtsCloudUpdaterDeps) {
+export function useTtsCloudUpdaters(deps: TtsCloudUpdaterDeps) {
   const { setSettings } = deps;
 
   const updateGeminiTtsModel = useCallback(

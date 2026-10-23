@@ -5,7 +5,7 @@ export interface TtsLocalUpdaterDeps {
   setSettings: SetSettings;
 }
 
-export function createTtsLocalUpdaters(deps: TtsLocalUpdaterDeps) {
+export function useTtsLocalUpdaters(deps: TtsLocalUpdaterDeps) {
   const { setSettings } = deps;
 
   const updateOpenAiCompatibleApiKey = useCallback(

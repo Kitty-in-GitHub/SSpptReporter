@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useAudioLipsync } from '../hooks/useAudioLipsync';
 import { useAituberCore } from '../hooks/useAituberCore';
 import { useLiveCommentIntelligence } from '../hooks/useLiveCommentIntelligence';
@@ -10,12 +10,24 @@ import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import type { TwitchChatMessage } from '../services/twitch/twitchService';
 import type { YouTubeChatMessage } from '../services/youtube/youtubeService';
 import { ChatSession } from './ChatSession';
-import { EditSession } from './EditSession';
-import { MocapSession } from './MocapSession';
-import { PresentSession } from './PresentSession';
 import { SessionDrawer } from '../components/SessionDrawer';
 import { SettingsDialog } from './SettingsDialog';
 import '../styles/app.css';
+
+// 非默认会话按需加载：PDF.js（汇报）、MediaPipe 采集（面捕）、讲稿导演台
+// 各自成为独立 chunk，首屏只加载聊天会话。
+const EditSession = lazy(() =>
+  import('./EditSession').then((module) => ({ default: module.EditSession })),
+);
+const MocapSession = lazy(() =>
+  import('./MocapSession').then((module) => ({ default: module.MocapSession })),
+);
+const PresentSession = lazy(() =>
+  import('./PresentSession').then((module) => ({
+    default: module.PresentSession,
+  })),
+);
+
 
 export default function App() {
   const { play, stop, mouthLevelRef, isSpeaking } = useAudioLipsync();
@@ -223,47 +235,49 @@ export default function App() {
         hidden={presentStageMode}
       />
 
-      {sessionMode === 'edit' ? (
-        <EditSession
-          settingsHook={settingsHook}
-          onToggleSettings={toggleSettingsDialog}
-        />
-      ) : sessionMode === 'mocap' ? (
-        <MocapSession
-          settingsHook={settingsHook}
-          onToggleSettings={toggleSettingsDialog}
-          avatarPresenterRef={mocapAvatarPresenterRef}
-          mouthLevelRef={mouthLevelRef}
-          isSpeaking={isSpeaking}
-          backgroundImageUrl={backgroundImageUrl}
-          partialCaption={partialResponse}
-        />
-      ) : sessionMode === 'present' ? (
-        <PresentSession
-          settingsHook={settingsHook}
-          onToggleSettings={toggleSettingsDialog}
-          onStageModeChange={setPresentStageMode}
-          isProcessing={isProcessing}
-          isSpeaking={isSpeaking}
-          mouthLevelRef={mouthLevelRef}
-          backgroundImageUrl={backgroundImageUrl}
-          onPlay={handleAudioPlay}
-          onStop={stop}
-        />
-      ) : (
-        <ChatSession
-          settingsHook={settingsHook}
-          onToggleSettings={toggleSettingsDialog}
-          avatarPresenterRef={avatarPresenterRef}
-          messages={messages}
-          partialResponse={partialResponse}
-          isProcessing={isProcessing}
-          onSend={handleSend}
-          mouthLevelRef={mouthLevelRef}
-          isSpeaking={isSpeaking}
-          backgroundImageUrl={backgroundImageUrl}
-        />
-      )}
+      <Suspense fallback={<div className="app-session-loading">正在加载会话…</div>}>
+        {sessionMode === 'edit' ? (
+          <EditSession
+            settingsHook={settingsHook}
+            onToggleSettings={toggleSettingsDialog}
+          />
+        ) : sessionMode === 'mocap' ? (
+          <MocapSession
+            settingsHook={settingsHook}
+            onToggleSettings={toggleSettingsDialog}
+            avatarPresenterRef={mocapAvatarPresenterRef}
+            mouthLevelRef={mouthLevelRef}
+            isSpeaking={isSpeaking}
+            backgroundImageUrl={backgroundImageUrl}
+            partialCaption={partialResponse}
+          />
+        ) : sessionMode === 'present' ? (
+          <PresentSession
+            settingsHook={settingsHook}
+            onToggleSettings={toggleSettingsDialog}
+            onStageModeChange={setPresentStageMode}
+            isProcessing={isProcessing}
+            isSpeaking={isSpeaking}
+            mouthLevelRef={mouthLevelRef}
+            backgroundImageUrl={backgroundImageUrl}
+            onPlay={handleAudioPlay}
+            onStop={stop}
+          />
+        ) : (
+          <ChatSession
+            settingsHook={settingsHook}
+            onToggleSettings={toggleSettingsDialog}
+            avatarPresenterRef={avatarPresenterRef}
+            messages={messages}
+            partialResponse={partialResponse}
+            isProcessing={isProcessing}
+            onSend={handleSend}
+            mouthLevelRef={mouthLevelRef}
+            isSpeaking={isSpeaking}
+            backgroundImageUrl={backgroundImageUrl}
+          />
+        )}
+      </Suspense>
 
       <SettingsDialog
         open={settingsOpen}

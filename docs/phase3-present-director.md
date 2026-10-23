@@ -1,6 +1,6 @@
 # Phase 3 · Present 导演时间线（节拍 + Profile）
 
-> **状态：已实现（待验收）**  
+> **状态：已通过本机验收**（补记于 2026-10-23；实际验收早于本记录）  
 > 一页多 beat、performance profile 统一驱动 VRM + TTS、句间停顿与语速覆盖。
 
 ---

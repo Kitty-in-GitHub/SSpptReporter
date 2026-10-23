@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AppSettings } from '../types/settings';
 import {
   DEFAULT_OPENAI_COMPATIBLE_MODEL,
@@ -14,12 +14,12 @@ import {
   type ImportedVrmModelMeta,
 } from '../lib/vrm/vrmModelStore';
 import { DEFAULT_VRM_MODEL_ID } from '../lib/vrm/vrmModelCatalog';
-import { createLlmSettingsUpdaters } from './settings/llmUpdaters';
-import { createTtsSettingsUpdaters } from './settings/tts';
-import { createVisualSettingsUpdaters } from './settings/visualUpdaters';
-import { createPresentSettingsUpdaters } from './settings/presentUpdaters';
-import { createStreamSettingsUpdaters } from './settings/streamUpdaters';
-import { createFaceCaptureUpdaters } from './settings/faceCaptureUpdaters';
+import { useLlmSettingsUpdaters } from './settings/llmUpdaters';
+import { useTtsSettingsUpdaters } from './settings/tts';
+import { useVisualSettingsUpdaters } from './settings/visualUpdaters';
+import { usePresentSettingsUpdaters } from './settings/presentUpdaters';
+import { useStreamSettingsUpdaters } from './settings/streamUpdaters';
+import { useFaceCaptureUpdaters } from './settings/faceCaptureUpdaters';
 
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
@@ -85,7 +85,7 @@ export function useSettings() {
     void refreshImportedVrmModels();
   }, [refreshImportedVrmModels]);
 
-  const llmUpdaters = createLlmSettingsUpdaters({
+  const llmUpdaters = useLlmSettingsUpdaters({
     setSettings,
     settings,
     openRouterDynamicModels,
@@ -93,18 +93,18 @@ export function useSettings() {
     setIsRefreshingOpenRouterFreeModels,
   });
 
-  const ttsUpdaters = createTtsSettingsUpdaters({ setSettings });
+  const ttsUpdaters = useTtsSettingsUpdaters({ setSettings });
 
-  const visualUpdaters = createVisualSettingsUpdaters({
+  const visualUpdaters = useVisualSettingsUpdaters({
     setSettings,
     setImportedVrmModels,
   });
 
-  const presentUpdaters = createPresentSettingsUpdaters({ setSettings });
+  const presentUpdaters = usePresentSettingsUpdaters({ setSettings });
 
-  const streamUpdaters = createStreamSettingsUpdaters({ setSettings });
+  const streamUpdaters = useStreamSettingsUpdaters({ setSettings });
 
-  const faceCaptureUpdaters = createFaceCaptureUpdaters({ setSettings });
+  const faceCaptureUpdaters = useFaceCaptureUpdaters({ setSettings });
 
   return {
     settings,

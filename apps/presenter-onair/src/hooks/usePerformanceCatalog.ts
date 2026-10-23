@@ -114,7 +114,8 @@ export function usePerformanceCatalog(deckId: string) {
         if (!overlay.profiles[profileId]) {
           return;
         }
-        const { [profileId]: _removed, ...rest } = overlay.profiles;
+        const rest = { ...overlay.profiles };
+        delete rest[profileId];
         await saveDeckPerformanceOverlay(deckId, { profiles: rest });
         await reload();
       } catch (saveError) {

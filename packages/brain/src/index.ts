@@ -47,10 +47,6 @@ export {
   retrieveByEmbedding,
 } from "./vectorRetrieve.js";
 export {
-  buildBrainVectorsForDeck,
-  parseBrainVectorsCliArgs,
-} from "./buildBrainVectorsCli.js";
-export {
   buildSlideIndex,
   slideIndexToChunks,
   type SlideMarkdownFile,

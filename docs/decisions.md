@@ -6,28 +6,69 @@
 
 ---
 
-## ADR-013 · 表情（状态）与肢体动作（事件）在呈现层分槽
+## ADR-001 · 皮套路线
 
-- **日期**：2026-09-02
-- **状态**：accepted（已于 2026-09-02 实现）
+- **日期**：2026-08-20
+- **状态**：accepted
+- **决策**：VRoid Studio → `.vrm`；虚拟二次元风，不做写实数字人；不用 Live2D 作为主方案。
+- **理由**：自动绑骨成本高；VRM 生态与 Web 运行时成熟。
+
+## ADR-002 · 身体底座
+
+- **日期**：2026-08-21
+- **状态**：accepted
+- **决策**：主应用基于 **AITuber OnAir** VRM 模板（`apps/presenter-onair`）；AITuberKit 仅作幻灯/Q&A UX 参考，不整仓依赖。
+- **理由**：OnAir 已含 VRM + TTS + 口型管线；减少从零造轮子。
+
+## ADR-003 · Director 协议
+
+- **日期**：2026-08-21
+- **状态**：accepted
+- **决策**：Brain/LLM 只输出 `DirectorAction` JSON；单一 schema：`schemas/director-action.schema.json`；校验在 `packages/director`。
+- **理由**：换皮套不改大脑；可测试、可日志、可打断。
+
+## ADR-004 · 仓库与资产策略
+
+- **日期**：2026-08-22
+- **状态**：superseded by ADR-008
+- **决策**：GitHub **私仓**；`content/` 知识库进 Git；**所有 `.vrm` 不进 Git**（含示例 miko）；密钥不进 Git。
+- **理由**：答辩材料需版本管理；模型体积大且可能涉及授权；密钥安全。
+
+## ADR-005 · 当前运行时模型
+
+- **日期**：2026-08-22
+- **状态**：accepted
+- **决策**：运行时加载 `StarString1.0.vrm`；`miko.vrm` 保留在本地 `assets/avatars/` 与 `public/avatar/` 作备份，不删除。
+- **理由**：用户定制皮套；保留 OnAir 默认以便回退。
+
+## ADR-006 · 工具链与环境
+
+- **日期**：2026-08-21
+- **状态**：accepted
+- **决策**：conda 环境 `ssreporter` + Node 22；npm workspaces（非 pnpm）；Windows 上不用 `conda run` 跑 npm。
+- **理由**：base conda npm 曾损坏；workspaces 足够当前规模。
+
+## ADR-007 · Phase 划分
+
+- **日期**：2026-08-20
+- **状态**：accepted
 - **决策**：
-  - **协议层保持合一**：`DirectorAction` 仍由一条指令同时携带 `emotion` 与 `gesture`，作者 / LLM 的心智模型是「一个节拍 = 一次表演」
-  - **呈现层分槽**：`useAvatarPresenter` 提供两个槽 —— **动作事件槽**（`gesture` / `animation`，播完即止）与 **情绪状态槽**（`emote`，`holdMs` 后自动回落）；`AvatarBackground` 用两个 effect 分别驱动，各自管生命周期
-  - **清零职责唯一**：只有情绪槽可以清零情绪 blendshape 通道；动作槽只叠加自己的 parts，不得 reset 全局通道
-- **理由**：
-  - 肢体动作是**事件**（VRMA 一次性；新指令应**打断**旧动作）；面部表情是**状态**（需持续一段；新指令应**替换**而非清零）。二者生命周期与打断语义不同，压进同一个 reaction 槽必然互相打架
-  - 单槽下 `gesture` 分支的前置 `controller.reset(160)` 会误清表情；且 `emote()` 会主动清零其余情绪通道而 `gesture()` 不会 —— 合并后无法给出统一的清零策略
-  - 保留「一个持续表情 + N 个动作」的表达能力（分槽后表情槽不动、动作槽可连发）
-  - `lib/avatar` 已有 `AvatarReactionPair { gesture, emotion }`，本意就是两件事，只是 presenter 只有单槽把它俩压扁了
-- **实现（2026-09-02）**：
-  - `useAvatarPresenter` 拆为 `reaction`（动作事件槽）+ `expressionReaction`（情绪状态槽），新增 `applyPerformance({ gesture, emotion })` 一次提交、`resetExpression()` 只清表情
-  - `AvatarShell` 用 `useMemo` 稳定两个槽的对象身份并分别下发；`AvatarBackground` 拆成两个 effect
-  - 动作槽的 `gesture` 分支**不再 `controller.reset()`**，改为只清理「上一次动作占用的通道」（`VrmExpressionController.gesture()` 返回实占通道名）；表情清零只由情绪槽执行
-  - `useDirectorQueue` / `DirectorPanel` 由「连发两次」改为一次 `onApplyPerformance(pair)`；`PresentSession` 的 `onResetEmotion` 改用 `resetExpression`
-  - 回归测试：`apps/presenter-onair/src/hooks/useAvatarPresenter.test.ts`
-- **相关文件**：`apps/presenter-onair/src/hooks/{useDirectorQueue,useAvatarPresenter}.ts` · `src/components/{AvatarShell,AvatarPanel,DirectorPanel}.tsx` · `src/lib/vrmExpressionController.ts`
+  - **Phase 0**：VRM + TTS + 口型 + 单条 DirectorAction
+  - **Phase 1**：知识库 + Present + PPT 双栏 + Director 队列
+  - **Phase 2**：Q&A + ASR + `barge_in` 打断
+- **理由**：先跑通身体，再叠大脑与答辩场景。
 
----
+## ADR-008 · 公开仓与双知识库
+
+- **日期**：2026-08-23
+- **状态**：accepted
+- **决策**：
+  - 代码仓可公开；根目录 MIT（`LICENSE` + `NOTICE`，致谢 AITuber OnAir）
+  - **示例知识库** `content/` + `public/decks/demo/` 进公开仓
+  - **私有知识库** `content-private/` 与非 demo 的 `public/decks/*` 不进 Git
+  - `.vrm` / 密钥仍不进 Git
+  - GitHub fork 血缘见 `docs/upstream-fork.md`（推荐产品仓 + 上游 fork 双仓）
+- **理由**：真实答辩材料与示例分离；合规再分发；fork 元数据无法事后挂到已有独立仓。
 
 ## ADR-009 · Present 节拍与 Performance Profile
 
@@ -69,80 +110,26 @@
   - `listSelectableProfiles` **不包含** `qa`（专用于问答 TTS，不出现在讲稿导演台 preset 列表）
 - **理由**：短答需要稳定、统一的语音基线；表情仍可随回答语义变化，与 Present 讲稿 preset 策略一致。
 
-## ADR-001 · 皮套路线
+## ADR-013 · 表情（状态）与肢体动作（事件）在呈现层分槽
 
-- **日期**：2026-08-20
-- **状态**：accepted
-- **决策**：VRoid Studio → `.vrm`；虚拟二次元风，不做写实数字人；不用 Live2D 作为主方案。
-- **理由**：自动绑骨成本高；VRM 生态与 Web 运行时成熟。
-
-## ADR-002 · 身体底座
-
-- **日期**：2026-08-21
-- **状态**：accepted
-- **决策**：主应用基于 **AITuber OnAir** VRM 模板（`apps/presenter-onair`）；AITuberKit 仅作幻灯/Q&A UX 参考，不整仓依赖。
-- **理由**：OnAir 已含 VRM + TTS + 口型管线；减少从零造轮子。
-
-## ADR-003 · Director 协议
-
-- **日期**：2026-08-21
-- **状态**：accepted
-- **决策**：Brain/LLM 只输出 `DirectorAction` JSON；单一 schema：`schemas/director-action.schema.json`；校验在 `packages/director`。
-- **理由**：换皮套不改大脑；可测试、可日志、可打断。
-
-## ADR-004 · 仓库与资产策略
-
-- **日期**：2026-08-22
-- **状态**：superseded by ADR-008
-- **决策**：GitHub **私仓**；`content/` 知识库进 Git；**所有 `.vrm` 不进 Git**（含示例 miko）；密钥不进 Git。
-- **理由**：答辩材料需版本管理；模型体积大且可能涉及授权；密钥安全。
-
-## ADR-008 · 公开仓与双知识库
-
-- **日期**：2026-08-23
-- **状态**：accepted
+- **日期**：2026-09-02
+- **状态**：accepted（已于 2026-09-02 实现）
 - **决策**：
-  - 代码仓可公开；根目录 MIT（`LICENSE` + `NOTICE`，致谢 AITuber OnAir）
-  - **示例知识库** `content/` + `public/decks/demo/` 进公开仓
-  - **私有知识库** `content-private/` 与非 demo 的 `public/decks/*` 不进 Git
-  - `.vrm` / 密钥仍不进 Git
-  - GitHub fork 血缘见 `docs/upstream-fork.md`（推荐产品仓 + 上游 fork 双仓）
-- **理由**：真实答辩材料与示例分离；合规再分发；fork 元数据无法事后挂到已有独立仓。
-
-## ADR-005 · 当前运行时模型
-
-- **日期**：2026-08-22
-- **状态**：accepted
-- **决策**：运行时加载 `StarString1.0.vrm`；`miko.vrm` 保留在本地 `assets/avatars/` 与 `public/avatar/` 作备份，不删除。
-- **理由**：用户定制皮套；保留 OnAir 默认以便回退。
-
-## ADR-006 · 工具链与环境
-
-- **日期**：2026-08-21
-- **状态**：accepted
-- **决策**：conda 环境 `ssreporter` + Node 22；npm workspaces（非 pnpm）；Windows 上不用 `conda run` 跑 npm。
-- **理由**：base conda npm 曾损坏；workspaces 足够当前规模。
-
-## ADR-007 · Phase 划分
-
-- **日期**：2026-08-20
-- **状态**：accepted
-- **决策**：
-  - **Phase 0**：VRM + TTS + 口型 + 单条 DirectorAction
-  - **Phase 1**：知识库 + Present + PPT 双栏 + Director 队列
-  - **Phase 2**：Q&A + ASR + `barge_in` 打断
-- **理由**：先跑通身体，再叠大脑与答辩场景。
-
-## ADR-013 · Q&A ASR 多引擎
-
-- **日期**：2026-08-24
-- **状态**：accepted
-- **决策**：
-  - 评委提问 ASR：`webSpeech`（默认）/ `browserWhisper`（浏览器 WASM，首次下载模型）/ `gateway`（本机 Faster-Whisper）/ `cloud`（OpenAI transcriptions）
-  - 选 `gateway` 且健康检查 `asr: false` 时弹出安装指引（不可在浏览器内静默 pip install）
-  - `browserWhisper` 使用 `@huggingface/transformers` + `Xenova/whisper-base`（q8），进度展示在听写状态行
-- **理由**：免终端用户可用 WASM；愿意装 Python 的用网关；云端作备选。
-- **不做（本期）**：流式逐字 ASR、把 Whisper 模型 commit 进 Git
+  - **协议层保持合一**：`DirectorAction` 仍由一条指令同时携带 `emotion` 与 `gesture`，作者 / LLM 的心智模型是「一个节拍 = 一次表演」
+  - **呈现层分槽**：`useAvatarPresenter` 提供两个槽 —— **动作事件槽**（`gesture` / `animation`，播完即止）与 **情绪状态槽**（`emote`，`holdMs` 后自动回落）；`AvatarBackground` 用两个 effect 分别驱动，各自管生命周期
+  - **清零职责唯一**：只有情绪槽可以清零情绪 blendshape 通道；动作槽只叠加自己的 parts，不得 reset 全局通道
+- **理由**：
+  - 肢体动作是**事件**（VRMA 一次性；新指令应**打断**旧动作）；面部表情是**状态**（需持续一段；新指令应**替换**而非清零）。二者生命周期与打断语义不同，压进同一个 reaction 槽必然互相打架
+  - 单槽下 `gesture` 分支的前置 `controller.reset(160)` 会误清表情；且 `emote()` 会主动清零其余情绪通道而 `gesture()` 不会 —— 合并后无法给出统一的清零策略
+  - 保留「一个持续表情 + N 个动作」的表达能力（分槽后表情槽不动、动作槽可连发）
+  - `lib/avatar` 已有 `AvatarReactionPair { gesture, emotion }`，本意就是两件事，只是 presenter 只有单槽把它俩压扁了
+- **实现（2026-09-02）**：
+  - `useAvatarPresenter` 拆为 `reaction`（动作事件槽）+ `expressionReaction`（情绪状态槽），新增 `applyPerformance({ gesture, emotion })` 一次提交、`resetExpression()` 只清表情
+  - `AvatarShell` 用 `useMemo` 稳定两个槽的对象身份并分别下发；`AvatarBackground` 拆成两个 effect
+  - 动作槽的 `gesture` 分支**不再 `controller.reset()`**，改为只清理「上一次动作占用的通道」（`VrmExpressionController.gesture()` 返回实占通道名）；表情清零只由情绪槽执行
+  - `useDirectorQueue` / `DirectorPanel` 由「连发两次」改为一次 `onApplyPerformance(pair)`；`PresentSession` 的 `onResetEmotion` 改用 `resetExpression`
+  - 回归测试：`apps/presenter-onair/src/hooks/useAvatarPresenter.test.ts`
+- **相关文件**：`apps/presenter-onair/src/hooks/{useDirectorQueue,useAvatarPresenter}.ts` · `src/components/{AvatarShell,AvatarPanel,DirectorPanel}.tsx` · `src/lib/vrmExpressionController.ts`
 
 ## ADR-014 · Brain Hybrid 检索（薄 RAG）
 
@@ -168,3 +155,15 @@
   - 可选安装：`npm run setup:embed`（未装不阻塞 Q&A）
 - **理由**：省 embedding token 费；答辩材料规模小，CPU 小模型足够；与 TTS/ASR 网关一致、少维护
 - **文档**：[`brain-retrieval.md`](./brain-retrieval.md)
+
+## ADR-016 · Q&A ASR 多引擎
+
+- **日期**：2026-08-24
+- **状态**：accepted
+- **编号说明**：本条原误用 **ADR-013**（与「表情/动作分槽」撞号）；2026-10-23 重排为 ADR-016，内容未变。
+- **决策**：
+  - 评委提问 ASR：`webSpeech`（默认）/ `browserWhisper`（浏览器 WASM，首次下载模型）/ `gateway`（本机 Faster-Whisper）/ `cloud`（OpenAI transcriptions）
+  - 选 `gateway` 且健康检查 `asr: false` 时弹出安装指引（不可在浏览器内静默 pip install）
+  - `browserWhisper` 使用 `@huggingface/transformers` + `Xenova/whisper-base`（q8），进度展示在听写状态行
+- **理由**：免终端用户可用 WASM；愿意装 Python 的用网关；云端作备选。
+- **不做（本期）**：流式逐字 ASR、把 Whisper 模型 commit 进 Git

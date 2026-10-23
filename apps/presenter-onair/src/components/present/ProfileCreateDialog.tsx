@@ -283,7 +283,3 @@ export function ProfileCreateDialog({
     </div>
   );
 }
-
-export function isEmotionProfile(profileId: string): profileId is import('@ssreporter/director').Emotion {
-  return isBuiltInProfile(profileId);
-}

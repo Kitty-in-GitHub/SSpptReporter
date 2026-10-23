@@ -11,7 +11,7 @@ export interface FaceCaptureUpdaterDeps {
   setSettings: SetSettings;
 }
 
-export function createFaceCaptureUpdaters(deps: FaceCaptureUpdaterDeps) {
+export function useFaceCaptureUpdaters(deps: FaceCaptureUpdaterDeps) {
   const { setSettings } = deps;
 
   const updateFaceCaptureMouthDriver = useCallback(

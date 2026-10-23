@@ -29,7 +29,7 @@ export interface LlmSettingsUpdaterDeps {
   setIsRefreshingOpenRouterFreeModels: (value: boolean) => void;
 }
 
-export function createLlmSettingsUpdaters(deps: LlmSettingsUpdaterDeps) {
+export function useLlmSettingsUpdaters(deps: LlmSettingsUpdaterDeps) {
   const {
     setSettings,
     settings,

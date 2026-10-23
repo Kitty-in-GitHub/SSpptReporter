@@ -12,7 +12,7 @@ export interface PresentSettingsUpdaterDeps {
   setSettings: SetSettings;
 }
 
-export function createPresentSettingsUpdaters(deps: PresentSettingsUpdaterDeps) {
+export function usePresentSettingsUpdaters(deps: PresentSettingsUpdaterDeps) {
   const { setSettings } = deps;
 
   const updatePresentSessionMode = useCallback(

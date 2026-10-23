@@ -27,10 +27,8 @@ import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentDeckSelect } from './PresentDeckSelect';
 import { PresentControls } from './PresentControls';
 import { PresentPlaybackControls } from './PresentPlaybackControls';
-import {
-  PresentScriptCue,
-  resolveScriptCueSummary,
-} from './PresentScriptCue';
+import { PresentScriptCue } from './PresentScriptCue';
+import { resolveScriptCueSummary } from './scriptCueSummary';
 import { PresentBottomDock } from './PresentBottomDock';
 import { PresentViewMenu } from './PresentViewMenu';
 import { QaPanel } from './QaPanel';

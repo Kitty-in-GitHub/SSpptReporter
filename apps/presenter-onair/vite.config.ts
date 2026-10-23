@@ -46,6 +46,26 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@huggingface/transformers', '@mediapipe/tasks-vision'],
   },
+  build: {
+    // vendor chunks (three / transformers / pdf) are intentionally large and
+    // lazily fetched; keep the warning meaningful for app code only.
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        // Keep the heavy, rarely-changing libraries in their own cacheable
+        // chunks so the app shell stays small (OBS browser source cold start).
+        manualChunks(id) {
+          if (id.includes('node_modules/three') || id.includes('three-vrm')) {
+            return 'vendor-three';
+          }
+          if (id.includes('node_modules/pdfjs-dist')) {
+            return 'vendor-pdf';
+          }
+          return undefined;
+        },
+      },
+    },
+  },
   worker: {
     // 与 useFaceCapture.ts 的 `{ type: 'module' }` 保持一致：MediaPipe 的 wasm glue
     // 在 ESM 下需要垫片才能挂上全局，垫片由 vite-mediapipe-plugin 注入

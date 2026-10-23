@@ -33,12 +33,6 @@ export {
   type SlideMarkdownFile,
 } from "./compile-deck-script.js";
 export {
-  compileDeckDir,
-  resolveDeckDir,
-  writeSlideMarkdown,
-  type CompileDeckDirResult,
-} from "./compile-deck-dir.js";
-export {
   pageToSlideFilename,
   parseSlideMarkdownFile,
   parseSlideMarkdownToDraft,

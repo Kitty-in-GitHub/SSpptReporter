@@ -45,7 +45,7 @@ SSreporter/
 | 1 | StarString VRM 1.0 | 已加载 |
 | 2 | `presenter-onair` 可见角色 | 已满足 |
 | 3 | Settings TTS 发声 | 已实现（Director 走 OnAir TTS） |
-| 4 | 口型跟随音频 | **待本机验收**（非 webSpeech 引擎） |
+| 4 | 口型跟随音频 | 已通过（非 webSpeech 引擎；见 `phase0-acceptance.md`） |
 | 5 | DirectorAction fixture 表情 | 已满足 |
 | 6 | Schema 校验 | 已满足（`validate.test.ts` + UI 按钮） |
 

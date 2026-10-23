@@ -1,6 +1,8 @@
-# packages/voice
+# packages/voice（预留，未参与构建）
 
 ASR / TTS 适配层占位。
+
+**本目录没有 `package.json`，不参与 npm workspaces 构建。**
 
 当前实现：
 

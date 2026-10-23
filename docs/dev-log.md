@@ -22,6 +22,28 @@
 
 ---
 
+### 2026-10-23 · 工程健康整改：conda 环境、lint 修通、P2 逐项、验收状态补记
+
+- **设备/环境**：Win / conda **`ssreporter`**（Node v22.23.2、npm 10.9.8、Python 3.11.16）
+- **做了什么**：
+  - **环境**：改用 conda `ssreporter` 跑全部命令（此前用的是系统 Node 24 / Python 3.12，导致 `embedding:false`）；`npm install` 在 Node 22 下重跑；`npm run setup:asr` 装入 faster-whisper 1.2.1 → `/health` 现在 `asr:true`（base）、`embedding:true`
+  - **lint 修通**：补 `globals` devDependency（此前 `npm run lint` 直接崩溃）；把 9 个 `create*Updaters` 工厂改名 `use*Updaters`（96 处 `rules-of-hooks` 消除）；拆分 `resolveScriptCueSummary` → `scriptCueSummary.ts`、`isEmotionProfile` → `lib/present/emotionProfile.ts`；修 `prefer-const` / 未使用变量；`react-hooks` 的 refs / set-state-in-effect / preserve-manual-memoization / exhaustive-deps 降为 **warn**（40+ 处属有意模式，重构另开任务）
+  - **P2-7**：`packages/director` 与 `packages/brain` 索引不再导出 node-only 模块（`compileDeckDir` / `buildBrainVectorsCli`），消除 `node:fs` 外置构建警告
+  - **P2-6**：会话与重型库按需加载 —— `EditSession` / `MocapSession` / `PresentSession` 改 `React.lazy` + `Suspense`；`manualChunks` 拆出 `vendor-three` / `vendor-pdf`；主包 **1.95MB → 578KB**（gzip 555KB → 169KB）
+  - **P2-8**：`npm audit fix` 把 `fast-uri` 3.1.5 → 3.1.9；剩余 `sharp`（Node 专用、不进浏览器）与 vitest 1.x 开发依赖风险写入 `docs/dependency-security.md`；新增 `npm run audit:prod`
+  - **P2-9**：修正 ADR 撞号 —— 重复的「Q&A ASR 多引擎」改为 **ADR-016**（内容未变），全文按 001→016 重排
+  - **P2-10**：四个占位目录 README 统一标注「无 package.json、不参与构建」，并修正 `vrm-runtime` 的过期指引
+  - **P2-11**：新增 `.github/workflows/ci.yml`（`npm ci` → typecheck → lint → test → build；audit 非阻塞）
+  - **P2-12**：本机 ASR / embedding 按 conda 环境安装并验证
+  - **验收状态补记**：Phase 2 / 2.5 / 3 由「待验收」改为「已通过本机验收（补记 2026-10-23）」，`AGENTS.md` 阶段表同步
+- **验证（conda 环境）**：`typecheck` 全过；`lint` **0 error / 48 warning**；`test` **106 通过**（36 + 13 + 57）；`build` 通过无体积告警；`npm run dev` 起来后 5173 / 5050 正常，`/health` 为 `asr:true, whisper_model:"base", embedding:true`；三个懒加载会话模块 dev 下均可解析
+- **未做 / 阻塞**：48 条 React Compiler 建议警告（refs / set-state-in-effect）未重构；`sharp` 漏洞需升级 `@huggingface/transformers` 4.3.1（破坏性，需回归浏览器内 Whisper）；浏览器内的人工点检（懒加载切换、口型、面捕）仍需人工过一遍
+- **下一台机器应优先**：`npm run dev` 后用 Firefox 走一遍会话切换（聊天→汇报→导演台→面捕），确认懒加载无白屏
+- **相关文件**：`apps/presenter-onair/{eslint.config.js,vite.config.ts,package.json}` · `src/app/App.tsx` · `src/hooks/settings/*` · `src/components/present/{PresentScriptCue,scriptCueSummary}.ts(x)` · `src/lib/present/emotionProfile.ts` · `packages/{director,brain}/src/index.ts` · `docs/{decisions,phase2-acceptance,phase2-5-asr,phase3-present-director,dependency-security}.md` · `AGENTS.md` · `.github/workflows/ci.yml`
+- **验证方式**：`npm run typecheck && npm run lint -w @ssreporter/presenter-onair && npm run test && npm run build`；`npm run dev` 后查 `/health`
+
+---
+
 ### 2026-09-24 · 面捕引擎按「采集 / 引擎」两段重建接回
 
 - **设备/环境**：Win / Firefox（采集主线的唯一可用浏览器）

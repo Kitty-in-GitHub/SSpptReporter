@@ -1,8 +1,8 @@
-# Mocap Gateway（规划中）
+# Mocap Gateway（规划中，未参与构建）
 
 本机 UDP → WebSocket 桥，用于 iFacialMocap / VMC 等外部面捕 App。
 
-**M1 未实现**；面捕模式当前仅支持浏览器摄像头（`faceCapture.source = webcam`）。
+**M1 未实现**；面捕模式当前仅支持浏览器摄像头（`faceCapture.source = webcam`）。**本目录没有 `package.json`，不参与 npm workspaces 构建。**
 
 参考实现路径：
 

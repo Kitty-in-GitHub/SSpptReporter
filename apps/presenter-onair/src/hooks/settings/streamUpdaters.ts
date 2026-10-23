@@ -7,7 +7,7 @@ export interface StreamSettingsUpdaterDeps {
   setSettings: SetSettings;
 }
 
-export function createStreamSettingsUpdaters(deps: StreamSettingsUpdaterDeps) {
+export function useStreamSettingsUpdaters(deps: StreamSettingsUpdaterDeps) {
   const { setSettings } = deps;
 
   const updateScreenVisionDeviceId = useCallback(

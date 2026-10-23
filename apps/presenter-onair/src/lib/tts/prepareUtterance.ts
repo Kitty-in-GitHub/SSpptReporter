@@ -109,7 +109,7 @@ export function prepareEdgeSegmentRequest(
     'zh-CN-XiaoxiaoNeural';
 
   const speed = directive.rate ?? context.defaultRate;
-  let pitch = formatEdgeProsodyValue(directive.pitch, 'Hz');
+  const pitch = formatEdgeProsodyValue(directive.pitch, 'Hz');
   let volume = formatEdgeProsodyValue(directive.volume, '%');
 
   if (segment.emphasized) {

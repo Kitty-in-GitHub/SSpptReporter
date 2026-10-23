@@ -23,8 +23,9 @@ import {
 } from '../../hooks/usePerformanceCatalog';
 import { useVoicePreview } from '../../hooks/useVoicePreview';
 import { isGesturePending } from '../../lib/gestureToVrmReaction';
+import { isEmotionProfile } from '../../lib/present/emotionProfile';
 import { EmphasisTextEditor } from './EmphasisTextEditor';
-import { isEmotionProfile, ProfileCreateDialog } from './ProfileCreateDialog';
+import { ProfileCreateDialog } from './ProfileCreateDialog';
 import { ProfileEditDialog } from './ProfileEditDialog';
 
 interface BeatPerformanceEditorProps {

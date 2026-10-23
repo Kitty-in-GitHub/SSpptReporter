@@ -34,7 +34,7 @@ export interface TtsCoreUpdaterDeps {
   setSettings: SetSettings;
 }
 
-export function createTtsCoreUpdaters(deps: TtsCoreUpdaterDeps) {
+export function useTtsCoreUpdaters(deps: TtsCoreUpdaterDeps) {
   const { setSettings } = deps;
 
   const updateTTSEngine = useCallback(
