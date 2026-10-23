@@ -22,6 +22,7 @@
 | Avatar 呈现层 | **`lib/avatar` + `AvatarShell`**（ADR-011） |
 | Q&A TTS 基线 | **`qa` profile** 分层（ADR-012；见 `docs/content-qa.md`） |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
+| 摄像头采集开发环境 | **Firefox**（本机 Edge / Chrome 的 Chromium 采集层坏：出十几帧即冻结，见 `docs/face-capture.md`） |
 | Director 包 | `packages/director`（类型 + Ajv 校验 + 单元测试 + 队列） |
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
 | Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
@@ -57,6 +58,7 @@ SSreporter/
 6. **最小改动** — 不整仓吞 AITuberKit；参考 UX，身体底座保持 OnAir。
 7. **Director 协议单一来源** — `schemas/director-action.schema.json`；改协议先改 schema 再改 `packages/director`。
 8. **上游致谢** — MIT / NOTICE；fork 策略见 `docs/upstream-fork.md`。
+9. **面捕 / 摄像头采集只在 Firefox 验收** — 本机 Edge、Chrome 的 Chromium 采集路径会「出十几帧后冻结」，独立在线摄像头测试站同样复现，与本项目代码无关（详见 `docs/face-capture.md` 的「已知问题」）。换一台 Chromium 采集正常的机器再放开。
 
 ## 5 分钟跑起来
 
@@ -84,7 +86,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | 加载 VRM | `useResolvedVrmModel` · `AvatarPanel`（`vrmUrl` prop，切换时重载） |
 | 设置持久化 | `lib/settings/` · `hooks/useSettings` · `hooks/settings/*Updaters` |
 | 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession` / `MocapSession`） |
-| 面捕直播皮套 | `MocapSession` · `useFaceCapture` · `docs/face-capture.md`（仅 `sessionMode=mocap`） |
+| 面捕直播皮套 | `MocapSession` · `useVideoSource`（采集 / 帧活性）· `useFaceCaptureEngine`（MediaPipe 引擎）· `docs/face-capture.md`（仅 `sessionMode=mocap`） |
 | Avatar 呈现层 | `lib/avatar/` · `useAvatarPresenter` · `AvatarShell`（Director/Brain 只产出 `AvatarReactionDraft`） |
 | Director 队列 | `hooks/useDirectorQueue`（`lastPlaybackError` 可见化） |
 | Director 试播 | `apps/presenter-onair/src/components/DirectorPanel.tsx` |

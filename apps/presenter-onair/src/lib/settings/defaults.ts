@@ -228,6 +228,7 @@ export function getDefaultSettings(): AppSettings {
       vrmEmotionEffectAnchors: {},
       vrmReactionControlMode: 'none',
       vrmEmotionEffectMap: { ...DEFAULT_VRM_EMOTION_EFFECT_MAP },
+      vrmRenderPaused: false,
     },
     present: { ...DEFAULT_PRESENT_SETTINGS },
     screenVision: {
@@ -340,6 +341,8 @@ export function mergeLoadedSettings(saved: Partial<AppSettings>): AppSettings {
       vrmEmotionEffectMap: normalizeVrmEmotionEffectMap(
         saved.visual?.vrmEmotionEffectMap,
       ),
+      vrmRenderPaused:
+        saved.visual?.vrmRenderPaused ?? defaults.visual.vrmRenderPaused,
     },
     present: normalizePresentSettings(saved.present),
     screenVision: { ...defaults.screenVision, ...saved.screenVision },

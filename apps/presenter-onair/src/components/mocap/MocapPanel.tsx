@@ -1,65 +1,79 @@
 import { UI_SETTINGS } from '../../constants/uiZh';
 import type { AvatarPresenterController } from '../../hooks/useAvatarPresenter';
 import type { CameraDeviceOption } from '../../hooks/useCameraDevices';
-import type { FaceCaptureMouthDriver, VisualSettings } from '../../types/settings';
+import type { VideoSourceState } from '../../hooks/useVideoSource';
 import type { FaceCaptureFrame } from '../../lib/avatar/faceCaptureTypes';
+import { readCameraLog } from '../../lib/cameraLog';
+import type {
+  CameraVideoBackend,
+  FaceCaptureMouthDriver,
+  VisualSettings,
+} from '../../types/settings';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AvatarShell } from '../AvatarShell';
 import { AppToolbar } from '../present/AppToolbar';
 
-interface PreviewStats {
-  paused: boolean;
-  readyState: number;
-  /** requestVideoFrameCallback 计数：真正被呈现（画到屏幕上）的帧 */
-  presented: number;
-  /** getVideoPlaybackQuality().totalVideoFrames：被解码的帧 */
-  decoded: number;
-  currentTime: number;
-  trackState: MediaStreamTrackState | 'none';
+/** 采集状态的人话描述：工具条胶囊与预览窗共用 */
+function describeVideoStatus(video: VideoSourceState): string {
+  switch (video.status) {
+    case 'idle':
+      return '尚未开始采集';
+    case 'opening':
+      return '正在打开摄像头…';
+    case 'error':
+      return video.error ? `打开失败：${video.error}` : '打开失败';
+    case 'stalled':
+      // 流死了但后端还在取帧 —— 这正是「抓帧能不能救我们」的关键信号
+      return video.backendAlive
+        ? `流已断 ${(video.idleMs / 1000).toFixed(1)}s：抓帧后端仍在工作`
+        : `流已断 ${(video.idleMs / 1000).toFixed(1)}s`;
+    case 'streaming':
+    default:
+      return `画面流动中 · 约 ${video.streamFps} fps`;
+  }
 }
 
 interface CameraPreviewProps {
-  stream: MediaStream | null;
+  video: VideoSourceState;
   devices: CameraDeviceOption[];
   labelsHidden: boolean;
   deviceId: string;
   onDeviceChange?: (deviceId: string) => void;
+  backend: CameraVideoBackend;
+  onBackendChange?: (backend: CameraVideoBackend) => void;
+  vrmRenderPaused: boolean;
+  faceCaptureActive: boolean;
+  faceCaptureError: string | null;
 }
 
 /**
- * 面捕摄像头预览：直接复用 `useFaceCapture` 已拿到的流。
- * 不新开 getUserMedia —— 同一设备通常不允许被两个流同时独占。
+ * 摄像头预览：把采集模块拿到的流显示出来，并把它量化出的帧状态摊开给人看。
+ * **不自己做任何测量** —— 帧数/帧率/空闲时长都来自 `useVideoSource`。
  */
 function CameraPreview({
-  stream,
+  video,
   devices,
   labelsHidden,
   deviceId,
   onDeviceChange,
+  backend,
+  onBackendChange,
+  vrmRenderPaused,
+  faceCaptureActive,
+  faceCaptureError,
 }: CameraPreviewProps) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const displayRef = useRef<HTMLVideoElement | null>(null);
   const [playError, setPlayError] = useState<string | null>(null);
-  /** 已呈现的帧数（由 requestVideoFrameCallback 累加） */
-  const presentedFramesRef = useRef(0);
-  /**
-   * 判断「摄像头有没有在输出新帧」。
-   * 不能只看画面内容变不变（人不动也像卡住），这里同时看三个与场景无关的信号：
-   * 呈现帧计数 / `getVideoPlaybackQuality().totalVideoFrames` / `currentTime`，
-   * 任一在推进即视为在出帧 —— 避免某个 API 在 MediaStream 源上不更新导致误报。
-   */
-  const [isFlowing, setIsFlowing] = useState(false);
-  /** 原始读数：出帧异常时用来区分「没解码」「解码后停住」「被暂停」 */
-  const [stats, setStats] = useState<PreviewStats | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) {
+    const element = displayRef.current;
+    if (!element) {
       return;
     }
-    video.srcObject = stream;
-    setPlayError(null);
-    if (stream) {
-      void video.play().catch((error: unknown) => {
+    element.srcObject = video.stream;
+    if (video.stream) {
+      void element.play().catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
         }
@@ -68,87 +82,55 @@ function CameraPreview({
         );
       });
     }
-    // 不做 srcObject = null 的清理：严格模式在开发下会把该 effect 跑两遍，
-    // 中间那次置空会让同一个 video 反复脱离/接回流；元素卸载时 React 会移除它，
-    // 引用随元素一起被回收，无需手动摘流。
-  }, [stream]);
+  }, [video.stream]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || typeof video.requestVideoFrameCallback !== 'function') {
-      return;
+  const deviceLine = video.label
+    ? [video.label, video.resolution].filter(Boolean).join(' · ')
+    : '';
+  const statsLine = [
+    `后端=${video.activeBackend ?? '—'}`,
+    // 呈现帧来自 rVFC；解码帧在 Firefox 下对 MediaStream 恒为 0，故两个都列出来
+    `呈现帧=${video.presentedFrames}(${video.streamFps}fps)`,
+    `解码帧=${video.videoDecodedFrames}`,
+    `后端帧=${video.backendFrames}(${video.backendFps}fps)`,
+    `空闲=${video.idleMs}ms`,
+    `后端活着=${video.backendAlive}`,
+    `重开=${video.restarts}${video.gaveUp ? '(已放弃)' : ''}`,
+  ].join(' ');
+
+  const copyDiagnostics = async () => {
+    const text = [
+      `设备：${deviceLine || '未连接'}`,
+      `采集：${describeVideoStatus(video)}`,
+      `后端：${backend}`,
+      `读数：${statsLine}`,
+      // 引擎与采集分开报，卡住时才分得清是哪一段
+      `面捕引擎：${
+        faceCaptureError
+          ? `错误：${faceCaptureError}`
+          : faceCaptureActive
+            ? '就绪'
+            : '加载中'
+      }`,
+      `VRM 渲染：${vrmRenderPaused ? '已暂停' : '运行中'}`,
+      '--- 采集日志 ---',
+      readCameraLog(),
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // 剪贴板不可用（非安全上下文 / 权限被拒）时整段打到控制台，手动复制
+      console.log(text);
     }
-    let callbackId = video.requestVideoFrameCallback(function onFrame() {
-      presentedFramesRef.current += 1;
-      callbackId = video.requestVideoFrameCallback(onFrame);
-    });
-    return () => {
-      video.cancelVideoFrameCallback(callbackId);
-    };
-  }, [stream]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) {
-      return;
-    }
-    presentedFramesRef.current = 0;
-    let lastPresented = 0;
-    let lastDecoded = 0;
-    let lastTime = 0;
-    let flowing = false;
-    setIsFlowing(false);
-
-    const timer = window.setInterval(() => {
-      const presented = presentedFramesRef.current;
-      const decoded = video.getVideoPlaybackQuality?.().totalVideoFrames ?? 0;
-      const time = video.currentTime;
-      const advanced =
-        presented !== lastPresented ||
-        decoded !== lastDecoded ||
-        time !== lastTime;
-      lastPresented = presented;
-      lastDecoded = decoded;
-      lastTime = time;
-      if (advanced !== flowing) {
-        flowing = advanced;
-        setIsFlowing(advanced);
-      }
-      setStats({
-        paused: video.paused,
-        readyState: video.readyState,
-        presented,
-        decoded,
-        currentTime: time,
-        trackState: stream?.getVideoTracks()[0]?.readyState ?? 'none',
-      });
-    }, 500);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [stream]);
-
-  const track = stream?.getVideoTracks()[0] ?? null;
-  const trackSettings = track?.getSettings();
-  const resolution =
-    trackSettings?.width && trackSettings?.height
-      ? `${trackSettings.width}×${trackSettings.height}`
-      : '';
-  const deviceLine =
-    stream && track
-      ? [track.label || '未知设备', resolution].filter(Boolean).join(' · ')
-      : '';
-  const flowStatus = !stream
-    ? '尚未连接摄像头（检查 设置 → 面捕 的「摄像头」选项）'
-    : isFlowing
-      ? '画面流动中'
-      : '画面静止：摄像头没有输出新帧';
+  };
 
   return (
     <div className="mocap-camera-preview">
       <video
-        ref={videoRef}
+        ref={displayRef}
         className="mocap-camera-preview-video"
         autoPlay
         muted
@@ -169,28 +151,32 @@ function CameraPreview({
             ))}
           </select>
         ) : null}
+        {onBackendChange ? (
+          <select
+            value={backend}
+            onChange={(event) =>
+              onBackendChange(event.target.value as CameraVideoBackend)
+            }
+            aria-label="选择采集后端"
+          >
+            <option value="videoFrameCallback">requestVideoFrameCallback</option>
+            <option value="grabFrame">ImageCapture.grabFrame</option>
+          </select>
+        ) : null}
         {deviceLine ? <span>{deviceLine}</span> : null}
-        <span>{flowStatus}</span>
-        {/* 只在出帧异常时显示原始读数，正常情况下保持干净 */}
-        {stats && !isFlowing ? (
-          <span className="mocap-camera-preview-stats">
-            {[
-              `paused=${stats.paused}`,
-              `readyState=${stats.readyState}`,
-              `呈现帧=${stats.presented}`,
-              `解码帧=${stats.decoded}`,
-              `t=${stats.currentTime.toFixed(1)}s`,
-              `轨道=${stats.trackState}`,
-            ].join(' ')}
-          </span>
-        ) : null}
+        <span>{describeVideoStatus(video)}</span>
+        <span className="mocap-camera-preview-stats">{statsLine}</span>
         {playError ? <em>预览播放失败：{playError}</em> : null}
-        {track?.muted ? (
-          <em>摄像头轨道已静音：设备可能被其他程序占用</em>
-        ) : null}
-        {labelsHidden ? (
-          <em>设备名不可见：尚未授权摄像头</em>
-        ) : null}
+        {labelsHidden ? <em>设备名不可见：尚未授权摄像头</em> : null}
+        <button
+          type="button"
+          className="mocap-camera-preview-copy"
+          onClick={() => {
+            void copyDiagnostics();
+          }}
+        >
+          {copied ? '已复制到剪贴板' : '复制诊断日志'}
+        </button>
       </div>
     </div>
   );
@@ -206,18 +192,23 @@ interface MocapPanelProps {
   vrmResolving?: boolean;
   backgroundImageUrl?: string | null;
   visual: VisualSettings;
-  faceCaptureRef: RefObject<FaceCaptureFrame | null>;
   mouthDriver: FaceCaptureMouthDriver;
   onMouthDriverChange: (driver: FaceCaptureMouthDriver) => void;
+  /** 视频采集模块状态（帧活性的事实来源） */
+  video: VideoSourceState;
+  /** 面捕引擎产出的最新帧：渲染循环按需读取，不触发重渲染 */
+  faceCaptureRef?: RefObject<FaceCaptureFrame | null>;
+  /** 面捕引擎是否已就绪出帧 */
+  faceCaptureActive?: boolean;
   faceCaptureError?: string | null;
-  faceCaptureRunning?: boolean;
-  /** 面捕已获取的摄像头流（供预览） */
-  captureStream?: MediaStream | null;
+  vrmRenderPaused?: boolean;
+  onToggleVrmRenderPaused?: () => void;
   showCameraPreview?: boolean;
   onToggleCameraPreview?: () => void;
-  /** 可选摄像头列表（预览窗里的切换下拉） */
   cameraDevices?: CameraDeviceOption[];
   cameraLabelsHidden?: boolean;
+  videoBackend: CameraVideoBackend;
+  onVideoBackendChange?: (backend: CameraVideoBackend) => void;
   faceCaptureDeviceId?: string;
   onFaceCaptureDeviceChange?: (deviceId: string) => void;
   partialCaption?: string;
@@ -233,16 +224,20 @@ export function MocapPanel({
   vrmResolving,
   backgroundImageUrl,
   visual,
-  faceCaptureRef,
   mouthDriver,
   onMouthDriverChange,
-  faceCaptureError,
-  faceCaptureRunning = false,
-  captureStream = null,
+  video,
+  faceCaptureRef,
+  faceCaptureActive = false,
+  faceCaptureError = null,
+  vrmRenderPaused = false,
+  onToggleVrmRenderPaused,
   showCameraPreview = false,
   onToggleCameraPreview,
   cameraDevices = [],
   cameraLabelsHidden = false,
+  videoBackend,
+  onVideoBackendChange,
   faceCaptureDeviceId = '',
   onFaceCaptureDeviceChange,
   partialCaption = '',
@@ -260,16 +255,23 @@ export function MocapPanel({
             }
           : undefined;
 
+  const statusText = describeVideoStatus(video);
+
   return (
     <div className="chat-panel chat-panel-broadcast mocap-panel" style={panelStyle}>
       {/* 放在工具条之前：底栏是 flex-end，预览正好贴在「摄像头」按钮上方 */}
       {showCameraPreview ? (
         <CameraPreview
-          stream={captureStream}
+          video={video}
           devices={cameraDevices}
           labelsHidden={cameraLabelsHidden}
           deviceId={faceCaptureDeviceId}
           onDeviceChange={onFaceCaptureDeviceChange}
+          backend={videoBackend}
+          onBackendChange={onVideoBackendChange}
+          vrmRenderPaused={vrmRenderPaused}
+          faceCaptureActive={faceCaptureActive}
+          faceCaptureError={faceCaptureError}
         />
       ) : null}
 
@@ -289,6 +291,17 @@ export function MocapPanel({
               摄像头
             </button>
           ) : null}
+          {onToggleVrmRenderPaused ? (
+            <button
+              type="button"
+              className={`mocap-vrm-pause-toggle${vrmRenderPaused ? ' is-active' : ''}`}
+              onClick={onToggleVrmRenderPaused}
+              aria-pressed={vrmRenderPaused}
+              title="暂停 / 恢复 VRM 渲染"
+            >
+              {vrmRenderPaused ? '恢复渲染' : '暂停渲染'}
+            </button>
+          ) : null}
           <label className="mocap-mouth-driver">
             <span>口型</span>
             <select
@@ -302,15 +315,19 @@ export function MocapPanel({
             </select>
           </label>
           <span
-            className={`mocap-status${faceCaptureRunning ? ' is-active' : ''}${faceCaptureError ? ' is-error' : ''}`}
+            className={`mocap-status${video.status === 'streaming' ? ' is-active' : ''}${video.status === 'error' || video.status === 'stalled' ? ' is-error' : ''}`}
+          >
+            {statusText}
+          </span>
+          {/* 引擎状态与采集状态分开：卡住时一眼看出是哪一段 */}
+          <span
+            className={`mocap-status${faceCaptureActive ? ' is-active' : ''}${faceCaptureError ? ' is-error' : ''}`}
           >
             {faceCaptureError
-              ? faceCaptureError
-              : faceCaptureRunning
-                ? '面捕运行中'
-                : captureStream
-                  ? '摄像头已连接，等待面捕引擎…'
-                  : '正在连接摄像头…'}
+              ? `面捕：${faceCaptureError}`
+              : faceCaptureActive
+                ? '面捕：就绪'
+                : '面捕：加载中…'}
           </span>
         </div>
       </AppToolbar>
@@ -324,9 +341,10 @@ export function MocapPanel({
         vrmResolving={vrmResolving}
         backgroundImageUrl={backgroundImageUrl}
         backgroundMode={visual.backgroundMode}
+        renderPaused={vrmRenderPaused}
         showExpressionControls={false}
         faceCaptureRef={faceCaptureRef}
-        faceCaptureActive={true}
+        faceCaptureActive={faceCaptureActive}
         mouthDriver={mouthDriver}
       />
 

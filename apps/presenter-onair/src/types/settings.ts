@@ -155,12 +155,20 @@ export interface StreamSettings {
 
 export type FaceCaptureMouthDriver = 'faceCapture' | 'tts';
 export type FaceCaptureSource = 'webcam';
+/**
+ * 视频采集后端。见 `useVideoSource` —— 在 Chromium 里这是两条不同的取帧路径，
+ * 可切换对照（视频流路径与 ImageCapture 静态抓帧路径）。
+ */
+export type CameraVideoBackend = 'videoFrameCallback' | 'grabFrame';
 
 export interface FaceCaptureSettings {
   mouthDriver: FaceCaptureMouthDriver;
   source: FaceCaptureSource;
   deviceId: string;
   showCameraPreview: boolean;
+  /** 采集后端（视频获取模块用） */
+  videoBackend: CameraVideoBackend;
+  /** 面捕帧平滑系数 0~1（越大越稳、越迟钝） */
   smoothing: number;
 }
 
@@ -206,6 +214,11 @@ export interface VisualSettings {
   vrmEmotionEffectAnchors: Record<string, EmotionEffectAnchor>;
   vrmReactionControlMode: VrmReactionControlMode;
   vrmEmotionEffectMap: VrmEmotionEffectMap;
+  /**
+   * 暂停 VRM 渲染：帧循环仍在跑但不做任何场景更新与 WebGL 绘制。
+   * 用于排查「渲染与摄像头采集抢资源」，也方便直播时临时冻结皮套。
+   */
+  vrmRenderPaused: boolean;
 }
 
 export interface ScreenVisionSettings {

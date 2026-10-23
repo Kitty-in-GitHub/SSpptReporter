@@ -842,6 +842,21 @@ body {
   font-style: normal;
 }
 
+.mocap-camera-preview-copy {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.mocap-camera-preview-copy:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* ── Chat Log ── */
 
 .chat-log {

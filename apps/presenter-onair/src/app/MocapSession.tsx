@@ -2,7 +2,8 @@ import { useEffect, type RefObject } from 'react';
 import { MocapPanel } from '../components/mocap/MocapPanel';
 import { useAvatarPresenter } from '../hooks/useAvatarPresenter';
 import { useCameraDevices } from '../hooks/useCameraDevices';
-import { useFaceCapture } from '../hooks/useFaceCapture';
+import { useVideoSource } from '../hooks/useVideoSource';
+import { useFaceCaptureEngine } from '../hooks/useFaceCaptureEngine';
 import { useResolvedVrmModel } from '../hooks/useResolvedVrmModel';
 import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import type { useSettings } from '../hooks/useSettings';
@@ -60,13 +61,22 @@ export function MocapSession({
     },
   );
 
-  const { faceCaptureRef, stream, isRunning, error } = useFaceCapture({
+  // 视频获取模块（独立）：只负责拿到活的帧并量化「帧还活着吗」。
+  const { state: video } = useVideoSource({
     enabled: faceCaptureSettings.source === 'webcam',
     deviceId: faceCaptureSettings.deviceId,
+    backend: faceCaptureSettings.videoBackend,
+  });
+
+  // 面捕引擎（独立）：建在采集模块之上，吃它暴露的帧源，产出与 VRM 无关的面捕帧。
+  // 采集没起来时 frameSource 为 null，引擎自己会退到「未运行」。
+  const faceCapture = useFaceCaptureEngine({
+    frameSource: video.frameSource,
+    enabled: faceCaptureSettings.source === 'webcam',
     smoothing: faceCaptureSettings.smoothing,
   });
 
-  // 面捕页里直接换摄像头：改 deviceId 会让 useFaceCapture 重开流，预览随之刷新
+  // 面捕页里直接换摄像头：改 deviceId 会让采集模块重开流，预览随之刷新
   const { devices: cameraDevices, labelsHidden: cameraLabelsHidden } =
     useCameraDevices(true);
 
@@ -88,12 +98,18 @@ export function MocapSession({
       vrmResolving={isVrmResolving}
       backgroundImageUrl={backgroundImageUrl}
       visual={settingsHook.settings.visual}
-      faceCaptureRef={faceCaptureRef}
       mouthDriver={faceCaptureSettings.mouthDriver}
       onMouthDriverChange={settingsHook.updateFaceCaptureMouthDriver}
-      faceCaptureError={error}
-      faceCaptureRunning={isRunning}
-      captureStream={stream}
+      video={video}
+      faceCaptureRef={faceCapture.frameRef}
+      faceCaptureActive={faceCapture.isRunning}
+      faceCaptureError={faceCapture.error}
+      vrmRenderPaused={settingsHook.settings.visual.vrmRenderPaused}
+      onToggleVrmRenderPaused={() =>
+        settingsHook.updateVisualVrmRenderPaused(
+          !settingsHook.settings.visual.vrmRenderPaused,
+        )
+      }
       showCameraPreview={faceCaptureSettings.showCameraPreview}
       onToggleCameraPreview={() =>
         settingsHook.updateFaceCaptureShowCameraPreview(
@@ -102,6 +118,8 @@ export function MocapSession({
       }
       cameraDevices={cameraDevices}
       cameraLabelsHidden={cameraLabelsHidden}
+      videoBackend={faceCaptureSettings.videoBackend}
+      onVideoBackendChange={settingsHook.updateFaceCaptureVideoBackend}
       faceCaptureDeviceId={faceCaptureSettings.deviceId}
       onFaceCaptureDeviceChange={settingsHook.updateFaceCaptureDeviceId}
       partialCaption={partialCaption}

@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>摄像头最小对照页</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #12161f;
+        color: #e6e9ef;
+        font:
+          14px/1.6 -apple-system,
+          "Segoe UI",
+          system-ui,
+          sans-serif;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 18px;
+      }
+      p.lead {
+        margin: 0 0 20px;
+        color: #93a1b5;
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      button,
+      select {
+        padding: 8px 14px;
+        border: 1px solid #2c3648;
+        border-radius: 8px;
+        background: #1b2130;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:hover,
+      select:hover {
+        background: #232b3d;
+      }
+      label {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        color: #93a1b5;
+      }
+      .row {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
+      video {
+        width: 320px;
+        background: #000;
+        border: 1px solid #2c3648;
+        border-radius: 8px;
+      }
+      .panel {
+        min-width: 320px;
+        padding: 12px 14px;
+        border: 1px solid #2c3648;
+        border-radius: 8px;
+        background: #171c28;
+      }
+      .verdict {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .ok {
+        color: #6ee7a8;
+      }
+      .bad {
+        color: #f88;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px 12px;
+        margin: 0;
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 13px;
+      }
+      dt {
+        color: #93a1b5;
+      }
+      dd {
+        margin: 0;
+        word-break: break-all;
+      }
+      #events {
+        margin: 12px 0 0;
+        padding: 10px 12px;
+        max-height: 240px;
+        overflow-y: auto;
+        border: 1px solid #2c3648;
+        border-radius: 8px;
+        background: #10141d;
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>摄像头最小对照页</h1>
+    <p class="lead">
+      这一页里没有 MediaPipe、没有 Worker、没有 Three.js —— 只有
+      <code>getUserMedia</code> 和 <code>&lt;video&gt;</code>。
+      用来判断「摄像头在应用里卡死」是应用代码的问题，还是浏览器 / 设备层的问题。
+      <br />
+      <strong>逐个试上面的约束预设</strong>：哪一个能持续出帧，就是能用的组合。
+    </p>
+
+    <div class="controls">
+      <label>
+        约束预设
+        <select id="preset">
+          <option value="default">默认 video:true（让 Chrome 自己选）</option>
+          <option value="640x480" selected>640×480 ideal（当前应用用的）</option>
+          <option value="1280x720">1280×720 ideal</option>
+          <option value="320x240">320×240 ideal</option>
+          <option value="fps15">640×480 + 限帧 15fps</option>
+          <option value="fps60">640×480 + 限帧 60fps</option>
+          <option value="resizeNone">640×480 + resizeMode:none</option>
+        </select>
+      </label>
+      <button id="start">打开摄像头</button>
+      <button id="stop">关闭摄像头</button>
+      <button id="again">再开一路（测双开）</button>
+    </div>
+
+    <div class="row">
+      <video id="video" playsinline muted autoplay></video>
+      <div class="panel">
+        <div id="verdict" class="verdict">尚未开始</div>
+        <dl>
+          <dt>设备</dt>
+          <dd id="label">—</dd>
+          <dt>协商结果</dt>
+          <dd id="negotiated">—</dd>
+          <dt>累计帧数</dt>
+          <dd id="frames">—</dd>
+          <dt>近 1 秒帧率</dt>
+          <dd id="fps">—</dd>
+          <dt>currentTime</dt>
+          <dd id="time">—</dd>
+          <dt>paused / readyState</dt>
+          <dd id="state">—</dd>
+          <dt>轨道</dt>
+          <dd id="track">—</dd>
+          <dt>已运行</dt>
+          <dd id="uptime">—</dd>
+        </dl>
+        <pre id="events">事件日志：</pre>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const video = $('video');
+      const eventsBox = $('events');
+
+      let stream = null;
+      let secondStream = null;
+      let startedAt = 0;
+      let lastFrames = 0;
+      let lastSampleAt = 0;
+      let stoppedSince = 0;
+      let timer = 0;
+
+      function logEvent(text) {
+        eventsBox.textContent += `\n+${String(Math.round(performance.now())).padStart(6, ' ')}ms  ${text}`;
+        eventsBox.scrollTop = eventsBox.scrollHeight;
+      }
+
+      for (const name of [
+        'loadstart',
+        'loadedmetadata',
+        'loadeddata',
+        'canplay',
+        'playing',
+        'waiting',
+        'stalled',
+        'suspend',
+        'abort',
+        'emptied',
+        'pause',
+        'ended',
+        'error',
+      ]) {
+        video.addEventListener(name, () =>
+          logEvent(
+            `video 事件：${name}  paused=${video.paused} readyState=${video.readyState}`,
+          ),
+        );
+      }
+
+      function buildConstraints(preset) {
+        switch (preset) {
+          case 'default':
+            return { video: true, audio: false };
+          case '1280x720':
+            return {
+              video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+              audio: false,
+            };
+          case '320x240':
+            return {
+              video: { width: { ideal: 320 }, height: { ideal: 240 } },
+              audio: false,
+            };
+          case 'fps15':
+            return {
+              video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 15 },
+              },
+              audio: false,
+            };
+          case 'fps60':
+            return {
+              video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 60 },
+              },
+              audio: false,
+            };
+          case 'resizeNone':
+            return {
+              video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                resizeMode: 'none',
+              },
+              audio: false,
+            };
+          case '640x480':
+          default:
+            return {
+              video: { width: { ideal: 640 }, height: { ideal: 480 } },
+              audio: false,
+            };
+        }
+      }
+
+      function resolveFrames() {
+        return video.getVideoPlaybackQuality?.().totalVideoFrames ?? -1;
+      }
+
+      function sample() {
+        const frames = resolveFrames();
+        const now = performance.now();
+        const elapsed = (now - lastSampleAt) / 1000;
+        const delta = frames - lastFrames;
+        const fps = elapsed > 0 && delta >= 0 ? Math.round(delta / elapsed) : null;
+
+        $('frames').textContent = frames >= 0 ? String(frames) : 'n/a（API 不可用）';
+        $('fps').textContent = fps === null ? '—' : `${fps} fps / 秒`;
+        $('time').textContent = `${video.currentTime.toFixed(2)} s`;
+        $('state').textContent = `paused=${video.paused} readyState=${video.readyState}`;
+        const track = stream?.getVideoTracks()[0];
+        $('track').textContent = track
+          ? `${track.readyState}  muted=${track.muted}`
+          : '—';
+        $('uptime').textContent = startedAt
+          ? `${((now - startedAt) / 1000).toFixed(1)} s`
+          : '—';
+
+        if (delta > 0) {
+          stoppedSince = 0;
+          $('verdict').className = 'verdict ok';
+          $('verdict').textContent = `画面流动中（约 ${fps ?? '?'} fps）`;
+        } else {
+          stoppedSince = stoppedSince || now;
+          const frozenFor = (now - stoppedSince) / 1000;
+          $('verdict').className = 'verdict bad';
+          $('verdict').textContent = `画面静止：已 ${frozenFor.toFixed(1)} 秒没有新帧（累计 ${frames} 帧）`;
+          if (frozenFor > 1.05 && frozenFor < 1.6) {
+            logEvent(
+              `⚠ 帧已停止：累计 ${frames} 帧，currentTime=${video.currentTime.toFixed(2)}s，readyState=${video.readyState}`,
+            );
+          }
+        }
+
+        lastFrames = frames;
+        lastSampleAt = now;
+      }
+
+      async function open() {
+        const preset = $('preset').value;
+        const constraints = buildConstraints(preset);
+        logEvent(`getUserMedia 请求：${preset} → ${JSON.stringify(constraints.video)}`);
+        const next = await navigator.mediaDevices.getUserMedia(constraints);
+        const track = next.getVideoTracks()[0];
+        const settings = track?.getSettings();
+        logEvent(
+          `成功：${track?.label}  ${settings?.width}×${settings?.height}  frameRate=${settings?.frameRate}  resizeMode=${settings?.resizeMode}`,
+        );
+        $('negotiated').textContent = `${settings?.width}×${settings?.height} @ ${settings?.frameRate ?? '?'}fps`;
+        return next;
+      }
+
+      $('start').addEventListener('click', async () => {
+        if (stream) return;
+        try {
+          stream = await open();
+          video.srcObject = stream;
+          await video.play();
+          startedAt = performance.now();
+          lastSampleAt = startedAt;
+          lastFrames = resolveFrames();
+          stoppedSince = 0;
+          const track = stream.getVideoTracks()[0];
+          $('label').textContent = track.label;
+          logEvent('video.play() 完成，开始采样');
+          window.clearInterval(timer);
+          timer = window.setInterval(sample, 1000);
+        } catch (error) {
+          logEvent(`打开失败：${error}`);
+          $('verdict').textContent = `打开失败：${error}`;
+          $('verdict').className = 'verdict bad';
+        }
+      });
+
+      $('stop').addEventListener('click', () => {
+        window.clearInterval(timer);
+        if (stream) {
+          for (const track of stream.getTracks()) track.stop();
+        }
+        if (secondStream) {
+          for (const track of secondStream.getTracks()) track.stop();
+          secondStream = null;
+        }
+        stream = null;
+        video.srcObject = null;
+        logEvent('已关闭摄像头');
+        $('verdict').textContent = '已关闭';
+        $('verdict').className = 'verdict';
+      });
+
+      $('again').addEventListener('click', async () => {
+        try {
+          secondStream = await open();
+          logEvent('第二路已打开（同一设备）：用于验证「同一页面双开」是否可行');
+        } catch (error) {
+          logEvent(`第二路打开失败：${error}`);
+        }
+      });
+
+      logEvent('页面就绪。建议逐个试约束预设，每个盯 15 秒以上。');
+    </script>
+  </body>
+</html>

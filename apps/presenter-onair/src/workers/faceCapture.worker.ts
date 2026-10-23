@@ -55,7 +55,7 @@ export type FaceCaptureWorkerRequest =
   | { type: 'stop' };
 
 export type FaceCaptureWorkerResponse =
-  | { type: 'ready' }
+  | { type: 'ready'; delegate: FaceCaptureDelegate }
   | {
       type: 'landmarks';
       landmarks: FaceCaptureLandmarkPoint[];
@@ -65,20 +65,37 @@ export type FaceCaptureWorkerResponse =
     }
   | { type: 'error'; message: string };
 
-let faceLandmarker: FaceLandmarker | null = null;
+/** 推理后端：GPU 优先，建不起来就退 CPU（部分机器上 worker 里拿不到 WebGL） */
+export type FaceCaptureDelegate = 'GPU' | 'CPU';
 
-async function initLandmarker(): Promise<void> {
+let faceLandmarker: FaceLandmarker | null = null;
+let activeDelegate: FaceCaptureDelegate = 'GPU';
+
+async function createLandmarker(delegate: FaceCaptureDelegate) {
   const vision = await FilesetResolver.forVisionTasks(WASM_BASE);
-  faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+  return FaceLandmarker.createFromOptions(vision, {
     baseOptions: {
       modelAssetPath: MODEL_URL,
-      delegate: 'GPU',
+      delegate,
     },
     runningMode: 'VIDEO',
     numFaces: 1,
     outputFaceBlendshapes: false,
     outputFacialTransformationMatrixes: false,
   });
+}
+
+async function initLandmarker(): Promise<void> {
+  try {
+    faceLandmarker = await createLandmarker('GPU');
+    activeDelegate = 'GPU';
+    return;
+  } catch {
+    // 建不起 GPU 就退 CPU；结果由 ready 消息里的 delegate 告知主线程，
+    // 不走 error 通道 —— 这是可用的降级，不是失败
+    faceLandmarker = await createLandmarker('CPU');
+    activeDelegate = 'CPU';
+  }
 }
 
 function toLandmarkPoints(
@@ -101,7 +118,10 @@ self.onmessage = async (event: MessageEvent<FaceCaptureWorkerRequest>) => {
   try {
     if (message.type === 'init') {
       await initLandmarker();
-      self.postMessage({ type: 'ready' } satisfies FaceCaptureWorkerResponse);
+      self.postMessage({
+        type: 'ready',
+        delegate: activeDelegate,
+      } satisfies FaceCaptureWorkerResponse);
       return;
     }
 

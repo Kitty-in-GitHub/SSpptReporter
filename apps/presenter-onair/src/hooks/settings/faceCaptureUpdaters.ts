@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type {
+  CameraVideoBackend,
   FaceCaptureMouthDriver,
   FaceCaptureSource,
 } from '../../types/settings';
@@ -65,6 +66,19 @@ export function createFaceCaptureUpdaters(deps: FaceCaptureUpdaterDeps) {
     [setSettings],
   );
 
+  const updateFaceCaptureVideoBackend = useCallback(
+    (videoBackend: CameraVideoBackend) => {
+      setSettings((prev) => ({
+        ...prev,
+        faceCapture: normalizeFaceCaptureSettings({
+          ...prev.faceCapture,
+          videoBackend,
+        }),
+      }));
+    },
+    [setSettings],
+  );
+
   const updateFaceCaptureSmoothing = useCallback(
     (smoothing: number) => {
       setSettings((prev) => ({
@@ -83,6 +97,7 @@ export function createFaceCaptureUpdaters(deps: FaceCaptureUpdaterDeps) {
     updateFaceCaptureSource,
     updateFaceCaptureDeviceId,
     updateFaceCaptureShowCameraPreview,
+    updateFaceCaptureVideoBackend,
     updateFaceCaptureSmoothing,
   };
 }

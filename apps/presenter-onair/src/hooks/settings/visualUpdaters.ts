@@ -160,6 +160,16 @@ export function createVisualSettingsUpdaters(deps: VisualSettingsUpdaterDeps) {
     [setSettings],
   );
 
+  const updateVisualVrmRenderPaused = useCallback(
+    (vrmRenderPaused: boolean) => {
+      setSettings((prev) => ({
+        ...prev,
+        visual: { ...prev.visual, vrmRenderPaused },
+      }));
+    },
+    [setSettings],
+  );
+
   const updateVisualVrmEmotionEffect = useCallback(
     (emotion: VrmReactionEmotion, effect: VrmEmotionEffect | null) => {
       setSettings((prev) => ({
@@ -231,6 +241,7 @@ export function createVisualSettingsUpdaters(deps: VisualSettingsUpdaterDeps) {
     resetVisualVrmCameraFraming,
     updateVisualShowInputInBroadcast,
     updateVisualVrmReactionControlMode,
+    updateVisualVrmRenderPaused,
     updateVisualVrmEmotionEffect,
     resetVisualVrmEmotionEffectMap,
     updateVisualVrmEmotionEffectAnchor,

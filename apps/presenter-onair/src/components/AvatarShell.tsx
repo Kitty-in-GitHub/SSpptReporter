@@ -19,6 +19,8 @@ export interface AvatarShellProps {
   faceCaptureRef?: RefObject<FaceCaptureFrame | null>;
   faceCaptureActive?: boolean;
   mouthDriver?: FaceCaptureMouthDriver;
+  /** 暂停 VRM 渲染（排查抢资源 / 临时冻结皮套） */
+  renderPaused?: boolean;
 }
 
 export function AvatarShell({
@@ -34,6 +36,7 @@ export function AvatarShell({
   faceCaptureRef,
   faceCaptureActive = false,
   mouthDriver = 'faceCapture',
+  renderPaused = false,
 }: AvatarShellProps) {
   const { reaction, expressionReaction, emotionEffectReaction, visual, callbacks } =
     presenter;
@@ -101,6 +104,7 @@ export function AvatarShell({
       onVrmCameraFramingChange={callbacks.onVrmCameraFramingChange}
       backgroundImageUrl={backgroundImageUrl}
       backgroundMode={backgroundMode}
+      renderPaused={renderPaused}
       showExpressionControls={showExpressionControls}
       faceCaptureRef={faceCaptureRef}
       faceCaptureActive={faceCaptureActive}

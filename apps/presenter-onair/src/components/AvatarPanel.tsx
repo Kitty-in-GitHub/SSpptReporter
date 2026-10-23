@@ -103,6 +103,8 @@ interface AvatarBackgroundProps {
   onVrmCameraFramingChange?: (framing: VrmCameraFraming) => void;
   backgroundImageUrl?: string | null;
   backgroundMode?: 'default' | 'green' | 'transparent';
+  /** 暂停渲染：帧循环保留但不做任何场景更新与绘制（排查抢资源 / 临时冻结皮套） */
+  renderPaused?: boolean;
   showExpressionControls?: boolean;
   faceCaptureRef?: RefObject<FaceCaptureFrame | null>;
   faceCaptureActive?: boolean;
@@ -527,6 +529,7 @@ export function AvatarBackground({
   vrmCameraFraming,
   onVrmCameraFramingChange,
   backgroundMode: _backgroundMode = 'default',
+  renderPaused = false,
   showExpressionControls = true,
   faceCaptureRef,
   faceCaptureActive = false,
@@ -579,6 +582,8 @@ export function AvatarBackground({
   faceCaptureRefRef.current = faceCaptureRef;
   const faceCaptureActiveRef = useRef(faceCaptureActive);
   faceCaptureActiveRef.current = faceCaptureActive;
+  const renderPausedRef = useRef(renderPaused);
+  renderPausedRef.current = renderPaused;
   const mouthDriverRef = useRef(mouthDriver);
   mouthDriverRef.current = mouthDriver;
   const showManualControls =
@@ -1090,6 +1095,14 @@ export function AvatarBackground({
     const clock = new Clock();
     const animate = (now: number) => {
       if (disposed) return;
+      animationFrameId = requestAnimationFrame(animate);
+
+      // 暂停渲染：帧循环本身保留（便于随时恢复），但跳过全部场景更新与 WebGL 绘制。
+      // 用于排查「VRM 渲染与摄像头采集抢资源」。
+      if (renderPausedRef.current) {
+        clock.getDelta();
+        return;
+      }
 
       const delta = clock.getDelta();
       const vrm = vrmRef.current;
@@ -1162,7 +1175,6 @@ export function AvatarBackground({
       renderer.render(backEffectScene, camera);
       renderer.clearDepth();
       renderer.render(scene, camera);
-      animationFrameId = requestAnimationFrame(animate);
     };
 
     animationFrameId = requestAnimationFrame(animate);

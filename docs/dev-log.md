@@ -22,6 +22,74 @@
 
 ---
 
+### 2026-09-24 · 面捕引擎按「采集 / 引擎」两段重建接回
+
+- **设备/环境**：Win / Firefox（采集主线的唯一可用浏览器）
+- **做了什么**：
+  - 新增 `useFaceCaptureEngine`：**建在 `useVideoSource` 之上**，吃 `state.frameSource`（探针 `<video>`）→ rAF 取帧泵（背压：Worker 回消息前不取下一帧）→ Worker（MediaPipe FaceLandmarker）→ Kalidokit 解算 → 平滑 → `frameRef` 给 `AvatarPanel` 帧循环读；**帧走 ref、状态走 state**（25~30fps 不进 React）
+  - 恢复 `src/workers/faceCapture.worker.ts`，含两个老坑的修法：wasm glue 用「fetch + 间接 eval」按 classic script 求值（否则 `custom_dbg is not defined` / `ModuleFactory not set.`）、**没检测到脸也必须回一条消息**（否则主线程帧泵永久锁死）；新增 GPU→CPU 自动降级，实际 delegate 由 `ready` 消息回报
+  - `useVideoSource` 新增 `state.frameSource`（复用探针元素，少挂一条 sink）
+  - 接线 `MocapSession` / `MocapPanel`：`faceCaptureRef` / `faceCaptureActive` / `faceCaptureError`；工具条与「复制诊断日志」把**采集状态**与**引擎状态**分开报（`画面流动中 · N fps` vs `面捕：加载中 / 就绪 / 错误`）——卡住时先看哪一段红
+  - 恢复 `faceCapture.smoothing`（默认 0.35 + 设置面板滑块）
+- **关键取舍**：
+  - **不走 `MediaStreamTrackProcessor`**：Firefox 不支持该 API（Chromium 侧是 2021 年的私有版本、且在主线 worker 语义上也不一致），零拷贝 VideoFrame 那条路等 Firefox 支持再做，避免写一条本机永远跑不到的死代码
+  - **Worker 生命周期只跟 `enabled`，不跟帧源**：采集自愈重开只换 `<video>`，模型不重载；平滑度同理放 ref，拖滑块不会重建 Worker
+- **未做 / 阻塞**：本机 Chromium 采集坏（上一条），引擎未在 Chromium 上验证；「浏览器拿不到帧时给明确提示」那条提示未做
+- **下一台机器应优先**：Firefox 进面捕模式 → 确认工具条两段状态都正常 → 抬头 / 低头 / 转头 / 眨眼 / 说话口型是否跟手，并按手感调 `平滑度`（0.2~0.6）
+- **相关文件**：`apps/presenter-onair/src/hooks/useFaceCaptureEngine.ts` · `src/workers/faceCapture.worker.ts` · `src/hooks/useVideoSource.ts` · `src/app/MocapSession.tsx` · `src/components/mocap/MocapPanel.tsx` · `src/components/settings/FaceCaptureSettingsSection.tsx` · `src/lib/settings/faceCapture.ts` · `docs/face-capture.md`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）；Firefox 人工点检
+
+---
+
+---
+
+### 2026-09-24 · 采集开发主线定为 Firefox（Chromium 侧停止排查）
+
+- **设备/环境**：Win；用户实测 **Edge 坏、Firefox 好**
+- **本轮新增证据（决定性）**：用户在 Edge 里打开**第三方在线摄像头测试站**，复现同一现象 ——
+  「只能获取第一帧，后续帧拿不到」。这同时排除了两件事：
+  1. **不是本项目代码/页面**的问题（已在 dev-log 2026-09-02 用 `camera-test.html` 排除过一次，这次是更外的对照）
+  2. **不是我们的约束**所致：在线站点用的是默认约束（`video: true`），照样卡
+  - 因此上一条把「Chromium 拿的是原生 640×480、Firefox 是 crop-and-scale」当第一嫌疑**被推翻**，降级为「与本故障无关的模式差异」
+- **Firefox 侧验证（同一天）**：`后端=videoFrameCallback 呈现帧=158(25fps) 解码帧=0 后端帧=158(25fps) 空闲=0ms 后端活着=true 重开=0`
+  - 说明本轮三处读数修复生效：`backendFps` 不再恒 0；`解码帧=0` 但 `呈现帧` 在涨 → Firefox 的 rVFC 有效，**严格判据对 Firefox 安全**（日志里 `+8903ms 流已停止出新帧 idleMs=1058 → 9910ms 流恢复出帧` 是真实首帧延迟，未到 4s 阈值，看门狗未误动）
+- **决策**：**面捕 / 摄像头采集的开发与验收只在 Firefox 上做**；Chromium 侧排查到此为止
+  - 写入 `AGENTS.md`（当前阶段表 + 硬性约束 9）
+  - `docs/face-capture.md` 文首加警示、文末「已知问题」补决策段
+- **未做 / 阻塞**：Chromium 采集层未修（已确认与本项目代码无关）；留给系统层/换机的建议清单：
+  相机 AI 效果中间层（Windows Studio Effects / OEM 相机效果 / NVIDIA Broadcast 类）→ 安全软件摄像头防护 →
+  `edge://flags` 关 Media Foundation Camera Capture → 设备禁用再启用 / 重启清 FrameServer 状态 / USB 省电 →
+  重装 VC++ redist + `sfc` `DISM`（对应 Chrome 的 SxS 报错）
+- **下一台机器应优先**：在 Firefox 上继续面捕引擎重建；取帧链路**先做能力探测**
+  （Firefox 的 `MediaStreamTrackProcessor` / WebCodecs 支持与 Chromium 不一致，缺失则退回
+  `<video>` + `createImageBitmap`）；若新机器 Chromium 采集正常，用 `camera-test.html` 复验后再放开
+- **相关文件**：`AGENTS.md` · `docs/face-capture.md` · `apps/presenter-onair/public/camera-test.html`
+- **验证方式**：无代码改动；Firefox 下 `npm run dev` → 面捕模式读数行为「画面流动中 · 约 N fps」
+
+---
+
+---
+
+---
+
+### 2026-09-24 · 修 `useVideoSource` 三处读数缺陷（Edge 的「冻结」被误报成「流动」）
+
+- **设备/环境**：Win；用户实测 **Edge 卡、Firefox 正常、Chrome 不能正常播放**；设备 `Integrated Camera 30c9:00a8` 640×480
+- **用户报的读数**：`后端=videoFrameCallback 呈现帧=15(1fps) 解码帧=15 后端帧=15(0fps) 空闲=0ms 后端活着=true 重开=0`
+- **根因一 · `backendFps` 在 `videoFrameCallback` 后端下恒为 0（读数骗人）**
+  - 原代码先 `lastPresented = signals.presented`，随后又用 `signals.presented - lastPresented` 算后端帧率 → 恒等于 0；`grabFrame` 分支用的是另一个变量 `lastGrab`，只有它是对的
+  - 也就是说「0fps」这个数与摄像头状态无关，任何状态下都显示 0
+  - 修法：后端帧率改用「更新 last* 之前」的增量（`presentedDelta` / `grabFrames - lastGrab`）
+- **根因二（关键）· 播放时钟把「冻结」伪装成「流动」，看门狗因此彻底失效**
+  - 三信号并集里含 `currentTime`；它对 MediaStream 是**播放时钟**，一帧都不来也每秒推进 → `streamAdvanced` 恒真、`lastStreamFrameAt` 每秒被刷新 → `idleMs` 永远 0、`重开=0`，`stalled` 判定与自愈重开全部不触发；「画面流动中 · 约 1 fps」也是时钟给的假读数
+  - 与「呈现帧 / 解码帧双双停在 15」合起来看，Edge 的真实状态是**冻结在 15 帧**（正是本文档里那条「出 10~15 帧后停死」）
+  - 修法：`currentTime` 只在「本会话从未见过任何帧计数（呈现帧与解码帧都恒为 0）」时兜底 —— 这正是模块注释原本写的意图（「前两者都不可用时的兜底」），实现跑偏成了并集。Firefox 这类拿不到帧计数的浏览器行为不变
+- **根因三 · 开流期误报 `stalled`**：采样没有跳过 `opening`（`video` 元素尚未创建，signals 全 0），日志里 `+2385ms` / `+12674ms` 两条 `流已停止出新帧` 都源自此；修法：`!video` 直接不采样
+- **未做 / 阻塞**：Chromium 采集层本身「出十几帧后卡死」仍未解决（空白对照页 `camera-test.html` 同样卡 → 与本项目代码无关）；已建议用户在 `edge://flags` 把 **Media Foundation Camera Capture** 设为 Disabled 后重试
+- **下一台机器应优先**：进面捕模式看读数行 —— Edge 现在应显示 `流已断 x.xs` 且 `重开` 递增（说明冻结被正确识别、自愈在跑）；Firefox 应仍为「画面流动中」
+- **相关文件**：`apps/presenter-onair/src/hooks/useVideoSource.ts` · `docs/face-capture.md`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
 ---
 
 ---
@@ -65,6 +133,189 @@
 
 ---
 
+### 2026-09-02 · Firefox 对照暴露检测器缺陷 + 系统层线索
+
+- **设备/环境**：Win；用户实际用的是 **Edge**（不是 Chrome）；另试 Firefox
+- **用户实测**：
+  - **Firefox**：`camera-test.html` 里**视频正常播放**，但判定显示「已 32.4 秒没有新帧（累计 0 帧）」
+  - **Edge**：一直卡死（前几轮的读数与肉眼观察一致）
+  - **Chrome**：**根本起不来** —— `应用程序无法启动，因为程序的并行配置并不正确`（典型 SxS / 运行库 / 清单损坏）
+- **检测器缺陷（我的问题）**：`getVideoPlaybackQuality().totalVideoFrames` 被当成「流是否活着的事实来源」，
+  但 **Firefox 对 MediaStream 源恒为 0** → 永远判「静止」。旧版预览里那套三信号取或的设计才是对的，
+  重构模块时被我简化掉了。**教训：跨浏览器可用的判据不能只依赖单一 API。**
+  - 修法：流活性改为**三个元素级信号取并集** —— `requestVideoFrameCallback` 呈现帧计数 /
+    `totalVideoFrames` / `currentTime`，任一推进即算活着；`streamFps` 也按这个优先级取值
+  - 新增 `state.presentedFrames` 与 `state.activeBackend`（回退后的事实），读数行把三路信号都摊开
+- **线索（重要）**：Edge 卡、Chrome 起不来、Firefox 正常 ——
+  Chromium 系在 Windows 上采集走 **Media Foundation**，Firefox 不走；
+  而 Chrome 的 SxS 报错说明**系统运行库/组件状态已经损坏**。两者很可能是同一个根因。
+- **未做 / 阻塞**：需要用户在系统层修（重装 VC++ 运行库、`sfc` / `DISM` 修复、修/重装 Edge、更新显卡驱动）
+- **下一步（更好的消息）**：**Firefox 是当前可用的环境**，可以在它上面继续验证采集模块与后续面捕
+- **相关文件**：`apps/presenter-onair/src/hooks/useVideoSource.ts` · `src/components/mocap/MocapPanel.tsx`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
+---
+
+### 2026-09-02 · 修 `useVideoSource` 代码评审提出的问题
+
+- **设备/环境**：Win / conda ssreporter
+- **起因**：用户对该模块做了代码评审，列出 9 条问题。逐条核对后确认并修复如下
+- **P0-1 · `grabFrame` 路径下 stall 看门狗失效（设计级）**
+  - 原实现用 `markFrame()`（后端取到帧）刷 `lastFrameAt`；而 `grabFrame` 在一条**已经卡死的流**上仍可能继续返回同一帧 → 看门狗永不触发，`status` 永远 `streaming`，直接废掉「双后端对照」这个卖点
+  - 修法：**流活性只认 `<video>` 自身的解码帧数**（`videoDecodedFrames`）；后端计数独立成 `backendFrames` / `backendFps` / `backendAlive`，语义在类型注释里写明（grabFrame 下 `backendFps` 上限约 5，与流帧率无关）
+  - 新增 `streamFps`（流自身解码帧率），UI 的「画面流动中 · 约 N fps」改用它
+  - ⚠️ 本条的「流活性只认 `videoDecodedFrames`」**已被上一条修正**：该字段在 Firefox 对 MediaStream 恒为 0，
+    现改为「呈现帧 / 解码帧 / currentTime 三路取并集」
+- **P0-2 · restart 后旧 `grabFrame` 定时链复活，双倍抓帧（资源泄漏）**
+  - `teardown()` 只能清掉待触发的 timer，**正在 `await grabFrame()` 的那次调用**恢复后 `disposed` 仍为 false → 又排新 timer；新 `open()` 再起一条 → 每 200ms 双倍抓帧
+  - 修法：引入**代数号 `generation`**，`teardown()` 与每次 `startBackend()` 都 +1；异步闭包恢复执行时校验代数，不匹配即退出。rVFC 回调同样校验
+- **P1 · restart 无上限、无退避（设备丢失时刷爆日志/CPU）**
+  - 修法：失败按 `500ms × 2^n` 退避、上限 15s；连续 5 次失败后 `gaveUp=true` 停止自动恢复并在状态里说明
+  - 同时把重开条件收紧为**流与后端都不出帧**才重开（后端正跑着时重开会把可用路径打断）
+- **`new ImageCapture(track)` 抛异常无回退**
+  - 原来只判了 `typeof ImageCapture !== 'function'`；构造抛错会让模块握着已打开的流停在 `error`
+  - 修法：构造包 try/catch，失败即回退到 rVFC 后端
+- **重开窗口内仍采样** → 短暂误报 `stalled` 且可能叠加一次重开
+  - 修法：`sample()` 开头 `if (disposed || restarting) return;`；并让 `restarting` **保持到 `open()` 结束**（否则 open 期间 video 为 null，采样会再触发一次重开 —— 这是修第一条时新暴露的坑）
+- **未采纳的一条**：评审认为严格模式的「微任务让出」防护是概率性的。核对后判断它是确定的 —— React 的「挂载→卸载→再挂载」在**同一个同步批次**内完成，两次 `open()` 都会在同一微任务检查点挂起，第一个恢复时 `disposed` 必为 true。已在注释里把前提写明
+- **未做 / 阻塞**：`videoDecodedFrames` 在 open 后有最多 1s 显示 0（诊断字段，无害）；`IDLE_STATE` 共享引用导致的漏 re-render 无害
+- **相关文件**：`apps/presenter-onair/src/hooks/useVideoSource.ts` · `src/components/mocap/MocapPanel.tsx` · `docs/face-capture.md`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
+---
+
+### 2026-09-02 · 废弃面捕与旧取帧，重写视频获取模块 `useVideoSource`
+
+- **设备/环境**：Win / conda ssreporter（核显）
+- **起因**：用户要求「彻底废弃当前的面捕和视频获取，从头写一个视频获取模块，先尝试实现视频获取」
+- **删除**：`hooks/useFaceCapture.ts`、`workers/faceCapture.worker.ts`、`hooks/useCameraPreviewStream.ts`、`lib/faceCaptureLog.ts`
+  - 识别层保留待接回：`lib/vrm/faceCaptureMapper.ts`（kalidokit → `FaceCaptureFrame`）、`lib/vrm/faceCaptureSmoothing.ts`、`applyFaceCaptureToVrm.ts`（纯函数 + 有测试）
+  - MediaPipe 的 wasm/模型资产与 vite 插件保留（重建面捕要用）
+- **新增 `hooks/useVideoSource.ts`**：只做视频获取
+  - 职责单一：拿到活着的 video track，并量化「帧还活着吗」；不识别、不搬像素、不渲染
+  - **两个可切换后端**：`videoFrameCallback`（默认，rVFC 回调计数）与 `grabFrame`（`ImageCapture.grabFrame()` 轮询，Windows 上走静态抓帧实现，与视频流路径不同）
+  - 同时记录 `<video>` 自身的解码帧数作为**独立旁证**，区分「流死了」与「只是这个后端没取到」
+  - 状态机 `idle/opening/streaming/stalled/error` + 帧断 4s 自动重开
+  - 严格模式双开防护（先让出微任务）
+- **新增 `lib/cameraLog.ts`**：原 `faceCaptureLog` 改名，前缀改 `[camera]`
+- **设置**：`faceCapture` 去掉 `smoothing` 与 `inferenceDelegate`（面捕废弃后无意义），新增 `videoBackend`；设置分区改名为「摄像头（仅面捕模式）」，说明面捕引擎重建中
+- **面捕页**：预览不再自己测帧，直接展示 `useVideoSource` 的状态（设备/分辨率/本后端帧/video 解码帧/fps/空闲/重开）；预览窗里可直接切采集后端；`faceCaptureActive` 改为 `false`（口型交给音频）
+- **未做 / 阻塞**：识别与驱动未接回；Chromium 侧采集卡死问题未解决（见 `docs/face-capture.md` 的「已知问题」）
+- **下一台机器应优先**：跑 `camera-test.html` 的约束预设找出能持续出帧的组合；再在面捕页对照两个采集后端
+- **相关文件**：`apps/presenter-onair/src/hooks/useVideoSource.ts`（新增） · `src/lib/cameraLog.ts`（新增） · `src/components/mocap/MocapPanel.tsx` · `src/app/MocapSession.tsx` · `src/components/settings/FaceCaptureSettingsSection.tsx` · `src/types/settings.ts` · `src/lib/settings/faceCapture.ts` · `src/hooks/settings/faceCaptureUpdaters.ts` · `AGENTS.md` · `docs/face-capture.md`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
+---
+
+### 2026-09-02 · 决定性对照：独立预览也卡死 → 排除应用处理链路
+
+- **设备/环境**：Win / conda ssreporter（核显）
+- **用户日志（预览已独立后）的决定性证据**：
+  - 预览是**完全独立的模块**（自己的 `getUserMedia`、自己的 track、无 Worker、无 MediaPipe、不碰 VRM）
+  - 它照样在 **10 帧 / 0.7 秒**处停死：`paused=false readyState=4 呈现帧=10 解码帧=10 t=0.7s 轨道=live`
+  - 面捕那一路同一时刻也是 `readFrames:11 / lastedMs:6001`
+  - 结论：**任何最小化的摄像头消费者在我们的页面里都活不过 0.7 秒** → 问题不在我们的处理链路里
+- **修掉一个我引入的 bug**：`useCameraPreviewStream` 漏了严格模式防护，日志里 `[预览] 独立请求摄像头` 出现两次（同一页面双开同一设备）。已补上与 `useFaceCapture` 同款的「先让出微任务再请求」防护
+- **新增最小对照页** `apps/presenter-onair/public/camera-test.html`
+  - 独立 HTML，无 MediaPipe / 无 Worker / 无 Three.js，只有 `getUserMedia` + `<video>` + 帧计数
+  - 用同样的判据（`getVideoPlaybackQuality().totalVideoFrames` + `currentTime`）每秒刷新，并记录 video 媒体事件
+  - 还有「再开一路」按钮，用于验证同一页面双开同一设备是否可行
+  - 用途：把「应用代码」与「浏览器/设备/这台机器」彻底分开
+- **用户实测对照页的结果（决定性）**：
+  - **对照页依旧卡顿** → 与本仓库代码无关；同一个浏览器里，一个只有 `getUserMedia` + `<video>` 的空白页也喂不住这台摄像头
+  - **任务管理器 CPU 占用 < 10%** → 连「CPU 饥饿」这条也排除（MediaPipe Worker 嫌疑同样不成立）
+  - 而同一个摄像头在其它程序里流畅 → 差异只剩 **Chromium 自己**
+- **对照页升级为「约束预设」实验台**：可逐个试
+  `视频默认 video:true` / `640×480` / `1280×720` / `320×240` / `640×480+限帧15` / `640×480+限帧60` / `640×480+resizeMode:none`
+  - 目标是**在 Chromium 里找出一个能持续出帧的约束组合**；找到就直接改应用去用，找不到才说明是浏览器采集后端的问题
+  - 每个预设都会打出协商结果（`width×height @ fps`、`resizeMode`）
+- **未做 / 阻塞**：待用户跑完预设实验；同时建议在浏览器层做三个开关对照（关闭硬件加速 / `chrome://flags` 里 Media Foundation 视频采集 / 换 Edge 试同一页）
+- **下一台机器应优先**：先跑对照页的预设，再回传「哪个组合能持续出帧」
+- **相关文件**：`apps/presenter-onair/public/camera-test.html`（新增） · `src/hooks/useCameraPreviewStream.ts`
+- **验证方式**：`npx tsc -b`；对照页脚本语法已用 `node --check` 等价方式校验，`http://localhost:5173/camera-test.html` 返回 200
+
+---
+
+### 2026-09-02 · 预览与面捕彻底解耦（两个独立模块）
+
+- **设备/环境**：Win / conda ssreporter（核显）
+- **起因**：用户用「暂停渲染」做了对照实验 —— **暂停 VRM 渲染后视频卡顿依旧**，故 VRM 渲染与采集抢资源**也被排除**；用户要求把视频采集与面捕捉拆成两个独立模块，预览必须与面捕无关
+- **用户日志（含前 5 帧节奏）给出的新事实**：
+  - 帧到达节奏正常：`读到第 1~5 帧` 的 `arrivedAfterMs` 为 87/111/123/162/328，`frameTimeMs` 逐帧推进（间隔 ~32ms，偶有 80/157ms 抖动），`format:"NV12"`
+  - 但每轮只读到 **8~15 帧**（约 0.5s）就彻底停；7 轮复现完全一致
+  - **停点紧贴「首帧推理完成」**：多轮里 `看门狗 idleMs` 反推的最后一帧时刻与 `首帧推理完成` 相差 0~150ms
+  - 摄像头侧始终正常：`frameRate:30 640×480`、`readyState:live`、`muted:false`
+- **改动一：预览独立成模块** `useCameraPreviewStream(enabled, deviceId)`
+  - 自己开一路 `getUserMedia`，**不与面捕共享 track**、不参与它的生命周期；关掉预览立刻释放自己那一路
+  - `CameraPreview` 改用它，`MocapPanel` 不再接收面捕的 stream（`captureStream` 移除）；`useFaceCapture` 只保留 `hasStream: boolean` 给状态胶囊用
+  - 目的：「预览还动不动」成为**独立证据** —— 面捕卡死时预览不该跟着卡
+- **改动二：Worker 里把 VideoFrame 立刻换成 ImageBitmap**
+  - VideoFrame 直接引用采集缓冲，长时间留在 Worker 里有可能耗尽采集源缓冲池 → 源头停止出帧（正是「出了十几帧就断」的形态）
+  - 现在：收到帧 → `createImageBitmap(frame)` → **立刻 `frame.close()`** → 推理 → 关掉位图。主线程依旧零拷贝
+- **日志增强**：预览自己的 `<video>` 媒体事件（带 `[预览]` 前缀，与面捕那一路对照）；Worker 记录首帧元信息（format/display/coded）与前 3 帧推理耗时；复制摘要里加上预览状态与 VRM 渲染状态
+- **未做 / 阻塞**：待确认预览是否独立存活（若面捕卡而预览不卡 → 坐实是处理链路；两个都卡 → 回到设备/Chromium 层）
+- **下一台机器应优先**：进面捕模式看预览是否**持续出帧**（面捕仍会卡），并回传新日志
+- **相关文件**：`apps/presenter-onair/src/hooks/useCameraPreviewStream.ts`（新增） · `src/hooks/useFaceCapture.ts` · `src/workers/faceCapture.worker.ts` · `src/components/mocap/MocapPanel.tsx` · `src/app/MocapSession.tsx` · `docs/face-capture.md`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
+---
+
+### 2026-09-02 · VRM 渲染可暂停 + 用户日志定位（GPU 争用假设被排除）
+
+- **设备/环境**：Win / conda ssreporter（核显）
+- **用户日志给出的结论**：
+  - 严格模式修复生效：只有一次 `请求摄像头`，前一次挂载明确放弃
+  - 新取帧管线生效：`取帧方式：MediaStreamTrackProcessor（零拷贝 VideoFrame）`
+  - **GPU 争用假设被排除** —— 这一轮 `delegate:"CPU"`（Worker 不建 WebGL 上下文）仍照样卡帧
+  - 推理不是瓶颈：`roundTripMs` 98~124ms
+  - **帧在「首帧推理完成」之后立刻停止**：两轮都是 `首帧推理完成` 后再无新帧，`readFrames` 只有 3 / 4
+  - 摄像头本身正常：`frameRate:30 640×480`、`readyState:live`、`muted:false`
+- **新增「暂停渲染」开关**：`visual.vrmRenderPaused` + 面捕页工具条按钮
+  - `AvatarBackground` 的帧循环保留（便于恢复）但跳过全部场景更新与 `renderer.render`；暂停期间 `clock.getDelta()` 排空，避免恢复时 delta 突跳
+  - 用途：验证「VRM 渲染与采集抢资源」，也方便直播时临时冻结皮套
+- **新增帧到达节奏日志**：TrackProcessor 路径记录前 5 帧的 `arrivedAfterMs / frameTimeMs（VideoFrame.timestamp）/ size / format`，用于判断源头是「一帧都没有」还是「出了几帧就停」
+- **未做 / 阻塞**：待用户用「暂停渲染」做对照实验（暂停后帧是否还断），以及回传新的帧节奏日志
+- **下一台机器应优先**：进面捕模式 → 点「暂停渲染」→ 观察是否还出现「看门狗：帧已经断了」
+- **相关文件**：`apps/presenter-onair/src/components/AvatarPanel.tsx` · `src/components/AvatarShell.tsx` · `src/components/mocap/MocapPanel.tsx` · `src/app/MocapSession.tsx` · `src/types/settings.ts` · `src/lib/settings/defaults.ts` · `src/hooks/settings/visualUpdaters.ts` · `src/hooks/useFaceCapture.ts`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
+---
+
+### 2026-09-02 · 换掉取帧管线：MediaStreamTrackProcessor 零拷贝 VideoFrame
+
+- **设备/环境**：Win / conda ssreporter（核显）
+- **起因**：用户反映「卡的要死」，并直接质疑取帧管线
+- **旧管线（确实是问题）**：
+  ```
+  getUserMedia → MediaStream
+     ├── 采集 <video>（1px 透明挂 body）
+     │     └── rAF 每帧 → createImageBitmap(video)   ← 主线程每帧一次 GPU→CPU 位图拷贝
+     │            └── postMessage(ImageBitmap) → Worker → detectForVideo
+     └── 预览 <video>（同一 stream）
+  ```
+  `createImageBitmap` 每帧一次位图拷贝，在核显上既是主要开销、又与 VRM 的 WebGL 争同一块显卡
+- **关键发现**：MediaPipe 的图像尺寸判定里含 `void 0 !== t.displayWidth ? [t.displayWidth, t.displayHeight] : …
+  ` —— `displayWidth` 是 `VideoFrame` 的属性，说明 **MediaPipe 原生接受 VideoFrame**，不必先转成位图
+- **新管线**：
+  ```
+  getUserMedia → MediaStream（1 条 track）
+     ├── MediaStreamTrackProcessor.readable → VideoFrame
+     │     └── postMessage(frame, [frame])  ← 零拷贝转移，主线程不碰像素
+     │           └── Worker: detectForVideo(frame) → 468 点 → kalidokit → VRM
+     └── 预览 <video>（同一 track，仅作显示 sink）
+  ```
+  - 首选 TrackProcessor 路径；**API 缺失时保留 `<video>` + createImageBitmap 兜底**（原有代码不动）
+  - 该路径下**不再创建采集用 `<video>`**（少一个 sink）
+  - 取帧按需：Worker 回消息后才取下一帧，天然背压，不堆积
+  - `lib.dom` 还没有 `MediaStreamTrackProcessor`，在 `useFaceCapture.ts` 里补了 `declare global` 最小声明
+- **看门狗改为与取帧方式无关**：判据由「video 元素 `totalVideoFrames` 不动」改为「距上次成功取到帧多久」；超过 4s 先告警，下一周期仍无帧则重开采集流
+- **未做 / 阻塞**：待人工确认卡顿与卡帧是否同时消失
+- **下一台机器应优先**：进面捕模式看日志里的 `取帧方式：…` 一行应为 TrackProcessor；再确认帧率与流畅度
+- **相关文件**：`apps/presenter-onair/src/hooks/useFaceCapture.ts` · `src/workers/faceCapture.worker.ts` · `docs/face-capture.md`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
+
+---
+
 ### 2026-09-02 · 修面捕卡死：Worker 漏回消息导致主线程锁死 + 预览读数误报
 
 - **设备/环境**：Win / conda ssreporter
@@ -88,10 +339,26 @@
   - 用户复测：读数仍是 `t=0.8s` 处停住（两次完全相同的停点，稳定复现），且**皮套不随头部转动** → 整条采集都停了，不只是预览
   - Chromium 对「不在文档里」的媒体元素出帧并不可靠，而它是唯一帧源；两个 video 共享同一条 track，这个 sink 异常可能拖住整条源。官方 MediaPipe 示例都是先入文档再取帧
   - 修法：`document.createElement('video')` 后 `document.body.appendChild(video)`，用 `position:fixed;1px;opacity:0`（**不能用 `display:none`**，那会完全不渲染）；`stopCapture` 里 `remove()`。并提前记 `videoRef.current`，保证 `play()` 抛错时也能摘掉
-- **未做 / 阻塞**：待人工确认 —— 同一个摄像头在 Windows「相机」应用里是否也卡（区分「设备/驱动」还是「Chromium 这一侧」）
-- **下一台机器应优先**：进面捕模式看两处 —— ① 预览读数是否转为「画面流动中」② 转动头部时皮套的脸是否跟随。若读数仍是「画面静止」且没有 muted 提示，说明是驱动/设备层问题（换设备或重启摄像头相关软件）
-- **相关文件**：`apps/presenter-onair/src/hooks/useFaceCapture.ts` · `src/workers/faceCapture.worker.ts` · `src/components/mocap/MocapPanel.tsx`
-- **验证方式**：`npx tsc -b`；`npx vitest run`
+- **根因五（待验证）**：**`facingMode: 'user'` 触发多余的采集模式重配**
+  - 用户第三次复测：`呈现帧=14 解码帧=14 t=0.7s`，仍是固定时间点停死（三次 0.7~0.8s）
+  - 桌面设备只有一个朝向，`facingMode` 没有任何筛选价值，却会让 Chromium 在打开设备后按朝向再协商一次采集模式；那次重配失败/半途卡住正好表现为「出十几帧后固定时间点停死」
+  - 修法：约束里去掉 `facingMode`，只留 `deviceId` + `width/height ideal`
+- **读数改进**：采样窗口 500ms → **2s** 并输出**实测帧率**（`画面流动中 · 约 N fps`）。500ms 窗口把「相机只跑个位数帧率」误判成「停了」，而这两种情况修法完全不同
+- **关键判据（用户实测）**：**相机硬件与驱动正常** —— 网页开着时其他程序提示「摄像头被占用」，关掉网页后其他程序能正常打开且画面流畅
+  - 即：设备没坏，是**我们的页面握着设备却拿不到帧**（Chromium 侧采集管线僵死），所以纯代码层有可能兜住
+- **卡帧自愈（新增）**：`useFaceCapture` 里加看门狗 —— 每 1.5s 查一次采集 video 的 `totalVideoFrames`，连续 4s 无新帧就 `stopCapture()` + 重开流；触发次数经 `restartCount` 传到预览窗显示「已自动重连 N 次」
+  - 注意 `stopCapture()` 会清掉看门狗自己的 interval，因此每次 `start()` 都新建一个（顺序：stop → start）
+- **日志（新增，按用户要求）**：面捕链路全量埋点，控制台用 `[faceCapture]` 过滤
+  - 新增 `src/lib/faceCaptureLog.ts`：`faceCaptureLog` / `faceCaptureWarn` / `describeVideo` / `describeStream`，默认开启，`window.__ssreporterFaceCaptureLog = false` 关闭。**注意 Worker 与主线程的 `performance.now()` 时间原点不同**，跨线程时间戳只能看各自线程内的先后
+  - `useFaceCapture`：请求/打开摄像头、**采集 video 的全部媒体事件**（`stalled`/`waiting`/`suspend`/`emptied`/`error`…，卡帧那一刻的答案就在这里）、`play()` 完成、Worker 就绪耗时、首帧与每 30 帧的往返耗时、单帧 >400ms 告警、取帧失败、看门狗判定与重连、启动失败
+  - `faceCapture.worker.ts`：wasm/模型分阶段耗时、推理器就绪（含实际 delegate）、首帧与每 60 帧推理耗时、人脸进入/离开、推理异常；并把 `image.close()` 移入 `finally`（原来推理抛错时会泄漏 ImageBitmap）
+- **推理后端可切换（改为设置项）**：新增设置 `faceCapture.inferenceDelegate`（`GPU` / `CPU`，默认 GPU）+ 设置 → 面捕 的「推理后端」下拉；`init` 消息携带该值，改成 `options.delegate` 并进 effect 依赖，**改完立刻重开采集，无需重进面捕模式**。Worker 里 GPU 初始化失败仍会自动回退 CPU 并告警
+- **「复制诊断日志」按钮（新增）**：`faceCaptureLog` 增加 400 行环形缓冲 + `readFaceCaptureLog()`；预览窗底部一键复制「摘要（设备/状态/读数/重连次数）+ 全部日志」，剪贴板不可用时整段打到控制台
+  - 目的：把此前"让用户开控制台敲命令、翻日志"的步骤全部去掉
+- **未做 / 阻塞**：待用户回传控制台日志，定位 0.75s 处到底触发了哪个媒体事件
+- **下一台机器应优先**：进面捕模式看三处 —— ① 是否显示「画面流动中 · 约 N fps」② 是否出现「已自动重连 N 次」③ 皮套待机动作（呼吸/眨眼）是否还在动；然后把「复制诊断日志」的内容贴出来
+- **相关文件**：`apps/presenter-onair/src/hooks/useFaceCapture.ts` · `src/workers/faceCapture.worker.ts` · `src/components/mocap/MocapPanel.tsx` · `src/lib/faceCaptureLog.ts` · `src/types/settings.ts` · `src/lib/settings/faceCapture.ts` · `src/hooks/settings/faceCaptureUpdaters.ts` · `src/components/settings/FaceCaptureSettingsSection.tsx` · `src/app/MocapSession.tsx` · `src/styles/app.css`
+- **验证方式**：`npx tsc -b`；`npx vitest run`（onair 57 passed）
 
 ---
 
