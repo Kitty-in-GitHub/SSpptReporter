@@ -20,7 +20,7 @@
 | Phase 2 | **已通过本机验收**：Brain RAG + Q&A 分层 profile + 汇报面板（见 `docs/phase2-acceptance.md`） |
 | Phase 2.5 ASR | **已通过本机验收**：Web Speech / 浏览器内 Whisper / 本机网关 / 云端四引擎（见 `docs/phase2-5-asr.md`） |
 | Phase 3 Present | **已通过本机验收**：多 beat + performance profile + 讲稿导演台 Voice 字段（见 `docs/phase3-present-director.md`） |
-| 工程健康 | `typecheck` / `lint` / `test`（106 项）/ `build` 全绿；CI 见 `.github/workflows/ci.yml`；依赖风险见 `docs/dependency-security.md` |
+| 工程健康 | `typecheck` / `lint` / `test`（117 项）/ `build` 全绿；CI 见 `.github/workflows/ci.yml`；依赖风险见 `docs/dependency-security.md` |
 | Avatar 呈现层 | **`lib/avatar` + `AvatarShell`**（ADR-011） |
 | Q&A TTS 基线 | **`qa` profile** 分层（ADR-012；见 `docs/content-qa.md`） |
 | 运行时 VRM | `StarString1.0.vrm`（`miko.vrm` 仅本地备份，不进 Git） |
@@ -29,6 +29,7 @@
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
 | Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
 | 讲稿导演台 | `ScriptEditorShell`（可视化节拍/预设/语速；见 `docs/content-decks.md`） |
+| 场次库 | **`DeckLibrarySession` · `DeckLibraryPanel`**：导入 PDF（自动按页建讲稿并编译）/ 切换 / 补建 / 删除；写盘见 `vite-content-api-plugin.ts`（仅 dev） |
 | 知识库 | `content/` 示例 + `content-private/` 私有（见 `docs/content-decks.md`） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 
@@ -87,7 +88,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 |------|------|
 | 加载 VRM | `useResolvedVrmModel` · `AvatarPanel`（`vrmUrl` prop，切换时重载） |
 | 设置持久化 | `lib/settings/` · `hooks/useSettings` · `hooks/settings/*Updaters` |
-| 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession` / `MocapSession`） |
+| 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession` / `DeckLibrarySession` / `MocapSession`） |
 | 面捕直播皮套 | `MocapSession` · `useVideoSource`（采集 / 帧活性）· `useFaceCaptureEngine`（MediaPipe 引擎）· `docs/face-capture.md`（仅 `sessionMode=mocap`） |
 | Avatar 呈现层 | `lib/avatar/` · `useAvatarPresenter` · `AvatarShell`（Director/Brain 只产出 `AvatarReactionDraft`） |
 | Director 队列 | `hooks/useDirectorQueue`（`lastPlaybackError` 可见化） |
@@ -95,6 +96,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 | Present 汇报 | `apps/presenter-onair/src/components/present/PresentShell.tsx` |
 | Q&A 面板 | `apps/presenter-onair/src/components/present/QaPanel.tsx` |
 | 场次切换 | `PresentDeckSelect` · `GET /api/content/decks` |
+| 场次库（导入 PDF） | `app/DeckLibrarySession.tsx` · `components/decks/DeckLibraryPanel.tsx` · `lib/decks/deckLibraryApi.ts` · `vite-content-api-plugin.ts` |
 | Brain Q&A | `packages/brain` · `apps/presenter-onair/src/hooks/useBrainQa.ts` |
 | Embedding | `resolveBrainEmbedder` · `gatewayEmbedHealth.ts` · `docs/brain-retrieval.md` |
 | PDF 幻灯 | `apps/presenter-onair/src/components/present/PdfSlideViewer.tsx` |
@@ -111,7 +113,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 
 ## 建议的下一步（优先级）
 
-1. **填真实材料**：`npm run scaffold:deck` → 编辑 `content-private/` → 拷贝 PDF → `npm run compile:deck`
+1. **填真实材料**：`npm run dev` → **场次库** 导入 PDF（自动按页建讲稿并编译）→ **讲稿导演台** 改正文 → **汇报** 播放
 2. **工程守护**：提交前跑 `npm run typecheck && npm run test && npm run lint -w @ssreporter/presenter-onair`；CI 见 `.github/workflows/ci.yml`
 3. （可选）本机 embedding：`npm run setup:embed`；`npm run build:brain-vectors -- --deck demo`
 4. （可选）VRMA 手势：`npm run setup:gestures` 或 [`docs/vrma-authoring.md`](docs/vrma-authoring.md)

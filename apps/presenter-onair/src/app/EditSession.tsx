@@ -25,6 +25,7 @@ export function EditSession({ settingsHook, onToggleSettings }: EditSessionProps
       deckId={activeDeckId}
       visual={settingsHook.settings.visual}
       onToggleSettings={onToggleSettings}
+      onDeckChange={settingsHook.updatePresentActiveDeckId}
     />
   );
 }

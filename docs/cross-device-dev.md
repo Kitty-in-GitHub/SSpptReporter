@@ -166,6 +166,31 @@ workspaces 把 `three` 提升到根 `node_modules`。确认 `apps/presenter-onai
 
 Web Speech（Director Phase0 按钮）通常**无 viseme**。在 Settings 配置 VOICEVOX 等 TTS，并确认模型含口型 Expression（Aa/Ih/Ou 等）。
 
+### Edge TTS 报「网关失败（500/502）」
+
+先看网关日志（`npm run dev` 的 `[tts]` 行）。最常见是 **edge-tts 版本过旧**：微软调整 `Sec-MS-GEC` 反滥用令牌后，旧版在 WebSocket 握手就被 403 拒绝，表现为「Edge TTS 网关失败」。
+
+```bash
+conda activate ssreporter
+python -m pip install -U edge-tts
+npm run dev:stop      # 必须重启：运行中的网关内存里还是旧版本
+npm run dev
+```
+
+自检（应返回 `OK bytes=...`）：
+
+```bash
+python -c "import asyncio,edge_tts
+async def m():
+    a=bytearray()
+    async for c in edge_tts.Communicate('测试','zh-CN-XiaoxiaoNeural',rate='+0%').stream():
+        if c['type']=='audio': a.extend(c['data'])
+    print('OK bytes=',len(a))
+asyncio.run(m())"
+```
+
+其它可能：本机无法访问 `speech.platform.bing.com`（代理/DNS），或系统时钟偏差超过 5 分钟（令牌按时间生成，可用 `w32tm /resync` 校正）。
+
 ### 两台机器路径不同
 
 文档中的 `d:\project\SSreporter` 仅为示例；以本机 clone 路径为准。环境统一靠 `environment.yml` + `package-lock.json`。

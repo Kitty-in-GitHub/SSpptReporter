@@ -1,5 +1,6 @@
 import { UI_PRESENT } from '../../constants/uiZh';
 import { useDeckCatalog } from '../../hooks/useDeckCatalog';
+import './presentChrome.css';
 
 interface PresentDeckSelectProps {
   activeDeckId: string;

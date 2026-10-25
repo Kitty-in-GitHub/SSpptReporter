@@ -31,7 +31,7 @@ gesture: bow
 });
 
 describe("compileSlideMarkdown", () => {
-  it("defaults slide_action to goto page from filename", () => {
+  it("leaves page sync to the deck compiler", () => {
     const result = compileSlideMarkdown({
       filename: "03.md",
       content: `---
@@ -42,7 +42,7 @@ gesture: point_slide
 第三页内容。`,
     });
 
-    expect(result.actions?.[0]?.slide_action).toEqual({ goto: 3 });
+    expect(result.actions?.[0]?.slide_action).toBeUndefined();
     expect(result.actions?.[0]?.utterance).toBe("第三页内容。");
     expect(result.actions?.[0]?.action_id).toBe("p03");
   });
@@ -75,7 +75,7 @@ profile: friendly
     expect(result.actions?.[2]?.utterance).toBe("第二句。");
   });
 
-  it("accepts slide_action JSON override", () => {
+  it("ignores slide_action in markdown (page turn is compiler-managed)", () => {
     const result = compileSlideMarkdown({
       filename: "02.md",
       content: `---
@@ -87,7 +87,7 @@ slide_action: {"next": true}
 第二页内容。`,
     });
 
-    expect(result.actions?.[0]?.slide_action).toEqual({ next: true });
+    expect(result.actions?.[0]?.slide_action).toBeUndefined();
   });
 });
 
@@ -116,9 +116,49 @@ gesture: bow
     ]);
 
     expect(result.issues).toHaveLength(0);
-    expect(result.actions).toHaveLength(2);
+    expect(result.actions).toHaveLength(3);
     expect(result.actions[0]?.action_id).toBe("p01");
+    expect(result.actions[0]?.slide_action).toEqual({ goto: 1 });
+    // 页末自动翻页拍：不朗读，只翻到下一页
+    expect(result.actions[1]?.action_id).toBe("turn-01");
+    expect(result.actions[1]?.utterance).toBe("");
     expect(result.actions[1]?.slide_action).toEqual({ next: true });
+    // 最后一页不再追加翻页拍
+    expect(result.actions[2]?.action_id).toBe("p02");
+    expect(result.actions[2]?.slide_action).toEqual({ goto: 2 });
+  });
+
+  it("turns the page only after every beat of the page", () => {
+    const result = compileDeckScript([
+      {
+        filename: "01.md",
+        content: `---
+emotion: friendly
+---
+
+<!-- beat -->
+第一句。
+
+<!-- beat -->
+第二句。`,
+      },
+      {
+        filename: "02.md",
+        content: `---
+emotion: friendly
+---
+
+下一页。`,
+      },
+    ]);
+
+    expect(result.issues).toHaveLength(0);
+    const ids = result.actions.map((action) => action.action_id);
+    expect(ids).toEqual(["p01", "p01-b02", "turn-01", "p02"]);
+    expect(result.actions[0]?.slide_action).toEqual({ goto: 1 });
+    expect(result.actions[1]?.slide_action).toBeUndefined();
+    expect(result.actions[2]?.slide_action).toEqual({ next: true });
+    expect(result.actions[3]?.slide_action).toEqual({ goto: 2 });
   });
 });
 

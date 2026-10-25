@@ -19,6 +19,11 @@ import '../styles/app.css';
 const EditSession = lazy(() =>
   import('./EditSession').then((module) => ({ default: module.EditSession })),
 );
+const DeckLibrarySession = lazy(() =>
+  import('./DeckLibrarySession').then((module) => ({
+    default: module.DeckLibrarySession,
+  })),
+);
 const MocapSession = lazy(() =>
   import('./MocapSession').then((module) => ({ default: module.MocapSession })),
 );
@@ -238,6 +243,11 @@ export default function App() {
       <Suspense fallback={<div className="app-session-loading">正在加载会话…</div>}>
         {sessionMode === 'edit' ? (
           <EditSession
+            settingsHook={settingsHook}
+            onToggleSettings={toggleSettingsDialog}
+          />
+        ) : sessionMode === 'decks' ? (
+          <DeckLibrarySession
             settingsHook={settingsHook}
             onToggleSettings={toggleSettingsDialog}
           />

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import './presentChrome.css';
 
 interface AppToolbarProps {
   onToggleSettings?: () => void;

@@ -73,9 +73,8 @@ function beatDraftToAction(beat: SlideBeatDraft): DirectorAction {
   if (beat.profile?.trim()) {
     action.profile = beat.profile.trim();
   }
-  if (beat.slide_action) {
-    action.slide_action = beat.slide_action;
-  }
+  // 呈现模式的翻页统一由「页边界」决定（见 compileDeckScript）：
+  // 每页念完自动翻到下一页，讲稿里写的 slide_action 不再生效。
   if (beat.voice && Object.keys(beat.voice).length > 0) {
     action.voice = beat.voice;
   }
@@ -87,6 +86,20 @@ function beatDraftToAction(beat: SlideBeatDraft): DirectorAction {
   }
 
   return action;
+}
+
+/**
+ * 页末翻页拍：utterance 为空（不朗读），承接上一页最后一句话结束后的翻页。
+ * 引擎顺序是「翻页 → 表情/手势 → 朗读」，所以这一拍会先翻页再进入下一页首拍。
+ */
+function pageTurnAction(page: number): DirectorAction {
+  return {
+    schema_version: "1.0",
+    mode: "present",
+    utterance: "",
+    action_id: `turn-${String(page).padStart(2, "0")}`,
+    slide_action: { next: true },
+  };
 }
 
 export function compileSlideMarkdown(
@@ -136,8 +149,8 @@ export function compileDeckScript(
   const sorted = [...files].sort((a, b) =>
     a.filename.localeCompare(b.filename, undefined, { numeric: true }),
   );
-  const actions: DirectorAction[] = [];
   const issues: CompileDeckScriptIssue[] = [];
+  const pages: Array<{ page: number; actions: DirectorAction[] }> = [];
 
   for (const file of sorted) {
     const result = compileSlideMarkdown(file);
@@ -145,8 +158,38 @@ export function compileDeckScript(
       issues.push(result.issue);
       continue;
     }
-    if (result.actions) {
-      actions.push(...result.actions);
+    if (!result.actions?.length) {
+      continue;
+    }
+    const page = parseSlideFilenamePage(file.filename);
+    if (!page) {
+      issues.push({ source: file.filename, message: "文件名须为 NN.md（页码）" });
+      continue;
+    }
+    pages.push({ page, actions: result.actions });
+  }
+
+  const lastPage = pages.reduce((max, entry) => Math.max(max, entry.page), 0);
+  const actions: DirectorAction[] = [];
+
+  for (const { page, actions: pageActions } of pages) {
+    // 每页首拍先把页面对准本页：正常连播时是幂等操作，
+    // 从别的页开始播放时则能立刻纠正页码。
+    const [first, ...rest] = pageActions;
+    actions.push({ ...first, slide_action: { goto: page } });
+    actions.push(...rest);
+
+    // 本页讲稿全部念完后，自动翻到下一页（最后一页不再翻）。
+    if (page !== lastPage) {
+      const turn = validateDirectorAction(pageTurnAction(page));
+      if (!turn.ok) {
+        issues.push({
+          source: `turn-${String(page).padStart(2, "0")}`,
+          message: turn.errors.join("; "),
+        });
+        continue;
+      }
+      actions.push(turn.action);
     }
   }
 

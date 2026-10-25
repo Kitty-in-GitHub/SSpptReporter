@@ -186,13 +186,37 @@ async def create_speech(body: SpeechRequest) -> Response:
     if volume:
         communicate_kwargs["volume"] = volume
 
-    communicate = edge_tts.Communicate(body.input, voice, **communicate_kwargs)
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            audio.extend(chunk["data"])
+    try:
+        communicate = edge_tts.Communicate(body.input, voice, **communicate_kwargs)
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio.extend(chunk["data"])
+    except Exception as error:  # noqa: BLE001
+        # 上游 Edge 服务失败（最常见：Sec-MS-GEC 令牌被拒 → websocket 403），
+        # 原样返回可读信息，避免前端只看到 "Internal Server Error"。
+        detail = f"{type(error).__name__}: {error}"
+        print(
+            f"[tts] speech failed voice={voice} rate={rate}: {detail}",
+            flush=True,
+        )
+        hint = ""
+        if "403" in detail or "handshake" in detail.lower():
+            hint = (
+                "（上游鉴权被拒，通常是 edge-tts 版本过旧："
+                "pip install -U edge-tts，然后重启 npm run dev）"
+            )
+        return Response(
+            status_code=502,
+            content=f"Edge TTS 合成失败：{detail}{hint}",
+            media_type="text/plain; charset=utf-8",
+        )
 
     if not audio:
-        return Response(status_code=500, content="TTS produced no audio")
+        return Response(
+            status_code=502,
+            content="Edge TTS 合成失败：上游没有返回音频数据",
+            media_type="text/plain; charset=utf-8",
+        )
 
     # Edge-TTS returns mp3; other response_format values are not transcoded in MVP.
     media_type = "audio/mpeg"

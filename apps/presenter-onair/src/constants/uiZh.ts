@@ -67,6 +67,7 @@ export const UI_SESSION_MODES = {
   chat: '聊天',
   present: '汇报',
   edit: '讲稿导演台',
+  decks: '场次库',
   mocap: '面捕',
 } as const;
 
@@ -118,3 +119,40 @@ export const UI_PRESENT = {
   scriptCueIdle: '点击「▶ 播放讲稿」开始本场汇报',
   scriptCueNoUtterance: '（本节拍无朗读文本）',
 };
+
+export const UI_DECKS = {
+  title: '场次库',
+  lead: '导入答辩 PDF，自动按页生成讲稿；也可在这里切换、补建与删除场次。',
+  devOnlyNotice:
+    '导入 / 补建 / 删除依赖本机写盘接口，只在 npm run dev 下可用（生产构建不暴露）。',
+  importTitle: '导入 PDF 场次',
+  fileLabel: '选择 PDF',
+  titleLabel: '场次标题',
+  deckIdLabel: '场次 ID',
+  deckIdHint: '小写字母开头，可含数字与下划线（如 my_defense）',
+  importAction: '导入并生成讲稿',
+  importing: '导入中…',
+  refresh: '刷新',
+  empty: '还没有场次。先导入一份 PDF。',
+  switchAction: '设为当前场次',
+  activeBadge: '当前场次',
+  editorAction: '讲稿导演台',
+  presentAction: '去汇报',
+  scaffoldAction: '按 PDF 补建讲稿',
+  deleteAction: '删除',
+  deleteConfirm:
+    '确定删除该场次？会同时删除 content-private 里的讲稿与 public 下的 PDF。',
+  hasPdf: 'PDF 已就位',
+  noPdf: '缺 PDF',
+  privateLabel: '私有',
+  publicLabel: '示例',
+  importDone: '已导入并生成讲稿',
+  scaffoldDone: '已补建讲稿',
+  deleted: '已删除场次',
+  pagesSuffix: '页讲稿',
+  actionsSuffix: '条指令',
+  fileTypeError: '请选择 .pdf 文件',
+  needFile: '请先选择 PDF 文件',
+  needTitle: '请填写场次标题',
+  needDeckId: '请填写场次 ID',
+} as const;

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { Gesture, SlideAction } from '@ssreporter/director';
+import type { Gesture } from '@ssreporter/director';
 import { UI_SESSION_MODES, UI_SETTINGS } from '../../constants/uiZh';
 import { usePerformanceCatalog } from '../../hooks/usePerformanceCatalog';
 import type { DeckScriptEditorController } from '../../hooks/useDeckScriptEditor';
@@ -13,7 +13,9 @@ import {
 } from './GesturePreviewStage';
 import { PdfSlideViewer } from './PdfSlideViewer';
 import { PresentControls } from './PresentControls';
+import { PresentDeckSelect } from './PresentDeckSelect';
 import { AppToolbar } from './AppToolbar';
+import './presentChrome.css';
 import './scriptEditor.css';
 
 interface ScriptEditorShellProps {
@@ -22,12 +24,7 @@ interface ScriptEditorShellProps {
   deckId: string;
   visual: VisualSettings;
   onToggleSettings: () => void;
-}
-
-function slideActionKind(action: SlideAction | undefined): 'goto' | 'next' | 'prev' {
-  if (action?.next) return 'next';
-  if (action?.prev) return 'prev';
-  return 'goto';
+  onDeckChange: (deckId: string) => void;
 }
 
 export function ScriptEditorShell({
@@ -36,6 +33,7 @@ export function ScriptEditorShell({
   deckId,
   visual,
   onToggleSettings,
+  onDeckChange,
 }: ScriptEditorShellProps) {
   const utteranceRef = useRef<HTMLTextAreaElement>(null);
   const previewIdRef = useRef(0);
@@ -59,28 +57,6 @@ export function ScriptEditorShell({
   const pageDraft = editor.pageDraft;
   const beat = editor.activeBeat;
   const pageCount = slideDeck.pageCount;
-  const slideAction = beat?.slide_action ?? { goto: editor.currentPage };
-  const actionKind = slideActionKind(slideAction);
-
-  const handleSlideActionKindChange = (kind: 'goto' | 'next' | 'prev') => {
-    if (!beat) return;
-    if (kind === 'next') {
-      editor.updateBeat(editor.activeBeatIndex, { slide_action: { next: true } });
-      return;
-    }
-    if (kind === 'prev') {
-      editor.updateBeat(editor.activeBeatIndex, { slide_action: { prev: true } });
-      return;
-    }
-    editor.updateBeat(editor.activeBeatIndex, {
-      slide_action: { goto: slideAction.goto ?? editor.currentPage },
-    });
-  };
-
-  const handleGotoPageChange = (value: number) => {
-    if (!beat) return;
-    editor.updateBeat(editor.activeBeatIndex, { slide_action: { goto: value } });
-  };
 
   const syncPdfPage = (page: number) => {
     slideDeck.goToPage(page);
@@ -94,6 +70,11 @@ export function ScriptEditorShell({
         settingsAriaLabel={UI_SETTINGS.ariaLabel}
         title={slideDeck.deck?.title ?? UI_SESSION_MODES.edit}
       >
+        <PresentDeckSelect
+          activeDeckId={deckId}
+          onDeckChange={onDeckChange}
+          disabled={editor.isSaving || slideDeck.isLoading}
+        />
         <PresentControls
           currentPage={editor.currentPage}
           pageCount={pageCount}
@@ -209,63 +190,12 @@ export function ScriptEditorShell({
                 onRemoveProfile={removeDeckProfile}
               />
 
-              <fieldset className="script-editor-field script-editor-slide-action">
-                <legend>翻页动作（本节拍）</legend>
-                <label>
-                  <input
-                    type="radio"
-                    name="slide-action-kind"
-                    checked={actionKind === 'goto'}
-                    onChange={() => handleSlideActionKindChange('goto')}
-                  />
-                  跳到指定页
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="slide-action-kind"
-                    checked={actionKind === 'next'}
-                    onChange={() => handleSlideActionKindChange('next')}
-                  />
-                  下一页
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="slide-action-kind"
-                    checked={actionKind === 'prev'}
-                    onChange={() => handleSlideActionKindChange('prev')}
-                  />
-                  上一页
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="slide-action-kind"
-                    checked={!beat.slide_action}
-                    onChange={() =>
-                      editor.updateBeat(editor.activeBeatIndex, {
-                        slide_action: undefined,
-                      })
-                    }
-                  />
-                  不翻页
-                </label>
-                {actionKind === 'goto' && (
-                  <label className="script-editor-goto">
-                    页码
-                    <input
-                      type="number"
-                      min={1}
-                      max={pageCount || undefined}
-                      value={slideAction.goto ?? editor.currentPage}
-                      onChange={(event) =>
-                        handleGotoPageChange(Number(event.target.value) || 1)
-                      }
-                    />
-                  </label>
-                )}
-              </fieldset>
+              <div className="script-editor-field script-editor-auto-turn">
+                <span>翻页</span>
+                <p>
+                  每页讲稿全部念完后自动翻到下一页，由编译器生成，无需手写翻页动作。
+                </p>
+              </div>
 
               {pageDraft.beats.length > 1 && (
                 <button

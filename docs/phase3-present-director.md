@@ -23,7 +23,6 @@
 ```markdown
 ---
 emotion: confident
-slide_action: {"goto": 3}
 ---
 
 <!-- beat -->
@@ -46,6 +45,7 @@ profile: emphatic
 - `voice: {"speed":0.95}` 或 `voice_speed: 0.95`
 - `timing: {"pause_after_ms":400}` 或 `pause_after_ms: 400`
 - 空 `utterance`：只动作 / 停顿，不朗读
+- **翻页不用写**：编译器在每页末尾自动生成翻页拍（本页念完才翻到下一页）；讲稿里的 `slide_action` 会被忽略。规则见 [`content-decks.md`](./content-decks.md#翻页规则无需手写)。
 
 ---
 

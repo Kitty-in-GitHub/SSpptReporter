@@ -1,4 +1,6 @@
-edge-tts>=6.1.12
+# Edge-TTS 会随微软的 Sec-MS-GEC 校验调整而失效（表现为 /v1/audio/speech 500/502、
+# 日志里 websocket 403）。保持较新版本，遇到 403 先 pip install -U edge-tts。
+edge-tts>=7.3.1
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 python-multipart>=0.0.12

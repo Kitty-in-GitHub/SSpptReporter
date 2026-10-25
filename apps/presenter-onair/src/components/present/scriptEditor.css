@@ -110,36 +110,21 @@
   gap: 12px;
 }
 
-.script-editor-slide-action {
+.script-editor-auto-turn {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 10px 12px;
-  margin: 0;
-}
-
-.script-editor-slide-action legend {
-  padding: 0 6px;
-  font-size: 13px;
-}
-
-.script-editor-slide-action label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: 14px;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.script-editor-goto {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
 }
 
-.script-editor-goto input {
-  width: 72px;
+.script-editor-auto-turn p {
+  margin: 0;
+  color: rgba(232, 238, 248, 0.65);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .script-editor-loading,

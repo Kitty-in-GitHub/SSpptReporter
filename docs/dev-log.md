@@ -22,6 +22,93 @@
 
 ---
 
+### 2026-10-23 · 讲稿导演台支持切换汇报场次
+
+- **需求**：不必先回「场次库」或「汇报」，在讲稿导演台就能切换到另一份答辩 PDF 的讲稿
+- **实现**：
+  - `ScriptEditorShell` 顶栏左侧复用 `PresentDeckSelect`（与汇报同一个组件），新增 `onDeckChange` 回调；`EditSession` 接 `settingsHook.updatePresentActiveDeckId`
+  - 切换后 `useSlideDeck`（PDF/页数）与 `useDeckScriptEditor`（讲稿/草稿）按 `deckId` 自动重载到第 1 页；未保存内容仍按场次存在 `localStorage` 草稿里，切回可恢复
+  - 切换期间禁用下拉（`isSaving || isLoading`），避免半途换场
+  - **样式归位**：`.present-deck-select*` 从 `presentLayouts.css` 移到共享的 `presentChrome.css`，由 `PresentDeckSelect` 自己引入（避免按需加载时丢样式）
+- **验证**：`typecheck` / `lint`（0 error）/ `build` 通过；构建产物 `AppToolbar-*.css` 含场次下拉样式且 `EditSession-*.css` 不重复；dev 下 `/src/.../{EditSession,ScriptEditorShell,PresentDeckSelect}.tsx` 与 `/api/content/decks` 均 200
+- **备注**：`content-private/decks/my_defense` 已不在（用户经场次库清理），当前私有场次只有 `ppt`
+- **相关文件**：`apps/presenter-onair/src/app/EditSession.tsx` · `src/components/present/{ScriptEditorShell.tsx,PresentDeckSelect.tsx,presentChrome.css,presentLayouts.css}` · `docs/content-decks.md`
+- **验证方式**：`npm run dev` → 讲稿导演台 → 顶栏「场次」切换 demo / 秀米教学ppt，PDF 与讲稿应随之切换
+
+---
+
+### 2026-10-23 · 翻页改为「本页念完自动翻」唯一行为（编译器生成翻页拍）
+
+- **起因**：讲稿与 PPT 不同步——`ppt` 场次每页写了 `slide_action: {"next": true}`，而引擎顺序是「翻页 → 表情/手势 → 朗读」，于是第 1 页开讲前就翻到第 2 页，全篇错位一页
+- **拍板**：只保留一种行为——**一页讲稿全部念完，再翻到下一页**；作者不再手写翻页动作
+- **实现**：
+  - `packages/director/src/compile-deck-script.ts`：`beatDraftToAction` 不再透传 `slide_action`（讲稿里写了也忽略）；`compileDeckScript` 改为两遍处理——每页**首拍**注入 `{"goto": 页码}`（连播幂等、从别处起播可纠正），每页（末页除外）末尾追加一条 **`turn-NN`** 动作（`utterance: ""` + `{"next": true}`）
+  - 引擎无需改动：`useDirectorQueue` 仍是「翻页 → 表情/手势 → 朗读」，`turn` 拍空朗读，于是翻页发生在上一页最后一句念完之后
+  - 讲稿导演台：移除「翻页动作（本节拍）」单选与页码输入，改为固定说明；`scriptEditor.css` 对应换成 `.script-editor-auto-turn`
+  - 文档：`docs/content-decks.md` 新增「翻页规则（无需手写）」小节并更新 frontmatter 表；`docs/phase3-present-director.md` 示例去掉 `slide_action` 并注明
+- **重新编译**：`demo` → 13 条（6 goto + 5 turn，末页不翻）；`ppt`（秀米 21 页）→ 41 条（21 goto + 20 turn）
+- **测试**：`compile-deck-script.test.ts` 更新/新增 3 项（忽略讲稿 `slide_action`、页末插入 turn、多节拍页只在最后一拍后翻页）；全量 **118 通过**（director 46 + brain 13 + onair 59）；`typecheck` / `lint` 0 error
+- **相关文件**：`packages/director/src/{compile-deck-script.ts,compile-deck-script.test.ts}` · `apps/presenter-onair/src/components/present/{ScriptEditorShell.tsx,scriptEditor.css}` · `docs/{content-decks.md,phase3-present-director.md}`
+- **验证方式**：`npm run dev` → 汇报 → 播放本场讲稿：每页讲完最后一句才翻页；讲稿导演台不再出现翻页选项
+
+---
+
+### 2026-10-23 · 修复 Edge TTS 网关 500：edge-tts 令牌被拒（升级 7.3.1）
+
+- **现象**：前端提示「Edge TTS 网关失败（500）：Internal Server Error」
+- **定位**：直接调 `edge_tts.Communicate(...).stream()` 复现 → `WSServerHandshakeError: 403, message='Invalid response status'`（`speech.platform.bing.com` 的 WebSocket 握手被拒）。系统时钟与服务器偏差仅 0–2s、DNS/TCP 443 正常，排除时钟与网络；**已装 edge-tts 7.2.8 过旧**，其 `Sec-MS-GEC` 反滥用令牌已被微软废弃
+- **修法**：
+  - conda 环境升级 `edge-tts 7.2.8 → 7.3.1`，同一段合成脚本恢复输出（16 KB）
+  - `apps/tts-gateway/server.py`：`/v1/audio/speech` 加 try/except，上游失败返回 **502 + 可读原因**（含「pip install -U edge-tts」提示），并在 `[tts]` 日志打印异常；不再裸 500
+  - `apps/tts-gateway/requirements.txt`：`edge-tts>=7.3.1` 并加注释说明 403 的处置
+  - `docs/cross-device-dev.md`：新增「Edge TTS 报网关失败」排错小节（升级 + 重启 + 自检脚本 + 时钟/网络备选原因）
+- **验证**：5051 临时实例上 `POST /v1/audio/speech` → 200 `audio/mpeg` 19152 bytes；非法 voice → 502 `Edge TTS 合成失败：ValueError: Invalid voice 'not-a-voice'.`；`/health` 正常（asr/embedding 均 true）
+- **重要提醒**：**升级后必须 `npm run dev:stop` 再 `npm run dev`** —— 运行中的网关进程内存里仍是旧版 edge-tts，重启才会生效
+- **相关文件**：`apps/tts-gateway/{server.py,requirements.txt}` · `docs/cross-device-dev.md`
+- **验证方式**：`npm run dev` → Director 试播，应有声音且口型正常
+
+---
+
+### 2026-10-23 · 修复：讲稿导演台 / 场次库样式丢失（CSS 随按需加载断开）
+
+- **现象**：代码分割（会话 `React.lazy`）后，「讲稿导演台」工具栏、翻页控件、PDF 加载/错误提示没有样式；场次库同理
+- **根因**：`.present-toolbar` / `.present-controls` / `.present-slide-error|loading` 等**复用外壳样式**写在 `presentLayouts.css` 里，而该文件只被 `PresentShell` 引入。以前 PresentShell 是静态 import，CSS 全局可用；改成按需加载后，单独进「讲稿导演台」就不加载它了
+- **修法**：抽出 `src/components/present/presentChrome.css`（工具栏 / 设置按钮 / 翻页控件 / 幻灯状态），由**使用方各自引入**——`AppToolbar`、`PresentControls`、`ScriptEditorShell`、`PdfSlideViewer`；`presentLayouts.css` 删除重复规则并加注释指路
+- **验证**：dev 下 `AppToolbar.tsx` / `ScriptEditorShell.tsx` 转译结果含 `import "…/presentChrome.css"`；构建产物出现共享块 `AppToolbar-*.css`（1.10 kB）且 `PresentSession-*.css` 不再重复；类名交叉检查确认讲稿导演台子树不再依赖 `presentLayouts.css`；`typecheck` / `lint` 0 error / `test` 117 通过 / `build` 通过
+- **相关文件**：`apps/presenter-onair/src/components/present/{presentChrome.css,AppToolbar.tsx,PresentControls.tsx,ScriptEditorShell.tsx,PdfSlideViewer.tsx,presentLayouts.css}`
+- **验证方式**：`npm run dev` → 讲稿导演台 / 场次库：工具栏、上一页/下一页、PDF 区域样式应正常
+
+---
+
+### 2026-10-23 · 修复：点「场次库」又跳回「聊天」
+
+- **现象**：界面菜单点「场次库」立刻回落「聊天」，页签无法保持
+- **根因**：`src/types/present.ts` 的 `normalizePresentSettings` 用白名单 `SESSION_MODES` 校验 `sessionMode`，新增 `'decks'` 时漏加 → 写入被归一化为默认值 `'chat'`
+- **修法**：白名单补 `'decks'`；新增 `src/types/present.test.ts` 锁定「全部模式保持原值 + 未知值回落默认」，避免以后再加模式时重犯
+- **验证**：新测试 2 项通过；`typecheck` 全过；`test` **117 通过**（director 45 + brain 13 + onair 59）；`lint` 0 error
+- **相关文件**：`apps/presenter-onair/src/types/present.ts` · `src/types/present.test.ts`
+- **验证方式**：`npm run dev` → 菜单点「场次库」应停在「场次库」
+
+---
+
+### 2026-10-23 · 新增「场次库」：导入 PDF 自动按页建讲稿、切换与管理
+
+- **设备/环境**：Win / conda `ssreporter`（Node 22）
+- **做了什么**：
+  - **新选项卡「场次库」**（`sessionMode: 'decks'`）：界面菜单第 4 项；`DeckLibrarySession` + `DeckLibraryPanel`，懒加载为独立 chunk（6.5 KB / gzip 2.3 KB）
+  - **导入 PDF**：选文件 + 标题 + 场次 ID → 写入 `public/decks/<id>/slides.pdf`；用 `pdf-lib` 读页数，在 `content-private/decks/<id>/` 生成 `deck.json`、`performance.json`、每页 `slides/NN.md`、`faq/<id>.md`，并**立即编译** `script.jsonl`（`slide_action.goto` 逐页对齐）；导入后自动把该场次设为当前场次
+  - **管理操作**：设为当前场次 / 直接进讲稿导演台 / 去汇报 / 按 PDF 补建缺失讲稿（不覆盖已写内容）/ 删除私有场次（连带 PDF、FAQ）
+  - **dev 写盘 API 扩展**（`vite-content-api-plugin.ts`）：`POST /api/content/decks/import`（原始 PDF 字节流）、`POST /api/content/decks/:id/scaffold`、`DELETE /api/content/decks/:id`；`GET /api/content/decks` 增加 `devApi` 与 `hasPdf / slidePages / scriptActions`；生产构建无写盘接口，页面显式提示
+  - **纯逻辑抽包**：`packages/director/src/deck-scaffold.ts`（id 规范化 / deck.json / 讲稿模板 / 文件名派生），前端与 dev API 共用，新增 9 项单测
+  - **文档**：`docs/content-decks.md` 增「场次库」小节并修正「`compile:deck` 只编译 `content/`，私有场次走场次库/导演台」；`AGENTS.md` 阶段表与入口表同步
+- **验证**：`typecheck` 全过；`lint` 0 error；`test` **115 通过**（director 45 + brain 13 + onair 57）；`build` 通过；dev 下实测「导入 demo PDF → 6 页自动建稿 → 编译 6 条 → 列表/页面/PDF/讲稿全部 200 → 补建 0 页 → 缺 PDF 场次报错 → 删除并清理干净」
+- **未做 / 阻塞**：导入仅支持 dev（写盘需要本机中间件）；未做重命名/排序；页数上限 99
+- **下一台机器应优先**：`npm run dev` → 场次库导入真实 PDF → 讲稿导演台改正文 → 汇报播放
+- **相关文件**：`apps/presenter-onair/src/app/{App,DeckLibrarySession}.tsx` · `src/components/decks/{DeckLibraryPanel.tsx,deckLibrary.css}` · `src/lib/decks/deckLibraryApi.ts` · `src/components/SessionDrawer.tsx` · `src/constants/uiZh.ts` · `src/types/present.ts` · `vite-content-api-plugin.ts` · `packages/director/src/{deck-scaffold.ts,deck-scaffold.test.ts,index.ts}` · `docs/content-decks.md` · `AGENTS.md`
+- **验证方式**：`npm run typecheck && npm run test && npm run lint -w @ssreporter/presenter-onair`；dev 下 `/api/content/decks` + 场次库导入流程
+
+---
+
 ### 2026-10-23 · 工程健康整改：conda 环境、lint 修通、P2 逐项、验收状态补记
 
 - **设备/环境**：Win / conda **`ssreporter`**（Node v22.23.2、npm 10.9.8、Python 3.11.16）

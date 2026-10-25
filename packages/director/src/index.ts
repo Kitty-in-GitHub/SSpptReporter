@@ -56,6 +56,16 @@ export {
 
 export { emotionToVrmExpression } from "./emotion-map.js";
 export {
+  buildDeckManifestTemplate,
+  buildEmptyPerformanceOverlay,
+  buildSlideMarkdownTemplate,
+  DECK_ID_PATTERN,
+  deckIdFromFileName,
+  isValidDeckId,
+  normalizeDeckId,
+  type DeckScaffoldInput,
+} from "./deck-scaffold.js";
+export {
   normalizeEmphasisRanges,
   resolveVoiceDirective,
   splitUtteranceByEmphasis,

@@ -1,3 +1,5 @@
+import './presentChrome.css';
+
 interface PresentControlsProps {
   currentPage: number;
   pageCount: number;
