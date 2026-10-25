@@ -29,7 +29,7 @@
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
 | Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
 | 讲稿导演台 | `ScriptEditorShell`（可视化节拍/预设/语速；见 `docs/content-decks.md`） |
-| 场次库 | **`DeckLibrarySession` · `DeckLibraryPanel`**：导入 PDF（自动按页建讲稿并编译）/ 切换 / 补建 / 删除；写盘见 `vite-content-api-plugin.ts`（仅 dev） |
+| 场次库 | **`DeckLibrarySession` · `DeckLibraryPanel`**：一键导入 PDF（ID/标题自动生成、按页建讲稿并编译）/ 重命名标题 / 删除；写盘见 `vite-content-api-plugin.ts`（仅 dev） |
 | 知识库 | `content/` 示例 + `content-private/` 私有（见 `docs/content-decks.md`） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 

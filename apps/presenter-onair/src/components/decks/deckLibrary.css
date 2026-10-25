@@ -1,8 +1,8 @@
-/* 场次库（导入 / 切换 / 管理答辩 PDF）
+/* 场次库（导入 / 管理答辩 PDF）
  *
- * 布局：宽屏两栏（左「导入」右侧「场次列表」），窄屏单栏。
- * 交互层级：每张卡片 1 个主操作（讲稿导演台）+ 1 个次操作（去汇报），
- * 补建 / 删除收进「更多」，避免一行堆 5 个按钮。
+ * 布局：单列 —— 顶部一行「全部场次 · 共 N 场 + 导入 PDF + 刷新」，下面卡片网格。
+ * 导入只需一个按钮：点选 PDF 后自动生成场次 ID 与标题（标题可事后重命名）。
+ * 每张卡片 1 个主操作（讲稿导演台）+ 1 个次操作（去汇报），其余收进「更多」。
  */
 
 .deck-library {
@@ -53,13 +53,14 @@
   color: #ffb4c2;
 }
 
-/* ── 两栏 ── */
+/* ── 列表头 ── */
 
-.deck-library-columns {
-  display: grid;
-  grid-template-columns: minmax(300px, 360px) 1fr;
-  gap: 20px;
-  align-items: start;
+.deck-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .deck-section-title {
@@ -78,130 +79,10 @@
   color: #8d97a6;
 }
 
-/* ── 导入卡片 ── */
-
-.deck-import-card {
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.deck-import-hint {
-  margin: 0;
-  color: #8d97a6;
-  font-size: 0.8rem;
-  line-height: 1.6;
-}
-
-.deck-file-drop {
+.deck-list-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px;
-  border: 1px dashed #2a4a6b;
-  border-radius: 10px;
-  background: #0f1c33;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.deck-file-drop:hover,
-.deck-file-drop:focus-within {
-  border-color: #3b82f6;
-  background: #12233d;
-}
-
-.deck-file-drop.has-file {
-  border-style: solid;
-  border-color: #2c6b4a;
-}
-
-.deck-file-drop input[type='file'] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.deck-file-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.85rem;
-  color: #c7d0dd;
-}
-
-.deck-file-drop.has-file .deck-file-name {
-  color: #b9f0c9;
-}
-
-.deck-file-action {
-  flex: none;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: #0f3460;
-  color: #dbe6f3;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.deck-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: #9aa4b2;
-}
-
-.deck-field input[type='text'] {
-  padding: 8px 10px;
-  background: #0f1c33;
-  border: 1px solid #0f3460;
-  border-radius: 8px;
-  color: #e0e0e0;
-  font-size: 0.9rem;
-  outline: none;
-}
-
-.deck-field input[type='text']:focus {
-  border-color: #3b82f6;
-}
-
-.deck-field input[type='text'][aria-invalid='true'] {
-  border-color: #6b2436;
-}
-
-.deck-field-hint {
-  margin: -4px 0 0;
-  color: #7d8797;
-  font-size: 0.75rem;
-}
-
-.deck-field-error {
-  margin: -4px 0 0;
-  color: #ff9fb0;
-  font-size: 0.75rem;
-}
-
-.deck-import-actions {
-  display: flex;
   gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 2px;
 }
 
 /* ── 按钮 ── */
@@ -217,6 +98,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
 }
 
 .deck-primary-button {
@@ -265,52 +147,17 @@
   cursor: not-allowed;
 }
 
-.deck-link-button {
-  flex: none;
-  background: none;
-  border: none;
-  padding: 2px 0;
-  color: #7fb2e5;
-  font-size: 0.78rem;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.deck-link-button:hover:not(:disabled) {
-  color: #a9cdf0;
-}
-
-.deck-link-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 /* ── 场次列表 ── */
-
-.deck-list-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.deck-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
 
 .deck-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 14px;
 }
 
 .deck-list-empty {
   margin: 0;
-  padding: 24px 16px;
+  padding: 28px 16px;
   border: 1px dashed #2a4a6b;
   border-radius: 10px;
   color: #8d97a6;
@@ -358,6 +205,7 @@
 
 .deck-card-heading {
   min-width: 0;
+  flex: 1;
 }
 
 .deck-card-title {
@@ -411,6 +259,35 @@
   white-space: nowrap;
 }
 
+/* ── 重命名 ── */
+
+.deck-rename-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.deck-rename-form input[type='text'] {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  background: #0f1c33;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.deck-rename-form .deck-primary-button,
+.deck-rename-form .deck-ghost-button {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+/* ── 状态芯片 ── */
+
 .deck-card-chips {
   display: flex;
   flex-wrap: wrap;
@@ -440,8 +317,8 @@
 .deck-card-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  flex-wrap: wrap;
   margin-top: auto;
 }
 
@@ -450,70 +327,60 @@
   font-size: 0.82rem;
 }
 
-/* ── 「更多」菜单 ── */
+/* ── 图标按钮（重命名 / 删除） ── */
 
-.deck-more {
-  position: relative;
-  margin-left: auto;
-}
-
-.deck-more > summary {
-  list-style: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #2a4a6b;
-  color: #c7d0dd;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-}
-
-.deck-more > summary::-webkit-details-marker {
-  display: none;
-}
-
-.deck-more > summary:hover {
-  background: #12233d;
-}
-
-.deck-more[open] > summary {
-  background: #12233d;
-  border-color: #3b82f6;
-}
-
-.deck-more-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 30;
+.deck-card-title-row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
-  min-width: 180px;
-  padding: 8px;
-  background: #101a2c;
-  border: 1px solid #2a4a6b;
-  border-radius: 10px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  min-width: 0;
 }
 
-.deck-more-menu button {
-  width: 100%;
-  text-align: left;
+.deck-icon-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #9bb8d3;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.deck-icon-button:hover:not(:disabled) {
+  background: #12233d;
+  border-color: #2a4a6b;
+  color: #dbe6f3;
+}
+
+.deck-icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.deck-rename-trigger {
+  color: #7d8797;
+}
+
+.deck-delete-trigger {
+  width: 30px;
+  height: 30px;
+}
+
+.deck-delete-trigger:hover:not(:disabled) {
+  background: #3a1620;
+  border-color: #6b2436;
+  color: #ff9fb0;
 }
 
 /* ── 响应式 ── */
-
-@media (max-width: 980px) {
-  .deck-library-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .deck-import-card {
-    position: static;
-  }
-}
 
 @media (max-width: 640px) {
   .deck-library-body {
@@ -522,13 +389,5 @@
 
   .deck-list {
     grid-template-columns: 1fr;
-  }
-
-  .deck-card-actions {
-    gap: 6px;
-  }
-
-  .deck-more {
-    margin-left: 0;
   }
 }

@@ -121,19 +121,23 @@ cd packages/director && DECK_ID=my-deck npm run compile:deck
 
 `activeDeckId` 来自设置 `present.activeDeckId`（默认 `demo`）。
 
-## 场次库（应用内导入 / 切换 / 管理）
+## 场次库（应用内导入 / 管理）
 
 `npm run dev` 下，界面切换菜单里的 **场次库** 负责真实答辩的 PDF 全流程：
 
 | 操作 | 行为 |
 |------|------|
-| 导入 PDF | 选文件 + 填标题/场次 ID → 写入 `public/decks/<id>/slides.pdf`，生成 `content-private/decks/<id>/`（`deck.json`、`performance.json`、按 PDF 页数生成每页 `slides/NN.md`、`faq/<id>.md`），并立即编译出 `script.jsonl`；完成后自动把该场次设为当前场次 |
-| 设为当前场次 | 等价于写 `present.activeDeckId`；汇报/讲稿导演台都会跟随 |
-| 讲稿导演台 / 去汇报 | 切换场次并直接进入对应界面，改完讲稿用「保存并编译」 |
-| 按 PDF 补建讲稿 | 已有 PDF 但讲稿页数不足时，只补缺失页再编译（不覆盖已写内容） |
-| 删除 | 仅限私有场次：删除 `content-private/decks/<id>`、`public/decks/<id>` 与对应 FAQ |
+| 导入 PDF | 右上角**一个按钮**：选 PDF 即导入。**场次 ID 与标题自动生成**（ID 由文件名派生、重名自动追加 `_2`；标题取文件名），写入 `public/decks/<id>/slides.pdf`，生成 `content-private/decks/<id>/`（`deck.json`、`performance.json`、**按 PDF 页数生成每页** `slides/NN.md`、`faq/<id>.md`），并立即编译出 `script.jsonl` |
+| 重命名 | 标题右侧铅笔图标；只改 `deck.json` 的 title（仅私有场次；示例场次只读） |
+| 删除 | 卡片右下角垃圾桶图标；仅限私有场次：删除 `content-private/decks/<id>`、`public/decks/<id>` 与对应 FAQ |
 
-> ⚠️ 写盘接口（导入/补建/删除/保存/编译）由 **dev 专用** Vite 插件提供，
+> 场次库只做导入/管理，不提供「进导演台 / 去汇报」按钮——切换场次统一在
+> **讲稿导演台顶栏**或**汇报顶栏**的「场次」下拉里做（两处共用 `present.activeDeckId`）。
+
+> 不提供「按 PDF 补建讲稿」：本工程不能在内部修改 PDF，导入时已按页全量建好讲稿；
+> 若 PDF 页数在外部变化，直接删除场次重新导入即可（ID 会自动避让）。
+
+> ⚠️ 写盘接口（导入/重命名/删除/保存/编译）由 **dev 专用** Vite 插件提供，
 > 生产构建里 `devApi` 为 false，页面会提示「仅 npm run dev 可用」。
 
 ## 新建一场答辩（私有，推荐）

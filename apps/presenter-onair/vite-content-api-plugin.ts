@@ -129,12 +129,6 @@ function resolvePdfPath(deckId: string, contentDir: string): string | null {
   return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
 }
 
-async function readPdfPageCount(pdfPath: string): Promise<number> {
-  const bytes = fs.readFileSync(pdfPath);
-  const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-  return doc.getPageCount();
-}
-
 function countSlidePages(contentDir: string, deckId: string): number {
   const slidesDir = path.join(contentDir, 'decks', deckId, 'slides');
   if (!fs.existsSync(slidesDir)) {
@@ -282,32 +276,55 @@ async function importDeck(params: {
   };
 }
 
-/** 已有场次：按 PDF 页数补建缺失讲稿并重新编译。 */
-async function scaffoldExistingDeck(
-  deckId: string,
-): Promise<{ deckId: string; pageCount: number; createdSlides: number; scriptActions: number }> {
-  const contentDir = resolveDeckContentRoot(deckId);
-  const pdfPath = resolvePdfPath(deckId, contentDir);
-  if (!pdfPath) {
-    throw new Error(
-      `场次 ${deckId} 还没有 PDF：请放到 public/decks/${deckId}/slides.pdf`,
-    );
-  }
+/** 从 PDF 文件名派生场次标题（去扩展名）；无可用文字时回退。 */
+function deckTitleFromFileName(fileName: string): string {
+  const base = fileName
+    .replace(/^.*[\\/]/, '')
+    .replace(/\.pdf$/i, '')
+    .trim();
+  return (base || '未命名场次').slice(0, 80);
+}
 
-  const pageCount = await readPdfPageCount(pdfPath);
-  if (pageCount < 1 || pageCount > MAX_SLIDES) {
-    throw new Error(`PDF 页数需在 1–${MAX_SLIDES} 之间（当前 ${pageCount} 页）`);
+/** 生成一个未被占用的私有场次 ID（同一标题重复导入时追加 _2、_3…）。 */
+function uniquePrivateDeckId(base: string): string {
+  const slug = normalizeDeckId(base);
+  let stem = /^[a-z]/.test(slug) ? slug : `deck_${slug}`;
+  stem = stem
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 24);
+  if (!stem) {
+    stem = 'deck';
   }
-
-  const createdSlides = createMissingSlides(contentDir, deckId, pageCount);
-  const compiled = compileDeckDir(contentDir, deckId);
-  if (compiled.issues.length > 0) {
-    throw new Error(
-      compiled.issues.map((issue) => `${issue.source}: ${issue.message}`).join('; '),
-    );
+  if (!/^[a-z]/.test(stem)) {
+    stem = `deck_${stem}`.slice(0, 24);
   }
+  let candidate = stem;
+  let index = 2;
+  while (
+    fs.existsSync(path.join(PRIVATE_CONTENT_DIR, 'decks', candidate, 'deck.json'))
+  ) {
+    candidate = `${stem}_${index}`;
+    index += 1;
+  }
+  return candidate;
+}
 
-  return { deckId, pageCount, createdSlides, scriptActions: compiled.count };
+/** 重写私有场次 deck.json 的 title，保留其它字段。 */
+function writeDeckTitle(deckId: string, title: string): void {
+  const manifestPath = path.join(
+    PRIVATE_CONTENT_DIR,
+    'decks',
+    deckId,
+    'deck.json',
+  );
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Record<
+    string,
+    unknown
+  >;
+  manifest.title = title;
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 }
 
 export function contentDeckApi(): Plugin {
@@ -327,26 +344,30 @@ export function contentDeckApi(): Plugin {
           return;
         }
 
-        // 导入 PDF（原始 PDF 字节流，场次 ID / 标题走查询参数）
+        // 导入 PDF（原始字节流）：场次 ID 与标题均可自动生成，fileName 用于派生二者
         if (url === '/api/content/decks/import' && req.method === 'POST') {
           try {
-            const deckId = normalizeDeckId(query.get('deckId') ?? '');
-            const title = (query.get('title') ?? '').trim();
-            if (!deckId || !isValidDeckId(deckId)) {
-              sendJson(res, 400, { ok: false, message: '场次 ID 非法（小写字母开头，可含数字/下划线）' });
+            const fileName = (query.get('fileName') ?? '').trim();
+            const explicitId = normalizeDeckId(query.get('deckId') ?? '');
+            const derivedTitle = deckTitleFromFileName(fileName);
+            const deckId = explicitId || uniquePrivateDeckId(derivedTitle);
+            if (!isValidDeckId(deckId)) {
+              sendJson(res, 400, {
+                ok: false,
+                message: '场次 ID 非法（小写字母开头，可含数字/下划线）',
+              });
               return;
             }
-            if (!title) {
-              sendJson(res, 400, { ok: false, message: '标题不能为空' });
-              return;
-            }
+            const title =
+              (query.get('title') ?? '').trim() || derivedTitle;
+
             const pdfBytes = await readRawBody(req, MAX_PDF_BYTES);
             if (pdfBytes.length < 5 || pdfBytes.subarray(0, 5).toString() !== '%PDF-') {
               sendJson(res, 400, { ok: false, message: '不是有效的 PDF 文件' });
               return;
             }
             const result = await importDeck({ deckId, title, pdfBytes });
-            sendJson(res, 200, { ok: true, ...result });
+            sendJson(res, 200, { ok: true, title, ...result });
           } catch (error) {
             sendJson(res, 400, {
               ok: false,
@@ -356,17 +377,34 @@ export function contentDeckApi(): Plugin {
           return;
         }
 
-        const scaffoldMatch = url?.match(/^\/api\/content\/decks\/([^/]+)\/scaffold$/);
-        if (scaffoldMatch && req.method === 'POST') {
-          try {
-            const result = await scaffoldExistingDeck(
-              decodeURIComponent(scaffoldMatch[1]),
-            );
-            sendJson(res, 200, { ok: true, ...result });
-          } catch (error) {
+        // 重命名私有场次标题（只改 deck.json 的 title）
+        const titleMatch = url?.match(/^\/api\/content\/decks\/([^/]+)\/title$/);
+        if (titleMatch && req.method === 'PATCH') {
+          const deckId = decodeURIComponent(titleMatch[1]);
+          if (!isPrivateDeck(deckId)) {
             sendJson(res, 400, {
               ok: false,
-              message: error instanceof Error ? error.message : '补建讲稿失败',
+              message: '只有私有场次可以重命名（示例场次不可改）',
+            });
+            return;
+          }
+          try {
+            const body = await readJsonBody<{ title?: string }>(req);
+            const title = (body.title ?? '').trim();
+            if (!title) {
+              sendJson(res, 400, { ok: false, message: '标题不能为空' });
+              return;
+            }
+            if (title.length > 80) {
+              sendJson(res, 400, { ok: false, message: '标题最多 80 个字符' });
+              return;
+            }
+            writeDeckTitle(deckId, title);
+            sendJson(res, 200, { ok: true, deckId, title });
+          } catch (error) {
+            sendJson(res, 500, {
+              ok: false,
+              message: error instanceof Error ? error.message : '重命名失败',
             });
           }
           return;

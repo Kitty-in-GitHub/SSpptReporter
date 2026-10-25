@@ -22,6 +22,54 @@
 
 ---
 
+### 2026-10-25 · 场次库卡片动作精简（铅笔重命名 + 垃圾桶删除）
+
+- **需求**：卡片的「讲稿导演台 / 去汇报」多余（切换在导演台顶栏更顺）；「更多」菜单里两项要拿出来；重命名用铅笔放标题右侧，删除用垃圾桶放卡片右下角
+- **改动**：
+  - 删除卡片上的「讲稿导演台 / 去汇报」与整个「更多」`<details>` 菜单
+  - **铅笔** `✎` 紧挨场次标题右侧（`aria-label`/`title` = 重命名；`devApi` 关闭或忙碌时禁用）
+  - **垃圾桶** `🗑` 在卡片底部右对齐（示例场次禁用并提示「示例场次不可删除」；忙碌时显示「处理中…」）
+  - 面板 props 去掉 `onOpenEditor` / `onOpenPresent`，`DeckLibrarySession` 同步清理
+  - 文案删除 `editorAction` / `presentAction` / `more`，新增 `deletePublicHint`；CSS 删除 `.deck-more*`，新增 `.deck-card-title-row` / `.deck-icon-button`（含 hover/disabled 与删除红色态）
+- **验证**：`typecheck` / `lint`（0 error）/ `build` 通过；dev 下 `/`、`DeckLibraryPanel.tsx`、`deckLibrary.css` 均 200，CSS 含 `.deck-icon-button`
+- **相关文件**：`apps/presenter-onair/src/components/decks/{DeckLibraryPanel.tsx,deckLibrary.css}` · `src/app/DeckLibrarySession.tsx` · `src/constants/uiZh.ts` · `docs/content-decks.md`
+- **验证方式**：`npm run dev` → 场次库：标题右侧铅笔可改名；右下角垃圾桶仅私有场次可用
+
+---
+
+### 2026-10-25 · 移除「按 PDF 补建讲稿」（工程内不能改 PDF，故无用）
+
+- **判断**：本工程没有 PDF 编辑能力，PDF 页数不会在场次内部变化；导入时已按页全量建好讲稿，因此「补建缺失页」没有真实使用场景
+- **移除范围**（整条链路）：
+  - UI：卡片「更多」里的「按 PDF 补建讲稿」按钮与 `handleScaffold`
+  - 前端 API：`scaffoldDeck()`
+  - dev 写盘路由：`POST /api/content/decks/:id/scaffold` 与 `scaffoldExistingDeck()`、`readPdfPageCount()`（导入仍用 `PDFDocument.load` 直接取页数）
+  - 文案：`UI_DECKS.scaffoldAction / scaffoldNoPdfHint / scaffoldDone`
+  - 文档：`docs/content-decks.md` 表格与 `AGENTS.md` 入口行
+- **保留**：`createMissingSlides()`（导入时建全部页要用）；页数变化的唯一处理方式改为「删场次 → 重新导入」（ID 自动避让）
+- **验证**：`typecheck` / `lint`（0 error）/ `build` 通过；dev 实测导入 `Smoke 测试.pdf` → `smoke`（6 页/11 条）、重命名 200、`POST …/scaffold` 已 **404**、删除 200、列表恢复干净；全仓 grep 无 scaffold 残留
+- **相关文件**：`apps/presenter-onair/src/components/decks/DeckLibraryPanel.tsx` · `src/lib/decks/deckLibraryApi.ts` · `src/constants/uiZh.ts` · `vite-content-api-plugin.ts` · `docs/content-decks.md` · `AGENTS.md`
+- **验证方式**：`npm run dev` → 场次库：只剩「重命名 / 删除场次」两个次要动作
+
+---
+
+### 2026-10-25 · 场次库收敛为「一键导入 + 自动命名 + 可重命名」
+
+- **需求**：切换场次在讲稿导演台更顺手 → 场次库去掉「设为当前」；导入缩成一个按钮；场次 ID 由程序生成；导入不再填标题；标题允许事后重命名
+- **导入**：
+  - 顶栏只有一个 **「导入 PDF」** 按钮（隐藏 `<input type=file>`），点选即导入，不再有标题/ID 表单
+  - **ID 自动生成**：服务端 `uniquePrivateDeckId()` 由文件名派生 slug（中文名回退 `deck`），重名自动追加 `_2`、`_3`…；**标题取文件名**（去 `.pdf`，≤80 字）
+  - 导入后不再自动切换场次，只高亮新卡片（切换交给导演台/去汇报）
+- **重命名**：新增 `PATCH /api/content/decks/:id/title`（仅私有场次，改写 `deck.json` 的 `title`，保留其它字段）；卡片「更多 → 重命名」就地变输入框，Enter 保存 / Esc 取消
+- **去掉**：卡片上的「设为当前」链接、导入区的标题/ID/重置/校验提示，以及两栏布局（改为单列：顶部「全部场次 · 共 N 场 + 导入 + 刷新」，下方卡片网格）
+- **验证**：
+  - 接口实测：导入 `我的答辩 2026.pdf` → `{deckId:"deck_2026", title:"我的答辩 2026"}`；再次导入同名 → `deck_2026_2`；`PATCH .../title` → 列表标题变为「答辩最终版」；随后删除两个测试场次恢复干净
+  - `typecheck` / `lint`（0 error）/ `build` 通过；dev 下 `DeckLibraryPanel.tsx` 200
+- **相关文件**：`apps/presenter-onair/src/components/decks/{DeckLibraryPanel.tsx,deckLibrary.css}` · `src/lib/decks/deckLibraryApi.ts` · `src/constants/uiZh.ts` · `vite-content-api-plugin.ts` · `docs/content-decks.md` · `AGENTS.md`
+- **验证方式**：`npm run dev` → 场次库点「导入 PDF」→ 卡片出现（标题=文件名）→「更多 → 重命名」改标题
+
+---
+
 ### 2026-10-25 · 场次库 UI / 交互重构（两栏 + 主次操作 + 实时校验）
 
 - **问题**：卡片一行堆 5 个按钮（设为当前/导演台/汇报/补建/删除），主次不分；导入区与列表挤在一列；导入按钮永远可点（错误只能等请求返回）；忙碌时只是禁用、没有反馈

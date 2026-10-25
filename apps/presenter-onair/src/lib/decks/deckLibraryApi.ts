@@ -20,6 +20,8 @@ export interface DeckListResult {
 
 export interface DeckImportResult {
   deckId: string;
+  /** 服务端从文件名派生的标题（可稍后重命名）。 */
+  title?: string;
   pageCount: number;
   createdSlides: number;
   scriptActions: number;
@@ -61,15 +63,11 @@ export async function fetchDeckLibrary(): Promise<DeckListResult> {
   };
 }
 
+/** 导入 PDF：场次 ID 与标题由服务端从文件名自动生成。 */
 export async function importDeckPdf(params: {
   file: File;
-  deckId: string;
-  title: string;
 }): Promise<DeckImportResult> {
-  const query = new URLSearchParams({
-    deckId: params.deckId,
-    title: params.title,
-  });
+  const query = new URLSearchParams({ fileName: params.file.name });
   const response = await fetch(`/api/content/decks/import?${query.toString()}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/pdf' },
@@ -78,12 +76,20 @@ export async function importDeckPdf(params: {
   return parseResponse<DeckImportResult>(response);
 }
 
-export async function scaffoldDeck(deckId: string): Promise<DeckImportResult> {
+/** 重命名场次标题（只改 deck.json 的 title，不动 ID 与文件）。 */
+export async function renameDeckTitle(
+  deckId: string,
+  title: string,
+): Promise<{ deckId: string; title: string }> {
   const response = await fetch(
-    `/api/content/decks/${encodeURIComponent(deckId)}/scaffold`,
-    { method: 'POST' },
+    `/api/content/decks/${encodeURIComponent(deckId)}/title`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    },
   );
-  return parseResponse<DeckImportResult>(response);
+  return parseResponse<{ deckId: string; title: string }>(response);
 }
 
 export async function deleteDeck(deckId: string): Promise<void> {

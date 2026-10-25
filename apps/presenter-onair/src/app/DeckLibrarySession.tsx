@@ -16,8 +16,6 @@ export function DeckLibrarySession({
     <DeckLibraryPanel
       activeDeckId={settingsHook.settings.present.activeDeckId || 'demo'}
       onSwitchDeck={settingsHook.updatePresentActiveDeckId}
-      onOpenEditor={() => settingsHook.updatePresentSessionMode('edit')}
-      onOpenPresent={() => settingsHook.updatePresentSessionMode('present')}
       onToggleSettings={onToggleSettings}
     />
   );
