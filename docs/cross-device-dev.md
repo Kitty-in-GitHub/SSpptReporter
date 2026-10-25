@@ -170,12 +170,31 @@ Web Speech（Director Phase0 按钮）通常**无 viseme**。在 Settings 配置
 
 先看网关日志（`npm run dev` 的 `[tts]` 行）。最常见是 **edge-tts 版本过旧**：微软调整 `Sec-MS-GEC` 反滥用令牌后，旧版在 WebSocket 握手就被 403 拒绝，表现为「Edge TTS 网关失败」。
 
+**先确认网关用的是哪个 Python**（最容易踩的坑：终端没激活 conda 时，网关会静默改用系统 Python，而两个环境的 pip 包各自独立）：
+
 ```bash
-conda activate ssreporter
+# 启动日志会打印实际解释器与 edge-tts 版本
+[tts-gateway] Using Python: D:\miniconda\envs\ssreporter\python.exe (edge-tts 7.3.1)
+
+# 或查健康接口（含 edge_tts_version 字段）
+curl http://127.0.0.1:5050/health
+```
+
+选 Python 的优先级：`PYTHON` 环境变量 → `CONDA_PREFIX`（`conda activate` 后的环境）→ PATH 上的 `python`。
+要显式指定：`$env:PYTHON='D:\miniconda\envs\ssreporter\python.exe'; npm run dev`。
+
+升级（**对上面日志里那个 Python 执行**）：
+
+```bash
+conda activate ssreporter          # 或先确认日志里的解释器路径
 python -m pip install -U edge-tts
-npm run dev:stop      # 必须重启：运行中的网关内存里还是旧版本
+npm run dev:stop                   # 必须重启：运行中的网关内存里还是旧版本
 npm run dev
 ```
+
+> 本机若同时存在系统 Python（如 `C:\Python312`）与 conda 环境，**两个都建议升级**；
+> 否则某次启动没激活 conda，就会退回旧版本再次 403。
+> 版本低于 `7.3.1` 时 `start.mjs` 会打印警告，`/health` 的 `edge_tts_version` 也可核对。
 
 自检（应返回 `OK bytes=...`）：
 

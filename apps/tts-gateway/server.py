@@ -143,11 +143,23 @@ def embed_texts_sync(texts: list[str]) -> list[list[float]]:
     return vectors
 
 
+def installed_version(package: str) -> str:
+    try:
+        from importlib.metadata import version
+
+        return version(package)
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 @app.get("/health")
 async def health() -> dict[str, str | bool]:
     return {
         "status": "ok",
         "engine": "edge-tts",
+        # 上游鉴权随 edge-tts 版本走：版本过旧会在合成时 403，
+        # 这个字段用于前端/排错时确认网关实际加载的版本。
+        "edge_tts_version": installed_version("edge-tts"),
         "asr": whisper_available(),
         "whisper_model": WHISPER_MODEL_SIZE if whisper_available() else "",
         "embedding": embed_available(),

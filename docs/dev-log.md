@@ -22,6 +22,54 @@
 
 ---
 
+### 2026-10-25 · 场次库 UI / 交互重构（两栏 + 主次操作 + 实时校验）
+
+- **问题**：卡片一行堆 5 个按钮（设为当前/导演台/汇报/补建/删除），主次不分；导入区与列表挤在一列；导入按钮永远可点（错误只能等请求返回）；忙碌时只是禁用、没有反馈
+- **布局**：
+  - 宽屏两栏：左侧「导入 PDF 场次」（sticky，滚动列表时不跑掉），右侧「全部场次」+ 刷新 + 场次计数；窄屏（<980px）自动单栏，<640px 卡片单列
+  - 卡片重排：标题 + `id` + 私有/示例标签 + 「当前场次」徽章；状态芯片（PDF 已就位/缺 PDF、页数、指令数；未编译时用警示色标「未编译」）
+- **交互**：
+  - 每卡主操作 **讲稿导演台**（primary）、次操作 **去汇报**（secondary），非当前场次右上角提供「设为当前」链接
+  - **补建 / 删除收进「更多」菜单**（`<details>`，点动作后自动收起），删除仅私有可用
+  - 导入表单实时校验：PDF 类型、标题非空、场次 ID 合法（`aria-invalid` 红边 + 文案）、**ID 与现有场次冲突时直接提示并禁用导入**；「导入并生成讲稿」只在可导入时启用，另有「重置」
+  - 文件选择区改为点击即选（隐藏原生 input + 文件名字样），选中后边框变绿
+  - 忙碌态：该卡片按钮整体替换为「处理中…」，`aria-busy`；刷新按钮显示「刷新中…」
+  - 成功/警告/错误提示条分区着色；导入成功后新卡片 flash 高亮 2.2s 并自动设为当前场次
+- **验证**：`typecheck` / `lint`（0 error）/ `build` 通过；dev 下 `/`、`DeckLibraryPanel.tsx`、`deckLibrary.css`、`/api/content/decks` 均 200
+- **相关文件**：`apps/presenter-onair/src/components/decks/{DeckLibraryPanel.tsx,deckLibrary.css}` · `src/constants/uiZh.ts`
+- **验证方式**：`npm run dev` → 场次库：导入（含错误输入）、切换、更多菜单里的补建/删除
+
+---
+
+### 2026-10-25 · 修复讲稿导演台 PDF 画面过小（画布容器样式未随按需加载）
+
+- **现象**：讲稿导演台左侧 PDF 很小，远不到画面一半
+- **根因**：`.present-slide-viewer`（`height:100%` / flex 居中 / padding）与 `.present-slide-canvas`（`max-height: calc(100% - 28px)`）仍留在 `presentLayouts.css` 里。该文件只由「汇报」引入；`PdfSlideViewer` 被讲稿导演台复用时只引入了共享的 `presentChrome.css`。**容器没有 `height:100%` → 高度由内容撑开**，画布按「内容高度」计算可用高度，于是被压成 ~200px 宽
+- **修法**：把这两条规则移到 `presentChrome.css`（`PdfSlideViewer` 自己引入），并从 `presentLayouts.css` 删除，避免重复；`useEffect` 里本就有 `ResizeObserver`，样式到位后会自动按可用区域重算
+- **验证**：`build` 通过；共享块 `AppToolbar-*.css` 含 `.present-slide-viewer{height:100%}`，`EditSession-*.css` / `PresentSession-*.css` 均无重复；dev 下 `/src/components/present/presentChrome.css` 已含两条规则，`PdfSlideViewer.tsx` / `ScriptEditorShell.tsx` 均 200
+- **相关文件**：`apps/presenter-onair/src/components/present/{presentChrome.css,presentLayouts.css}`
+- **验证方式**：`npm run dev` → 讲稿导演台：PDF 应占左侧约一半宽、高度铺满（16:9 幻灯按宽度贴合）
+
+---
+
+### 2026-10-25 · 修复 TTS 再报错：系统 Python 仍是旧版 edge-tts（并让版本可见）
+
+- **现象**：`npm run dev` 下 TTS 又报错（前端「Edge TTS 网关失败」）
+- **根因**：上次只升级了 conda 环境（`ssreporter`）里的 edge-tts，**系统 Python `C:\Python312` 仍是 7.2.8**。网关选 Python 的顺序是 `PYTHON` → `CONDA_PREFIX` → PATH 的 `python`；终端里没 `conda activate ssreporter` 时就会静默用系统 Python → 合成 403。实测系统 Python 直连：`WSServerHandshakeError: 403`
+- **修法**：
+  - 升级**系统 Python** 的 edge-tts 7.2.8 → 7.3.1，复测直连合成成功（8 KB）
+  - `apps/tts-gateway/scripts/start.mjs`：启动日志打印 `Using Python: <路径> (edge-tts x.y.z)`；低于 `7.3.1` 时打印明确警告（含升级命令）
+  - `apps/tts-gateway/scripts/python.mjs`：新增 `pythonPackageVersion` / `compareVersions`
+  - `apps/tts-gateway/server.py`：`/health` 增加 `edge_tts_version`
+  - 把「依赖检查未通过」的误导性文案改成「自动安装 requirements…」，安装失败才报错
+  - `docs/cross-device-dev.md`：TTS 排错补充「网关用哪个 Python」的优先级、启动日志/`/health` 核对方法、双 Python 都要升级的提醒
+- **验证**：conda Python 启动日志 `(edge-tts 7.3.1)`、`/health` 返回 `edge_tts_version:"7.3.1"`、`/v1/audio/speech` 200（14 KB）；两个 Python 的 `pythonPackageVersion` 均为 `7.3.1`；三个脚本语法检查通过
+- **备注**：受限沙箱里 `spawnSync` 捕获 stdout 会失败（版本查询返回 null），属沙箱限制；用户终端正常，代码已 fail-soft
+- **相关文件**：`apps/tts-gateway/{server.py,requirements.txt,scripts/start.mjs,scripts/python.mjs}` · `docs/cross-device-dev.md`
+- **验证方式**：`npm run dev` → 看 `[tts-gateway] Using Python …` 行版本应为 7.3.1 → Director 试播有声音
+
+---
+
 ### 2026-10-23 · 讲稿导演台支持切换汇报场次
 
 - **需求**：不必先回「场次库」或「汇报」，在讲稿导演台就能切换到另一份答辩 PDF 的讲稿

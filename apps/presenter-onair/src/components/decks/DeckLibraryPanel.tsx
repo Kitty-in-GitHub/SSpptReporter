@@ -3,7 +3,7 @@ import {
   isValidDeckId,
   normalizeDeckId,
 } from '@ssreporter/director';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UI_DECKS } from '../../constants/uiZh';
 import {
   deleteDeck,
@@ -27,6 +27,14 @@ function describeError(error: unknown): string {
   return error instanceof Error ? error.message : '操作失败';
 }
 
+/** 点「更多」菜单里的动作后顺手收起菜单。 */
+function closeMenu(event: React.MouseEvent<HTMLButtonElement>) {
+  const details = event.currentTarget.closest('details');
+  if (details) {
+    details.open = false;
+  }
+}
+
 export function DeckLibraryPanel({
   activeDeckId,
   onSwitchDeck,
@@ -41,12 +49,27 @@ export function DeckLibraryPanel({
   const [busyDeckId, setBusyDeckId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [highlightDeckId, setHighlightDeckId] = useState<string | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [deckId, setDeckId] = useState('');
   const deckIdTouchedRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const normalizedId = normalizeDeckId(deckId);
+  const idValid = isValidDeckId(normalizedId);
+  const idExists = useMemo(
+    () => decks.some((deck) => deck.id === normalizedId),
+    [decks, normalizedId],
+  );
+  const canImport =
+    devApi &&
+    Boolean(file) &&
+    title.trim().length > 0 &&
+    idValid &&
+    !idExists &&
+    !isImporting;
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -66,19 +89,33 @@ export function DeckLibraryPanel({
     void refresh();
   }, [refresh]);
 
+  const resetForm = useCallback(() => {
+    setFile(null);
+    setTitle('');
+    setDeckId('');
+    deckIdTouchedRef.current = false;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const picked = event.target.files?.[0] ?? null;
-    setFile(picked);
     setError(null);
     setNotice(null);
     if (!picked) {
+      setFile(null);
       return;
     }
     if (!picked.name.toLowerCase().endsWith('.pdf')) {
       setError(UI_DECKS.fileTypeError);
       setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
+    setFile(picked);
     if (!title.trim()) {
       setTitle(picked.name.replace(/\.pdf$/i, ''));
     }
@@ -88,21 +125,9 @@ export function DeckLibraryPanel({
   };
 
   const handleImport = async () => {
-    if (!file) {
-      setError(UI_DECKS.needFile);
+    if (!canImport || !file) {
       return;
     }
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) {
-      setError(UI_DECKS.needTitle);
-      return;
-    }
-    const normalizedId = normalizeDeckId(deckId);
-    if (!normalizedId || !isValidDeckId(normalizedId)) {
-      setError(`${UI_DECKS.needDeckId}（${UI_DECKS.deckIdHint}）`);
-      return;
-    }
-
     setIsImporting(true);
     setError(null);
     setNotice(null);
@@ -110,19 +135,14 @@ export function DeckLibraryPanel({
       const result = await importDeckPdf({
         file,
         deckId: normalizedId,
-        title: trimmedTitle,
+        title: title.trim(),
       });
       onSwitchDeck(result.deckId);
       setNotice(
         `${UI_DECKS.importDone}：${result.deckId}（${result.pageCount} ${UI_DECKS.pagesSuffix}，${result.scriptActions} ${UI_DECKS.actionsSuffix}）`,
       );
-      setFile(null);
-      setTitle('');
-      setDeckId('');
-      deckIdTouchedRef.current = false;
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      setHighlightDeckId(result.deckId);
+      resetForm();
       await refresh();
     } catch (importError) {
       setError(describeError(importError));
@@ -138,7 +158,7 @@ export function DeckLibraryPanel({
     try {
       const result = await scaffoldDeck(targetId);
       setNotice(
-        `${UI_DECKS.scaffoldDone}：${result.createdSlides} 页新建，共 ${result.scriptActions} ${UI_DECKS.actionsSuffix}`,
+        `${UI_DECKS.scaffoldDone}：新建 ${result.createdSlides} 页，共 ${result.scriptActions} ${UI_DECKS.actionsSuffix}`,
       );
       await refresh();
     } catch (scaffoldError) {
@@ -169,37 +189,41 @@ export function DeckLibraryPanel({
     }
   };
 
+  const hasFormContent = Boolean(file) || Boolean(title) || Boolean(deckId);
+
   return (
     <div className="deck-library">
-      <AppToolbar
-        onToggleSettings={onToggleSettings}
-        title={UI_DECKS.title}
-      />
+      <AppToolbar onToggleSettings={onToggleSettings} title={UI_DECKS.title} />
 
       <div className="deck-library-body">
-        <p className="deck-library-lead">{UI_DECKS.lead}</p>
         {!devApi ? (
-          <p className="deck-library-notice is-warning">
-            {UI_DECKS.devOnlyNotice}
-          </p>
+          <p className="deck-banner is-warning">{UI_DECKS.devOnlyNotice}</p>
         ) : null}
-        {error ? <p className="deck-library-error">{error}</p> : null}
-        {notice ? <p className="deck-library-notice">{notice}</p> : null}
+        {error ? <p className="deck-banner is-error">{error}</p> : null}
+        {notice ? <p className="deck-banner is-success">{notice}</p> : null}
 
-        <section className="deck-import-card">
-          <h2 className="deck-import-title">{UI_DECKS.importTitle}</h2>
-          <div className="deck-import-row">
-            <label className="deck-import-field">
-              <span>{UI_DECKS.fileLabel}</span>
+        <div className="deck-library-columns">
+          <section className="deck-import-card" aria-labelledby="deck-import-title">
+            <h2 className="deck-section-title" id="deck-import-title">
+              {UI_DECKS.importTitle}
+            </h2>
+            <p className="deck-import-hint">{UI_DECKS.importHint}</p>
+
+            <label className={`deck-file-drop${file ? ' has-file' : ''}`}>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf,.pdf"
+                accept=".pdf,application/pdf"
                 disabled={!devApi || isImporting}
                 onChange={handleFileChange}
               />
+              <span className="deck-file-name">
+                {file ? file.name : UI_DECKS.noFile}
+              </span>
+              <span className="deck-file-action">{UI_DECKS.fileLabel}</span>
             </label>
-            <label className="deck-import-field">
+
+            <label className="deck-field">
               <span>{UI_DECKS.titleLabel}</span>
               <input
                 type="text"
@@ -209,137 +233,201 @@ export function DeckLibraryPanel({
                 onChange={(event) => setTitle(event.target.value)}
               />
             </label>
-            <label className="deck-import-field">
+
+            <label className="deck-field">
               <span>{UI_DECKS.deckIdLabel}</span>
               <input
                 type="text"
                 value={deckId}
                 disabled={!devApi || isImporting}
                 placeholder="my_defense"
+                aria-invalid={deckId.length > 0 && (!idValid || idExists)}
                 onChange={(event) => {
                   deckIdTouchedRef.current = true;
                   setDeckId(event.target.value);
                 }}
               />
             </label>
-          </div>
-          <p className="deck-import-hint">{UI_DECKS.deckIdHint}</p>
-          <div className="deck-import-actions">
-            <button
-              type="button"
-              className="deck-primary-button"
-              disabled={!devApi || isImporting}
-              onClick={() => void handleImport()}
-            >
-              {isImporting ? UI_DECKS.importing : UI_DECKS.importAction}
-            </button>
-            <button
-              type="button"
-              className="deck-secondary-button"
-              disabled={isLoading}
-              onClick={() => void refresh()}
-            >
-              {UI_DECKS.refresh}
-            </button>
-          </div>
-        </section>
+            <p className="deck-field-hint">{UI_DECKS.deckIdHint}</p>
+            {deckId.length > 0 && !idValid ? (
+              <p className="deck-field-error">{UI_DECKS.deckIdInvalid}</p>
+            ) : null}
+            {idExists ? (
+              <p className="deck-field-error">{UI_DECKS.deckIdExists}</p>
+            ) : null}
 
-        <section className="deck-list">
-          {decks.length === 0 && !isLoading ? (
-            <p className="deck-list-empty">{UI_DECKS.empty}</p>
-          ) : null}
-          {decks.map((deck) => {
-            const isActive = deck.id === activeDeckId;
-            const isBusy = busyDeckId === deck.id;
-            return (
-              <article
-                key={deck.id}
-                className={`deck-card${isActive ? ' is-active' : ''}`}
+            <div className="deck-import-actions">
+              <button
+                type="button"
+                className="deck-primary-button"
+                disabled={!canImport}
+                onClick={() => void handleImport()}
               >
-                <header className="deck-card-head">
-                  <div>
-                    <h3 className="deck-card-title">{deck.title}</h3>
-                    <div className="deck-card-id">
-                      {deck.id}
-                      <span className="deck-card-kind">
-                        {deck.isPrivate
-                          ? UI_DECKS.privateLabel
-                          : UI_DECKS.publicLabel}
-                      </span>
-                    </div>
-                  </div>
-                  {isActive ? (
-                    <span className="deck-active-badge">
-                      {UI_DECKS.activeBadge}
-                    </span>
-                  ) : null}
-                </header>
+                {isImporting ? UI_DECKS.importing : UI_DECKS.importAction}
+              </button>
+              <button
+                type="button"
+                className="deck-ghost-button"
+                disabled={!hasFormContent || isImporting}
+                onClick={resetForm}
+              >
+                {UI_DECKS.reset}
+              </button>
+            </div>
+          </section>
 
-                <div className="deck-card-status">
-                  <span
-                    className={`deck-chip${deck.hasPdf ? ' is-ok' : ' is-missing'}`}
-                  >
-                    {deck.hasPdf ? UI_DECKS.hasPdf : UI_DECKS.noPdf}
-                  </span>
-                  <span className="deck-chip">
-                    {deck.slidePages} {UI_DECKS.pagesSuffix}
-                  </span>
-                  <span className="deck-chip">
-                    {deck.scriptActions} {UI_DECKS.actionsSuffix}
-                  </span>
-                </div>
+          <section className="deck-list-section" aria-labelledby="deck-list-title">
+            <header className="deck-list-header">
+              <h2 className="deck-section-title" id="deck-list-title">
+                {UI_DECKS.listTitle}
+                <span className="deck-list-count">
+                  {UI_DECKS.countPrefix}
+                  {decks.length}
+                  {UI_DECKS.countSuffix}
+                </span>
+              </h2>
+              <button
+                type="button"
+                className="deck-ghost-button"
+                disabled={isLoading}
+                onClick={() => void refresh()}
+              >
+                {isLoading ? UI_DECKS.refreshing : UI_DECKS.refresh}
+              </button>
+            </header>
 
-                <div className="deck-card-actions">
-                  <button
-                    type="button"
-                    className="deck-secondary-button"
-                    disabled={isActive}
-                    onClick={() => onSwitchDeck(deck.id)}
-                  >
-                    {UI_DECKS.switchAction}
-                  </button>
-                  <button
-                    type="button"
-                    className="deck-secondary-button"
-                    onClick={() => {
-                      onSwitchDeck(deck.id);
-                      onOpenEditor();
-                    }}
-                  >
-                    {UI_DECKS.editorAction}
-                  </button>
-                  <button
-                    type="button"
-                    className="deck-secondary-button"
-                    onClick={() => {
-                      onSwitchDeck(deck.id);
-                      onOpenPresent();
-                    }}
-                  >
-                    {UI_DECKS.presentAction}
-                  </button>
-                  <button
-                    type="button"
-                    className="deck-secondary-button"
-                    disabled={!devApi || isBusy || !deck.hasPdf}
-                    title={deck.hasPdf ? undefined : UI_DECKS.noPdf}
-                    onClick={() => void handleScaffold(deck.id)}
-                  >
-                    {UI_DECKS.scaffoldAction}
-                  </button>
-                  <button
-                    type="button"
-                    className="deck-danger-button"
-                    disabled={!devApi || isBusy || !deck.isPrivate}
-                    onClick={() => void handleDelete(deck.id)}
-                  >
-                    {UI_DECKS.deleteAction}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </section>
+            {decks.length === 0 && !isLoading ? (
+              <p className="deck-list-empty">{UI_DECKS.empty}</p>
+            ) : (
+              <div className="deck-list">
+                {decks.map((deck) => {
+                  const isActive = deck.id === activeDeckId;
+                  const isBusy = busyDeckId === deck.id;
+                  const isNew = highlightDeckId === deck.id;
+                  return (
+                    <article
+                      key={deck.id}
+                      className={`deck-card${isActive ? ' is-active' : ''}${
+                        isNew ? ' is-new' : ''
+                      }`}
+                      aria-busy={isBusy}
+                    >
+                      <header className="deck-card-head">
+                        <div className="deck-card-heading">
+                          <h3 className="deck-card-title">{deck.title}</h3>
+                          <div className="deck-card-meta">
+                            <code className="deck-card-id">{deck.id}</code>
+                            <span
+                              className={`deck-tag${
+                                deck.isPrivate ? ' is-private' : ' is-public'
+                              }`}
+                            >
+                              {deck.isPrivate
+                                ? UI_DECKS.privateLabel
+                                : UI_DECKS.publicLabel}
+                            </span>
+                          </div>
+                        </div>
+                        {isActive ? (
+                          <span className="deck-active-badge">
+                            {UI_DECKS.activeBadge}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="deck-link-button"
+                            disabled={isBusy}
+                            onClick={() => onSwitchDeck(deck.id)}
+                          >
+                            {UI_DECKS.setActive}
+                          </button>
+                        )}
+                      </header>
+
+                      <div className="deck-card-chips">
+                        <span
+                          className={`deck-chip${deck.hasPdf ? ' is-ok' : ' is-missing'}`}
+                        >
+                          {deck.hasPdf ? UI_DECKS.hasPdf : UI_DECKS.noPdf}
+                        </span>
+                        <span className="deck-chip">
+                          {deck.slidePages} {UI_DECKS.pagesSuffix}
+                        </span>
+                        <span
+                          className={`deck-chip${deck.scriptActions > 0 ? '' : ' is-warning'}`}
+                        >
+                          {deck.scriptActions > 0
+                            ? `${deck.scriptActions} ${UI_DECKS.actionsSuffix}`
+                            : UI_DECKS.uncompiled}
+                        </span>
+                      </div>
+
+                      <footer className="deck-card-actions">
+                        {isBusy ? (
+                          <span className="deck-card-busy">
+                            {UI_DECKS.busy}
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="deck-primary-button"
+                              onClick={() => {
+                                onSwitchDeck(deck.id);
+                                onOpenEditor();
+                              }}
+                            >
+                              {UI_DECKS.editorAction}
+                            </button>
+                            <button
+                              type="button"
+                              className="deck-secondary-button"
+                              onClick={() => {
+                                onSwitchDeck(deck.id);
+                                onOpenPresent();
+                              }}
+                            >
+                              {UI_DECKS.presentAction}
+                            </button>
+                            <details className="deck-more">
+                              <summary>{UI_DECKS.more}</summary>
+                              <div className="deck-more-menu">
+                                <button
+                                  type="button"
+                                  className="deck-secondary-button"
+                                  disabled={!devApi || !deck.hasPdf}
+                                  title={
+                                    deck.hasPdf
+                                      ? undefined
+                                      : UI_DECKS.scaffoldNoPdfHint
+                                  }
+                                  onClick={() => void handleScaffold(deck.id)}
+                                >
+                                  {UI_DECKS.scaffoldAction}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="deck-danger-button"
+                                  disabled={!devApi || !deck.isPrivate}
+                                  onClick={(event) => {
+                                    closeMenu(event);
+                                    void handleDelete(deck.id);
+                                  }}
+                                >
+                                  {UI_DECKS.deleteAction}
+                                </button>
+                              </div>
+                            </details>
+                          </>
+                        )}
+                      </footer>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );
