@@ -5,10 +5,17 @@ import {
   type SessionMode,
 } from './present';
 
-const ALL_MODES: SessionMode[] = ['chat', 'present', 'edit', 'decks', 'mocap'];
+const ALL_MODES: SessionMode[] = [
+  'chat',
+  'present',
+  'edit',
+  'decks',
+  'mocap',
+  'settings',
+];
 
 describe('normalizePresentSettings · sessionMode', () => {
-  it('keeps every supported mode (including decks)', () => {
+  it('keeps every supported mode (including decks and settings)', () => {
     for (const mode of ALL_MODES) {
       expect(normalizePresentSettings({ sessionMode: mode }).sessionMode).toBe(
         mode,

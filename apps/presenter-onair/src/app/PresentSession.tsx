@@ -14,7 +14,6 @@ type SettingsHook = ReturnType<typeof useSettings>;
 
 interface PresentSessionProps {
   settingsHook: SettingsHook;
-  onToggleSettings: () => void;
   onStageModeChange: (active: boolean) => void;
   isProcessing: boolean;
   isSpeaking: boolean;
@@ -26,7 +25,6 @@ interface PresentSessionProps {
 
 export function PresentSession({
   settingsHook,
-  onToggleSettings,
   onStageModeChange,
   isProcessing,
   isSpeaking,
@@ -127,7 +125,6 @@ export function PresentSession({
       onPipBorderlessChange={settingsHook.updatePresentPipBorderless}
       onPipSizeChange={settingsHook.updatePresentPipSize}
       onPipOffsetChange={settingsHook.updatePresentPipOffset}
-      onToggleSettings={onToggleSettings}
       mouthLevelRef={mouthLevelRef}
       isSpeaking={isSpeaking}
       avatarPresenter={avatarPresenter}

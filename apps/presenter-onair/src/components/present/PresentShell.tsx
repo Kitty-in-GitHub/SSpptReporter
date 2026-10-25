@@ -7,7 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
-import { UI_QA, UI_SETTINGS } from '../../constants/uiZh';
+import { UI_QA } from '../../constants/uiZh';
 import type { useDirectorQueue } from '../../hooks/useDirectorQueue';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
 import {
@@ -59,7 +59,6 @@ interface PresentShellProps {
   onPipBorderlessChange: (borderless: boolean) => void;
   onPipSizeChange: (size: number) => void;
   onPipOffsetChange: (offsetX: number, offsetY: number) => void;
-  onToggleSettings: () => void;
   /** 演讲模式：隐藏导演台等外层面板 */
   onStageModeChange?: (active: boolean) => void;
   mouthLevelRef: RefObject<number>;
@@ -131,7 +130,6 @@ export function PresentShell({
   onPipBorderlessChange,
   onPipSizeChange,
   onPipOffsetChange,
-  onToggleSettings,
   onStageModeChange,
   mouthLevelRef,
   isSpeaking,
@@ -503,11 +501,7 @@ export function PresentShell({
       }}
     >
       {!stageMode ? (
-        <AppToolbar
-          onToggleSettings={onToggleSettings}
-          settingsAriaLabel={UI_SETTINGS.ariaLabel}
-          title={deckTitle}
-        >
+        <AppToolbar title={deckTitle}>
           <PresentDeckSelect
             activeDeckId={activeDeckId}
             onDeckChange={onDeckChange}

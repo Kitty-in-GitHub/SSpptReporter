@@ -7,10 +7,9 @@ type SettingsHook = ReturnType<typeof useSettings>;
 
 interface EditSessionProps {
   settingsHook: SettingsHook;
-  onToggleSettings: () => void;
 }
 
-export function EditSession({ settingsHook, onToggleSettings }: EditSessionProps) {
+export function EditSession({ settingsHook }: EditSessionProps) {
   const activeDeckId = settingsHook.settings.present.activeDeckId || 'demo';
   const slideDeck = useSlideDeck(settingsHook.settings.present.activeDeckId);
   const scriptEditor = useDeckScriptEditor(
@@ -24,7 +23,6 @@ export function EditSession({ settingsHook, onToggleSettings }: EditSessionProps
       editor={scriptEditor}
       deckId={activeDeckId}
       visual={settingsHook.settings.visual}
-      onToggleSettings={onToggleSettings}
       onDeckChange={settingsHook.updatePresentActiveDeckId}
     />
   );

@@ -1,4 +1,3 @@
-import { UI_SETTINGS } from '../../constants/uiZh';
 import type { AvatarPresenterController } from '../../hooks/useAvatarPresenter';
 import type { CameraDeviceOption } from '../../hooks/useCameraDevices';
 import type { VideoSourceState } from '../../hooks/useVideoSource';
@@ -183,7 +182,6 @@ function CameraPreview({
 }
 
 interface MocapPanelProps {
-  onToggleSettings: () => void;
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
   avatarPresenter: AvatarPresenterController;
@@ -215,7 +213,6 @@ interface MocapPanelProps {
 }
 
 export function MocapPanel({
-  onToggleSettings,
   mouthLevelRef,
   isSpeaking,
   avatarPresenter,
@@ -275,11 +272,7 @@ export function MocapPanel({
         />
       ) : null}
 
-      <AppToolbar
-        onToggleSettings={onToggleSettings}
-        settingsAriaLabel={UI_SETTINGS.ariaLabel}
-        title="直播皮套"
-      >
+      <AppToolbar title="直播皮套">
         <div className="mocap-toolbar-controls">
           {onToggleCameraPreview ? (
             <button

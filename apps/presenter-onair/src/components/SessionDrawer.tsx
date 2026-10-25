@@ -8,6 +8,7 @@ const SESSION_MODE_TABS: ReadonlyArray<{ mode: SessionMode; label: string }> = [
   { mode: 'edit', label: UI_SESSION_MODES.edit },
   { mode: 'decks', label: UI_SESSION_MODES.decks },
   { mode: 'mocap', label: UI_SESSION_MODES.mocap },
+  { mode: 'settings', label: UI_SESSION_MODES.settings },
 ];
 
 interface SessionDrawerProps {

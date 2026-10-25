@@ -46,9 +46,6 @@ export interface DeckSummary {
   id: string;
   title: string;
   isPrivate: boolean;
-  hasPdf: boolean;
-  slidePages: number;
-  scriptActions: number;
 }
 
 function readJsonBody<T>(req: IncomingMessage): Promise<T> {
@@ -107,63 +104,16 @@ function writeDeckPerformanceJson(
   return filePath;
 }
 
-function readDeckManifest(contentDir: string, deckId: string): Record<string, unknown> | null {
-  const manifestPath = path.join(contentDir, 'decks', deckId, 'deck.json');
-  try {
-    return JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-/** deck.json 的 slideSource.url（`/decks/<id>/slides.pdf`）→ 磁盘路径。 */
-function resolvePdfPath(deckId: string, contentDir: string): string | null {
-  const manifest = readDeckManifest(contentDir, deckId);
-  const slideSource = manifest?.slideSource as { url?: unknown } | undefined;
-  const url = typeof slideSource?.url === 'string' ? slideSource.url.trim() : '';
-  const candidates: string[] = [];
-  if (url.startsWith('/decks/')) {
-    candidates.push(path.join(pluginDir, 'public', url.replace(/^\//, '')));
-  }
-  candidates.push(path.join(publicDeckDir(deckId), 'slides.pdf'));
-  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
-}
-
-function countSlidePages(contentDir: string, deckId: string): number {
-  const slidesDir = path.join(contentDir, 'decks', deckId, 'slides');
-  if (!fs.existsSync(slidesDir)) {
-    return 0;
-  }
-  return fs
-    .readdirSync(slidesDir)
-    .filter((name) => /^\d{2}\.md$/.test(name)).length;
-}
-
-function countScriptActions(contentDir: string, deckId: string): number {
-  const scriptPath = path.join(contentDir, 'decks', deckId, 'script.jsonl');
-  if (!fs.existsSync(scriptPath)) {
-    return 0;
-  }
-  return fs
-    .readFileSync(scriptPath, 'utf8')
-    .split(/\r?\n/)
-    .filter((line) => line.trim().length > 0).length;
-}
-
+/** 场次列表只返回基础属性；页数/指令数等统计不再提供（UI 不展示，也省去逐场读盘）。 */
 function describeDeck(entry: {
   id: string;
   title: string;
   isPrivate: boolean;
 }): DeckSummary {
-  const contentDir = resolveDeckContentRoot(entry.id);
-  const pdfPath = resolvePdfPath(entry.id, contentDir);
   return {
     id: entry.id,
     title: entry.title,
     isPrivate: entry.isPrivate,
-    hasPdf: pdfPath !== null,
-    slidePages: countSlidePages(contentDir, entry.id),
-    scriptActions: countScriptActions(contentDir, entry.id),
   };
 }
 

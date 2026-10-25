@@ -13,17 +13,19 @@ import './deckLibrary.css';
 interface DeckLibraryPanelProps {
   activeDeckId: string;
   onSwitchDeck: (deckId: string) => void;
-  onToggleSettings: () => void;
 }
 
 function describeError(error: unknown): string {
   return error instanceof Error ? error.message : '操作失败';
 }
 
+function deckDirectory(deck: DeckSummary): string {
+  return `${deck.isPrivate ? 'content-private' : 'content'}/decks/${deck.id}`;
+}
+
 export function DeckLibraryPanel({
   activeDeckId,
   onSwitchDeck,
-  onToggleSettings,
 }: DeckLibraryPanelProps) {
   const [decks, setDecks] = useState<DeckSummary[]>([]);
   const [devApi, setDevApi] = useState(true);
@@ -33,9 +35,16 @@ export function DeckLibraryPanel({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [highlightDeckId, setHighlightDeckId] = useState<string | null>(null);
+  const [selectedDeckId, setSelectedDeckId] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const selectedDeck =
+    decks.find((deck) => deck.id === selectedDeckId) ??
+    decks.find((deck) => deck.id === activeDeckId) ??
+    decks[0] ??
+    null;
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -55,6 +64,9 @@ export function DeckLibraryPanel({
     void refresh();
   }, [refresh]);
 
+  // 选中项直接由 selectedDeckId 派生：无效（未选/已删）时回落到当前场次或第一项，
+  // 不需要在 effect 里补写 state。
+
   const handleImportFile = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -73,10 +85,9 @@ export function DeckLibraryPanel({
     setNotice(null);
     try {
       const result = await importDeckPdf({ file });
-      setNotice(
-        `${UI_DECKS.importDone}：${result.title ?? result.deckId}（${result.pageCount} ${UI_DECKS.pagesSuffix}，${result.scriptActions} ${UI_DECKS.actionsSuffix}）`,
-      );
+      setNotice(`${UI_DECKS.importDone}：${result.title ?? result.deckId}`);
       setHighlightDeckId(result.deckId);
+      setSelectedDeckId(result.deckId);
       await refresh();
     } catch (importError) {
       setError(describeError(importError));
@@ -85,19 +96,20 @@ export function DeckLibraryPanel({
     }
   };
 
-  const handleDelete = async (targetId: string) => {
+  const handleDelete = async (deck: DeckSummary) => {
     if (!window.confirm(UI_DECKS.deleteConfirm)) {
       return;
     }
-    setBusyDeckId(targetId);
+    setBusyDeckId(deck.id);
     setError(null);
     setNotice(null);
     try {
-      await deleteDeck(targetId);
-      if (targetId === activeDeckId) {
+      await deleteDeck(deck.id);
+      if (deck.id === activeDeckId) {
         onSwitchDeck('demo');
       }
-      setNotice(`${UI_DECKS.deleted}：${targetId}`);
+      setNotice(`${UI_DECKS.deleted}：${deck.title}`);
+      setSelectedDeckId('');
       await refresh();
     } catch (deleteError) {
       setError(describeError(deleteError));
@@ -118,16 +130,16 @@ export function DeckLibraryPanel({
     setRenameValue('');
   };
 
-  const submitRename = async (deckId: string) => {
+  const submitRename = async (deck: DeckSummary) => {
     const title = renameValue.trim();
     if (!title) {
       return;
     }
-    setBusyDeckId(deckId);
+    setBusyDeckId(deck.id);
     setError(null);
     setNotice(null);
     try {
-      await renameDeckTitle(deckId, title);
+      await renameDeckTitle(deck.id, title);
       setNotice(`${UI_DECKS.renamed}：${title}`);
       cancelRename();
       await refresh();
@@ -138,9 +150,12 @@ export function DeckLibraryPanel({
     }
   };
 
+  const isRenamingSelected = selectedDeck !== null && renamingId === selectedDeck.id;
+  const isBusy = selectedDeck !== null && busyDeckId === selectedDeck.id;
+
   return (
     <div className="deck-library">
-      <AppToolbar onToggleSettings={onToggleSettings} title={UI_DECKS.title} />
+      <AppToolbar title={UI_DECKS.title} />
 
       <div className="deck-library-body">
         {!devApi ? (
@@ -185,139 +200,146 @@ export function DeckLibraryPanel({
           </div>
         </header>
 
-        {decks.length === 0 && !isLoading ? (
-          <p className="deck-list-empty">{UI_DECKS.empty}</p>
-        ) : (
-          <div className="deck-list">
-            {decks.map((deck) => {
-              const isActive = deck.id === activeDeckId;
-              const isBusy = busyDeckId === deck.id;
-              const isNew = highlightDeckId === deck.id;
-              const isRenaming = renamingId === deck.id;
-              return (
-                <article
-                  key={deck.id}
-                  className={`deck-card${isActive ? ' is-active' : ''}${
-                    isNew ? ' is-new' : ''
-                  }`}
-                  aria-busy={isBusy}
-                >
-                  <header className="deck-card-head">
-                    <div className="deck-card-heading">
-                      {isRenaming ? (
-                        <div className="deck-rename-form">
-                          <input
-                            type="text"
-                            value={renameValue}
-                            maxLength={80}
-                            placeholder={UI_DECKS.renamePlaceholder}
-                            autoFocus
-                            onChange={(event) => setRenameValue(event.target.value)}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter') {
-                                void submitRename(deck.id);
-                              } else if (event.key === 'Escape') {
-                                cancelRename();
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="deck-primary-button"
-                            disabled={isBusy || !renameValue.trim()}
-                            onClick={() => void submitRename(deck.id)}
-                          >
-                            {UI_DECKS.renameSave}
-                          </button>
-                          <button
-                            type="button"
-                            className="deck-ghost-button"
-                            disabled={isBusy}
-                            onClick={cancelRename}
-                          >
-                            {UI_DECKS.renameCancel}
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="deck-card-title-row">
-                            <h3 className="deck-card-title">{deck.title}</h3>
-                            <button
-                              type="button"
-                              className="deck-icon-button deck-rename-trigger"
-                              aria-label={UI_DECKS.renameAction}
-                              title={UI_DECKS.renameAction}
-                              disabled={!devApi || isBusy}
-                              onClick={() => startRename(deck)}
-                            >
-                              ✎
-                            </button>
-                          </div>
-                          <div className="deck-card-meta">
-                            <code className="deck-card-id">{deck.id}</code>
-                            <span
-                              className={`deck-tag${
-                                deck.isPrivate ? ' is-private' : ' is-public'
-                              }`}
-                            >
-                              {deck.isPrivate
-                                ? UI_DECKS.privateLabel
-                                : UI_DECKS.publicLabel}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    {isActive && !isRenaming ? (
-                      <span className="deck-active-badge">
-                        {UI_DECKS.activeBadge}
-                      </span>
-                    ) : null}
-                  </header>
+        <div className="deck-library-columns">
+          <nav className="deck-list" aria-label={UI_DECKS.listTitle}>
+            {decks.length === 0 && !isLoading ? (
+              <p className="deck-list-empty">{UI_DECKS.empty}</p>
+            ) : (
+              decks.map((deck) => {
+                const isActive = deck.id === activeDeckId;
+                const isSelected = selectedDeck?.id === deck.id;
+                const isNew = highlightDeckId === deck.id;
+                return (
+                  <button
+                    key={deck.id}
+                    type="button"
+                    className={`deck-row${isSelected ? ' is-selected' : ''}${
+                      isNew ? ' is-new' : ''
+                    }`}
+                    aria-current={isActive ? 'true' : undefined}
+                    onClick={() => setSelectedDeckId(deck.id)}
+                  >
+                    <span className="deck-row-title">{deck.title}</span>
+                    <span className="deck-row-meta">
+                      {deck.id} ·{' '}
+                      {deck.isPrivate ? UI_DECKS.privateLabel : UI_DECKS.publicLabel}
+                      {isActive ? ` · ${UI_DECKS.activeBadge}` : ''}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </nav>
 
-                  <div className="deck-card-chips">
-                    <span
-                      className={`deck-chip${deck.hasPdf ? ' is-ok' : ' is-missing'}`}
-                    >
-                      {deck.hasPdf ? UI_DECKS.hasPdf : UI_DECKS.noPdf}
-                    </span>
-                    <span className="deck-chip">
-                      {deck.slidePages} {UI_DECKS.pagesSuffix}
-                    </span>
-                    <span
-                      className={`deck-chip${deck.scriptActions > 0 ? '' : ' is-warning'}`}
-                    >
-                      {deck.scriptActions > 0
-                        ? `${deck.scriptActions} ${UI_DECKS.actionsSuffix}`
-                        : UI_DECKS.uncompiled}
-                    </span>
-                  </div>
-
-                  <footer className="deck-card-actions">
-                    {isBusy ? (
-                      <span className="deck-card-busy">{UI_DECKS.busy}</span>
-                    ) : (
+          <section className="deck-detail" aria-label={UI_DECKS.detailTitle}>
+            {selectedDeck ? (
+              <>
+                <header className="deck-detail-head">
+                  {isRenamingSelected ? (
+                    <div className="deck-rename-form">
+                      <input
+                        type="text"
+                        value={renameValue}
+                        maxLength={80}
+                        placeholder={UI_DECKS.renamePlaceholder}
+                        autoFocus
+                        onChange={(event) => setRenameValue(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            void submitRename(selectedDeck);
+                          } else if (event.key === 'Escape') {
+                            cancelRename();
+                          }
+                        }}
+                      />
                       <button
                         type="button"
-                        className="deck-icon-button deck-delete-trigger"
-                        aria-label={UI_DECKS.deleteAction}
-                        title={
-                          deck.isPrivate
-                            ? UI_DECKS.deleteAction
-                            : UI_DECKS.deletePublicHint
-                        }
-                        disabled={!devApi || !deck.isPrivate}
-                        onClick={() => void handleDelete(deck.id)}
+                        className="deck-primary-button"
+                        disabled={isBusy || !renameValue.trim()}
+                        onClick={() => void submitRename(selectedDeck)}
                       >
-                        🗑
+                        {UI_DECKS.renameSave}
                       </button>
-                    )}
-                  </footer>
-                </article>
-              );
-            })}
-          </div>
-        )}
+                      <button
+                        type="button"
+                        className="deck-ghost-button"
+                        disabled={isBusy}
+                        onClick={cancelRename}
+                      >
+                        {UI_DECKS.renameCancel}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="deck-detail-title-row">
+                      <h3 className="deck-detail-title">{selectedDeck.title}</h3>
+                      <button
+                        type="button"
+                        className="deck-icon-button deck-rename-trigger"
+                        aria-label={UI_DECKS.renameAction}
+                        title={UI_DECKS.renameAction}
+                        disabled={!devApi || isBusy}
+                        onClick={() => startRename(selectedDeck)}
+                      >
+                        ✎
+                      </button>
+                      {selectedDeck.id === activeDeckId ? (
+                        <span className="deck-active-badge">
+                          {UI_DECKS.activeBadge}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+                </header>
+
+                <dl className="deck-detail-props">
+                  <div className="deck-prop">
+                    <dt>{UI_DECKS.propId}</dt>
+                    <dd>
+                      <code>{selectedDeck.id}</code>
+                    </dd>
+                  </div>
+                  <div className="deck-prop">
+                    <dt>{UI_DECKS.propType}</dt>
+                    <dd>
+                      {selectedDeck.isPrivate
+                        ? UI_DECKS.privateLabel
+                        : UI_DECKS.publicLabel}
+                    </dd>
+                  </div>
+                  <div className="deck-prop">
+                    <dt>{UI_DECKS.propDir}</dt>
+                    <dd>
+                      <code>{deckDirectory(selectedDeck)}</code>
+                    </dd>
+                  </div>
+                </dl>
+
+                <footer className="deck-detail-actions">
+                  {isBusy ? (
+                    <span className="deck-card-busy">{UI_DECKS.busy}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="deck-icon-button deck-delete-trigger"
+                      aria-label={UI_DECKS.deleteAction}
+                      title={
+                        selectedDeck.isPrivate
+                          ? UI_DECKS.deleteAction
+                          : UI_DECKS.deletePublicHint
+                      }
+                      disabled={!devApi || !selectedDeck.isPrivate}
+                      onClick={() => void handleDelete(selectedDeck)}
+                    >
+                      🗑
+                    </button>
+                  )}
+                </footer>
+              </>
+            ) : (
+              <p className="deck-detail-empty">{UI_DECKS.detailEmpty}</p>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );

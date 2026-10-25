@@ -5,18 +5,13 @@ type SettingsHook = ReturnType<typeof useSettings>;
 
 interface DeckLibrarySessionProps {
   settingsHook: SettingsHook;
-  onToggleSettings: () => void;
 }
 
-export function DeckLibrarySession({
-  settingsHook,
-  onToggleSettings,
-}: DeckLibrarySessionProps) {
+export function DeckLibrarySession({ settingsHook }: DeckLibrarySessionProps) {
   return (
     <DeckLibraryPanel
       activeDeckId={settingsHook.settings.present.activeDeckId || 'demo'}
       onSwitchDeck={settingsHook.updatePresentActiveDeckId}
-      onToggleSettings={onToggleSettings}
     />
   );
 }

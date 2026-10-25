@@ -25,79 +25,6 @@ body {
 
 /* ── Settings ── */
 
-.settings-button {
-  background: none;
-  border: 1px solid #0f3460;
-  color: #e0e0e0;
-  font-size: 1.3rem;
-  padding: 4px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.settings-button:hover {
-  background: #0f3460;
-}
-
-/* ── Settings Dialog ── */
-
-.settings-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.settings-dialog {
-  width: min(480px, 90vw);
-  max-height: 80vh;
-  background: #16213e;
-  border: 1px solid #0f3460;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.settings-dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #0f3460;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-
-.settings-dialog-header.is-dragging {
-  cursor: grabbing;
-}
-
-.settings-dialog-header h2 {
-  font-size: 1rem;
-  color: #e94560;
-  margin: 0;
-}
-
-.settings-dialog-close {
-  background: none;
-  border: none;
-  color: #8899aa;
-  font-size: 1.5rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 4px;
-}
-
-.settings-dialog-close:hover {
-  color: #e0e0e0;
-}
-
 .settings-panel {
   background: #16213e;
   padding: 16px;
@@ -605,16 +532,6 @@ body {
   justify-content: flex-end;
 }
 
-.chat-panel-toolbar {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  z-index: 4;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 /* ── Session Drawer ── */
 
 .session-drawer-toggle {
@@ -705,30 +622,6 @@ body {
   background: #0f3460;
   border-color: #e94560;
   color: #fff;
-}
-
-.chat-settings-button {
-  position: static;
-  background: rgba(22, 33, 62, 0.9);
-  transition: opacity 0.15s;
-}
-
-.chat-panel-broadcast .chat-panel-toolbar {
-  opacity: 0;
-}
-
-.chat-panel-broadcast:hover .chat-panel-toolbar,
-.chat-panel-toolbar:focus-within {
-  opacity: 1;
-}
-
-.chat-panel-broadcast .chat-settings-button {
-  opacity: 1;
-}
-
-.chat-panel-broadcast:hover .chat-settings-button,
-.chat-settings-button:focus-visible {
-  opacity: 1;
 }
 
 .broadcast-caption {

@@ -1,8 +1,8 @@
 /* 场次库（导入 / 管理答辩 PDF）
  *
- * 布局：单列 —— 顶部一行「全部场次 · 共 N 场 + 导入 PDF + 刷新」，下面卡片网格。
+ * 布局：顶部「全部场次 · 共 N 场 + 导入 PDF + 刷新」，
+ * 下面左侧是可纵向滚动的场次列表，右侧是选中场次的属性卡片。
  * 导入只需一个按钮：点选 PDF 后自动生成场次 ID 与标题（标题可事后重命名）。
- * 每张卡片 1 个主操作（讲稿导演台）+ 1 个次操作（去汇报），其余收进「更多」。
  */
 
 .deck-library {
@@ -18,16 +18,17 @@
 .deck-library-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  padding: 16px 20px 32px;
+  overflow: hidden;
+  padding: 16px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* ── 顶部提示条 ── */
 
 .deck-banner {
+  flex: none;
   margin: 0;
   padding: 10px 12px;
   border-radius: 8px;
@@ -56,6 +57,7 @@
 /* ── 列表头 ── */
 
 .deck-list-header {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -88,9 +90,7 @@
 /* ── 按钮 ── */
 
 .deck-primary-button,
-.deck-secondary-button,
-.deck-ghost-button,
-.deck-danger-button {
+.deck-ghost-button {
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -110,15 +110,6 @@
   background: #c73650;
 }
 
-.deck-secondary-button {
-  background: #0f3460;
-  color: #dbe6f3;
-}
-
-.deck-secondary-button:hover:not(:disabled) {
-  background: #1a4a7a;
-}
-
 .deck-ghost-button {
   background: transparent;
   border-color: #2a4a6b;
@@ -129,59 +120,67 @@
   background: #12233d;
 }
 
-.deck-danger-button {
-  background: transparent;
-  border-color: #6b2436;
-  color: #ff9fb0;
-}
-
-.deck-danger-button:hover:not(:disabled) {
-  background: #3a1620;
-}
-
 .deck-primary-button:disabled,
-.deck-secondary-button:disabled,
-.deck-ghost-button:disabled,
-.deck-danger-button:disabled {
+.deck-ghost-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* ── 场次列表 ── */
+/* ── 两栏：左侧列表 / 右侧属性 ── */
+
+.deck-library-columns {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 16px;
+}
 
 .deck-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
 }
 
 .deck-list-empty {
   margin: 0;
-  padding: 28px 16px;
+  padding: 20px 14px;
   border: 1px dashed #2a4a6b;
   border-radius: 10px;
   color: #8d97a6;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-align: center;
 }
 
-.deck-card {
+.deck-row {
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: #1a1a2e;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  border-radius: 10px;
   border: 1px solid #0f3460;
-  border-radius: 12px;
-  padding: 14px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #1a1a2e;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.deck-card.is-active {
-  border-color: #e94560;
-  box-shadow: 0 0 0 1px rgba(233, 69, 96, 0.35) inset;
+.deck-row:hover {
+  background: #12233d;
 }
 
-.deck-card.is-new {
+.deck-row.is-selected {
+  background: #12233d;
+  border-color: #3b82f6;
+}
+
+.deck-row.is-new {
   animation: deck-flash 2.2s ease-out;
 }
 
@@ -196,21 +195,8 @@
   }
 }
 
-.deck-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.deck-card-heading {
-  min-width: 0;
-  flex: 1;
-}
-
-.deck-card-title {
-  margin: 0;
-  font-size: 0.98rem;
+.deck-row-title {
+  font-size: 0.9rem;
   font-weight: 600;
   color: #f0f3f8;
   overflow: hidden;
@@ -218,45 +204,53 @@
   white-space: nowrap;
 }
 
-.deck-card-meta {
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.deck-card-id {
-  font-size: 0.76rem;
+.deck-row-meta {
+  font-size: 0.74rem;
   color: #8d97a6;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.deck-tag {
-  flex: none;
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid #2a4a6b;
-  color: #9bb8d3;
-  font-size: 0.7rem;
+/* ── 右侧属性卡片 ── */
+
+.deck-detail {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
 }
 
-.deck-tag.is-private {
-  border-color: #5c4a1a;
-  color: #e8cf9a;
+.deck-detail-head {
+  flex: none;
 }
 
-.deck-active-badge {
-  flex: none;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(233, 69, 96, 0.15);
-  border: 1px solid rgba(233, 69, 96, 0.5);
-  color: #ff9fb0;
-  font-size: 0.72rem;
-  white-space: nowrap;
+.deck-detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.deck-detail-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #f0f3f8;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.deck-detail-empty {
+  margin: auto;
+  color: #8d97a6;
+  font-size: 0.88rem;
+  text-align: center;
 }
 
 /* ── 重命名 ── */
@@ -286,40 +280,50 @@
   font-size: 0.8rem;
 }
 
-/* ── 状态芯片 ── */
+/* ── 属性表 ── */
 
-.deck-card-chips {
+.deck-detail-props {
+  margin: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
 }
 
-.deck-chip {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #0f1c33;
-  border: 1px solid #1f3a5c;
-  color: #a8b3c4;
-  font-size: 0.72rem;
+.deck-prop {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.16);
 }
 
-.deck-chip.is-ok {
-  border-color: #2c6b4a;
-  color: #9fe0b6;
+.deck-prop:last-child {
+  border-bottom: none;
 }
 
-.deck-chip.is-missing,
-.deck-chip.is-warning {
-  border-color: #6b4a1a;
-  color: #f3d9a8;
+.deck-prop dt {
+  color: #8d97a6;
+  font-size: 0.78rem;
 }
 
-.deck-card-actions {
+.deck-prop dd {
+  margin: 0;
+  color: #dbe6f3;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.deck-prop code {
+  font-size: 0.82rem;
+  color: #a9cdf0;
+}
+
+.deck-detail-actions {
+  flex: none;
+  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: auto;
 }
 
 .deck-card-busy {
@@ -328,13 +332,6 @@
 }
 
 /* ── 图标按钮（重命名 / 删除） ── */
-
-.deck-card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
 
 .deck-icon-button {
   flex: none;
@@ -380,14 +377,42 @@
   color: #ff9fb0;
 }
 
+/* ── 当前场次徽章 ── */
+
+.deck-active-badge {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(233, 69, 96, 0.15);
+  border: 1px solid rgba(233, 69, 96, 0.5);
+  color: #ff9fb0;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
 /* ── 响应式 ── */
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .deck-library-body {
-    padding: 12px 12px 24px;
+    overflow-y: auto;
+  }
+
+  .deck-library-columns {
+    grid-template-columns: 1fr;
+    flex: none;
   }
 
   .deck-list {
-    grid-template-columns: 1fr;
+    max-height: 40vh;
+  }
+
+  .deck-detail {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .deck-library-body {
+    padding: 12px 12px 20px;
   }
 }

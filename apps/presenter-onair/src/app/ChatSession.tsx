@@ -11,7 +11,6 @@ type SettingsHook = ReturnType<typeof useSettings>;
 
 interface ChatSessionProps {
   settingsHook: SettingsHook;
-  onToggleSettings: () => void;
   avatarPresenterRef: RefObject<AvatarPresenterController | null>;
   messages: ChatMessage[];
   partialResponse: string;
@@ -24,7 +23,6 @@ interface ChatSessionProps {
 
 export function ChatSession({
   settingsHook,
-  onToggleSettings,
   avatarPresenterRef,
   messages,
   partialResponse,
@@ -84,7 +82,6 @@ export function ChatSession({
       vrmResolving={isVrmResolving}
       backgroundImageUrl={backgroundImageUrl}
       visual={settingsHook.settings.visual}
-      onToggleSettings={onToggleSettings}
     />
   );
 }

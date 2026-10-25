@@ -22,6 +22,42 @@
 
 ---
 
+### 2026-10-25 · 设置改为独立「设置」标签页 + 顶部分类导航（移除 ⚙ 弹窗）
+
+- **需求**：把设置内容从设置按钮里移出，做成设置选项卡，并用顶部导航栏分类
+- **结构**：
+  - `SessionMode` 新增 `'settings'`；界面切换抽屉新增「设置」入口
+  - 新增 `SettingsSession`（懒加载）：顶栏（`AppToolbar`）+ 横向分类导航 + 可滚动内容区
+  - 六个分类：对话模型 / 语音合成 / 汇报与问答 / 外观与感知 / 面捕 / 直播互动，对应 `UI_SETTINGS.tabs`
+  - `SettingsPanel` 新增 `category` 属性，只渲染该分类下的设置区块（屏幕视觉并入「汇报与问答」；表情特效并入「外观与感知」）
+- **移除**：
+  - `SettingsDialog` / `settingsOpen` 状态与开关（整个弹窗组件删除）
+  - `AppToolbar` 的 ⚙ 按钮与 `onToggleSettings` / `settingsAriaLabel` props；`ChatPanel` 自己的 ⚙ 按钮与 `.chat-panel-toolbar`；5 个会话组件的 `onToggleSettings` 透传
+  - 相关 CSS：`.settings-dialog*`、`.settings-button`、`.chat-settings-button`、`.present-settings-button`
+- **保留行为**：设置仍即时持久化（`useSettings`）；VRM 导入模型失效时自动回退内置模型（逻辑随页面迁移）
+- **验证**：`typecheck` 通过；`lint` 0 error（48 警告）；`test` **118 通过**（46+13+59）；`build` 通过（`SettingsSession` 独立 chunk 88 KB / CSS 0.85 KB）；dev 下 `/`、`SettingsSession.tsx`、`settingsSession.css`、`SettingsPanel.tsx`、`SessionDrawer.tsx` 均 200
+- **相关文件**：`apps/presenter-onair/src/app/{SettingsSession.tsx,settingsSession.css,App.tsx}` · `src/components/{SettingsPanel.tsx,SessionDrawer.tsx,ChatPanel.tsx}` · `src/components/present/AppToolbar.tsx` · `src/types/present.ts` · `src/constants/uiZh.ts`
+- **验证方式**：`npm run dev` → 界面切换 → 设置：顶部分类切换六个分区
+
+---
+
+### 2026-10-25 · 场次库改为「左侧列表 + 右侧属性卡片」，移除统计字段
+
+- **需求**：不统计/不显示讲稿页数、指令数、是否有 PDF；卡片布局优化；场次改为左侧纵向可滚动列表，右侧显示所选场次的基础属性
+- **布局**：
+  - 顶部仍是「全部场次 · 共 N 场 + 导入 PDF + 刷新」
+  - 下面两栏：左侧 `.deck-list`（纵向滚动，行内只有标题 + `ID · 类型 · 当前`），右侧 `.deck-detail` 属性卡片
+  - 属性卡片：标题 + 铅笔（重命名）+ 「当前场次」徽章；`场次 ID / 类型 / 讲稿目录` 三行属性；右下角垃圾桶（删除）
+  - 选中项高亮；选中失效（未选/已删）时派生回落到当前场次或第一项（不在 effect 里写 state，避免级联渲染）
+  - 窄屏（<900px）：上下堆叠，列表限高 `40vh`
+- **数据层**：`GET /api/content/decks` 只返回 `id/title/isPrivate`；删除 `hasPdf` / `slidePages` / `scriptActions` 及 `resolvePdfPath` / `countSlidePages` / `countScriptActions` / `readDeckManifest`（不再逐场读盘统计）
+- **文案**：删除 `hasPdf`/`noPdf`/`pagesSuffix`/`actionsSuffix`/`uncompiled`，新增 `detailTitle`/`detailEmpty`/`propId`/`propType`/`propDir`；导入成功提示改为「已导入：<标题>」
+- **验证**：`typecheck` / `lint`（0 error，警告数与改前持平）/ `build` 通过；dev 下接口返回 `{"id":"demo","title":…,"isPrivate":false}`（无统计字段），面板与 CSS 均 200
+- **相关文件**：`apps/presenter-onair/src/components/decks/{DeckLibraryPanel.tsx,deckLibrary.css}` · `src/lib/decks/deckLibraryApi.ts` · `src/constants/uiZh.ts` · `vite-content-api-plugin.ts` · `docs/content-decks.md` · `AGENTS.md`
+- **验证方式**：`npm run dev` → 场次库：左侧点选场次，右侧查看属性并重命名/删除
+
+---
+
 ### 2026-10-25 · 场次库卡片动作精简（铅笔重命名 + 垃圾桶删除）
 
 - **需求**：卡片的「讲稿导演台 / 去汇报」多余（切换在导演台顶栏更顺）；「更多」菜单里两项要拿出来；重命名用铅笔放标题右侧，删除用垃圾桶放卡片右下角

@@ -123,13 +123,16 @@ cd packages/director && DECK_ID=my-deck npm run compile:deck
 
 ## 场次库（应用内导入 / 管理）
 
-`npm run dev` 下，界面切换菜单里的 **场次库** 负责真实答辩的 PDF 全流程：
+`npm run dev` 下，界面切换菜单里的 **场次库** 负责真实答辩的 PDF 全流程。
+
+**布局**：左侧是纵向可滚动的场次列表（标题 + ID·类型，点选查看），右侧是所选场次的**属性卡片**；不展示讲稿页数 / 指令数 / 是否有 PDF 等统计。
 
 | 操作 | 行为 |
 |------|------|
 | 导入 PDF | 右上角**一个按钮**：选 PDF 即导入。**场次 ID 与标题自动生成**（ID 由文件名派生、重名自动追加 `_2`；标题取文件名），写入 `public/decks/<id>/slides.pdf`，生成 `content-private/decks/<id>/`（`deck.json`、`performance.json`、**按 PDF 页数生成每页** `slides/NN.md`、`faq/<id>.md`），并立即编译出 `script.jsonl` |
-| 重命名 | 标题右侧铅笔图标；只改 `deck.json` 的 title（仅私有场次；示例场次只读） |
-| 删除 | 卡片右下角垃圾桶图标；仅限私有场次：删除 `content-private/decks/<id>`、`public/decks/<id>` 与对应 FAQ |
+| 查看属性 | 左侧列表点选 → 右侧显示「场次 ID / 类型（私有·示例）/ 讲稿目录」 |
+| 重命名 | 属性卡片标题右侧铅笔图标；只改 `deck.json` 的 title（仅私有场次；示例场次只读） |
+| 删除 | 属性卡片右下角垃圾桶图标；仅限私有场次：删除 `content-private/decks/<id>`、`public/decks/<id>` 与对应 FAQ |
 
 > 场次库只做导入/管理，不提供「进导演台 / 去汇报」按钮——切换场次统一在
 > **讲稿导演台顶栏**或**汇报顶栏**的「场次」下拉里做（两处共用 `present.activeDeckId`）。

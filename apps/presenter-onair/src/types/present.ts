@@ -1,4 +1,10 @@
-export type SessionMode = 'chat' | 'present' | 'edit' | 'decks' | 'mocap';
+export type SessionMode =
+  | 'chat'
+  | 'present'
+  | 'edit'
+  | 'decks'
+  | 'mocap'
+  | 'settings';
 
 export type PresentLayout =
   | 'split_slide_left'
@@ -81,7 +87,14 @@ const PIP_CORNERS: PipCorner[] = [
   'top-left',
 ];
 
-const SESSION_MODES: SessionMode[] = ['chat', 'present', 'edit', 'decks', 'mocap'];
+const SESSION_MODES: SessionMode[] = [
+  'chat',
+  'present',
+  'edit',
+  'decks',
+  'mocap',
+  'settings',
+];
 
 export function normalizePresentSettings(
   partial?: Partial<PresentSettings> | null,

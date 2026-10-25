@@ -29,7 +29,8 @@
 | Director UI | `DirectorPanel` → 单条/队列播放 + TTS 口型 |
 | Present 汇报 | `PresentShell` + PDF.js，5 种布局（见 `docs/present-deck.md`） |
 | 讲稿导演台 | `ScriptEditorShell`（可视化节拍/预设/语速；见 `docs/content-decks.md`） |
-| 场次库 | **`DeckLibrarySession` · `DeckLibraryPanel`**：一键导入 PDF（ID/标题自动生成、按页建讲稿并编译）/ 重命名标题 / 删除；写盘见 `vite-content-api-plugin.ts`（仅 dev） |
+| 场次库 | **`DeckLibrarySession` · `DeckLibraryPanel`**：左侧场次列表 + 右侧属性卡片；一键导入 PDF（ID/标题自动生成）/ 重命名标题 / 删除；不展示页数与指令数；写盘见 `vite-content-api-plugin.ts`（仅 dev） |
+| 设置页 | **`SettingsSession`**：界面切换里的「设置」标签；顶部分类导航（对话模型 / 语音合成 / 汇报与问答 / 外观与感知 / 面捕 / 直播互动）切换 `SettingsPanel` 的分区（原 ⚙ 弹窗已移除） |
 | 知识库 | `content/` 示例 + `content-private/` 私有（见 `docs/content-decks.md`） |
 | 私仓 | `https://github.com/Kitty-in-GitHub/SSpptReporter.git` |
 
@@ -88,7 +89,7 @@ npm run dev         # 同时启动页面 + 本机 TTS 网关 :5050
 |------|------|
 | 加载 VRM | `useResolvedVrmModel` · `AvatarPanel`（`vrmUrl` prop，切换时重载） |
 | 设置持久化 | `lib/settings/` · `hooks/useSettings` · `hooks/settings/*Updaters` |
-| 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession` / `DeckLibrarySession` / `MocapSession`） |
+| 应用壳 | `apps/presenter-onair/src/app/`（`PresentSession` / `ChatSession` / `EditSession` / `DeckLibrarySession` / `MocapSession` / `SettingsSession`） |
 | 面捕直播皮套 | `MocapSession` · `useVideoSource`（采集 / 帧活性）· `useFaceCaptureEngine`（MediaPipe 引擎）· `docs/face-capture.md`（仅 `sessionMode=mocap`） |
 | Avatar 呈现层 | `lib/avatar/` · `useAvatarPresenter` · `AvatarShell`（Director/Brain 只产出 `AvatarReactionDraft`） |
 | Director 队列 | `hooks/useDirectorQueue`（`lastPlaybackError` 可见化） |

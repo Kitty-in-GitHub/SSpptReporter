@@ -11,7 +11,6 @@ import type { TwitchChatMessage } from '../services/twitch/twitchService';
 import type { YouTubeChatMessage } from '../services/youtube/youtubeService';
 import { ChatSession } from './ChatSession';
 import { SessionDrawer } from '../components/SessionDrawer';
-import { SettingsDialog } from './SettingsDialog';
 import '../styles/app.css';
 
 // 非默认会话按需加载：PDF.js（汇报）、MediaPipe 采集（面捕）、讲稿导演台
@@ -32,13 +31,17 @@ const PresentSession = lazy(() =>
     default: module.PresentSession,
   })),
 );
+const SettingsSession = lazy(() =>
+  import('./SettingsSession').then((module) => ({
+    default: module.SettingsSession,
+  })),
+);
 
 
 export default function App() {
   const { play, stop, mouthLevelRef, isSpeaking } = useAudioLipsync();
   const settingsHook = useSettings();
   const updateTwitchAccessToken = settingsHook.updateTwitchAccessToken;
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [streamErrorMessage, setStreamErrorMessage] = useState('');
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(
     null,
@@ -57,13 +60,6 @@ export default function App() {
     }
   }, [sessionMode]);
 
-  const toggleSettingsDialog = useCallback(() => {
-    setSettingsOpen((open) => !open);
-  }, []);
-
-  const closeSettingsDialog = useCallback(() => {
-    setSettingsOpen(false);
-  }, []);
 
   const handleAudioPlay = useCallback(
     async (arrayBuffer: ArrayBuffer) => {
@@ -241,20 +237,22 @@ export default function App() {
       />
 
       <Suspense fallback={<div className="app-session-loading">正在加载会话…</div>}>
-        {sessionMode === 'edit' ? (
-          <EditSession
+        {sessionMode === 'settings' ? (
+          <SettingsSession
             settingsHook={settingsHook}
-            onToggleSettings={toggleSettingsDialog}
+            isProcessing={isProcessing}
+            backgroundImageUrl={backgroundImageUrl}
+            streamErrorMessage={streamErrorMessage}
+            screenVisionController={screenVisionController}
+            onBackgroundImageChange={handleBackgroundImageChange}
           />
+        ) : sessionMode === 'edit' ? (
+          <EditSession settingsHook={settingsHook} />
         ) : sessionMode === 'decks' ? (
-          <DeckLibrarySession
-            settingsHook={settingsHook}
-            onToggleSettings={toggleSettingsDialog}
-          />
+          <DeckLibrarySession settingsHook={settingsHook} />
         ) : sessionMode === 'mocap' ? (
           <MocapSession
             settingsHook={settingsHook}
-            onToggleSettings={toggleSettingsDialog}
             avatarPresenterRef={mocapAvatarPresenterRef}
             mouthLevelRef={mouthLevelRef}
             isSpeaking={isSpeaking}
@@ -264,7 +262,6 @@ export default function App() {
         ) : sessionMode === 'present' ? (
           <PresentSession
             settingsHook={settingsHook}
-            onToggleSettings={toggleSettingsDialog}
             onStageModeChange={setPresentStageMode}
             isProcessing={isProcessing}
             isSpeaking={isSpeaking}
@@ -276,7 +273,6 @@ export default function App() {
         ) : (
           <ChatSession
             settingsHook={settingsHook}
-            onToggleSettings={toggleSettingsDialog}
             avatarPresenterRef={avatarPresenterRef}
             messages={messages}
             partialResponse={partialResponse}
@@ -288,17 +284,6 @@ export default function App() {
           />
         )}
       </Suspense>
-
-      <SettingsDialog
-        open={settingsOpen}
-        onClose={closeSettingsDialog}
-        settingsHook={settingsHook}
-        isProcessing={isProcessing}
-        backgroundImageUrl={backgroundImageUrl}
-        streamErrorMessage={streamErrorMessage}
-        screenVisionController={screenVisionController}
-        onBackgroundImageChange={handleBackgroundImageChange}
-      />
     </div>
   );
 }

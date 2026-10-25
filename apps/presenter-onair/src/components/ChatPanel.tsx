@@ -1,4 +1,3 @@
-import { UI_SETTINGS } from '../constants/uiZh';
 import type { AvatarPresenterController } from '../hooks/useAvatarPresenter';
 import type { ChatMessage } from '../types/chat';
 import type { VisualSettings } from '../types/settings';
@@ -12,7 +11,6 @@ interface ChatPanelProps {
   partialResponse: string;
   isProcessing: boolean;
   onSend: (text: string) => void;
-  onToggleSettings: () => void;
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
   avatarPresenter: AvatarPresenterController;
@@ -28,7 +26,6 @@ export function ChatPanel({
   partialResponse,
   isProcessing,
   onSend,
-  onToggleSettings,
   mouthLevelRef,
   isSpeaking,
   avatarPresenter,
@@ -65,16 +62,6 @@ export function ChatPanel({
       }`}
       style={panelStyle}
     >
-      <div className="chat-panel-toolbar">
-        <button
-          type="button"
-          className="settings-button chat-settings-button"
-          onClick={onToggleSettings}
-          aria-label={UI_SETTINGS.ariaLabel}
-        >
-          ⚙
-        </button>
-      </div>
       <AvatarShell
         presenter={avatarPresenter}
         mouthLevelRef={mouthLevelRef}

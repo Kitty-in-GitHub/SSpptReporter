@@ -13,7 +13,6 @@ type SettingsHook = ReturnType<typeof useSettings>;
 
 interface MocapSessionProps {
   settingsHook: SettingsHook;
-  onToggleSettings: () => void;
   avatarPresenterRef: RefObject<AvatarPresenterController | null>;
   mouthLevelRef: RefObject<number>;
   isSpeaking: boolean;
@@ -23,7 +22,6 @@ interface MocapSessionProps {
 
 export function MocapSession({
   settingsHook,
-  onToggleSettings,
   avatarPresenterRef,
   mouthLevelRef,
   isSpeaking,
@@ -89,7 +87,6 @@ export function MocapSession({
 
   return (
     <MocapPanel
-      onToggleSettings={onToggleSettings}
       mouthLevelRef={mouthLevelRef}
       isSpeaking={isSpeaking}
       avatarPresenter={avatarPresenter}

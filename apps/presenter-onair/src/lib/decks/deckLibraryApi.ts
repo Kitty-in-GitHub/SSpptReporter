@@ -8,9 +8,6 @@ export interface DeckSummary {
   id: string;
   title: string;
   isPrivate: boolean;
-  hasPdf: boolean;
-  slidePages: number;
-  scriptActions: number;
 }
 
 export interface DeckListResult {

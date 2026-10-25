@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { Gesture } from '@ssreporter/director';
-import { UI_SESSION_MODES, UI_SETTINGS } from '../../constants/uiZh';
+import { UI_SESSION_MODES } from '../../constants/uiZh';
 import { usePerformanceCatalog } from '../../hooks/usePerformanceCatalog';
 import type { DeckScriptEditorController } from '../../hooks/useDeckScriptEditor';
 import type { SlideDeckController } from '../../hooks/useSlideDeck';
@@ -23,7 +23,6 @@ interface ScriptEditorShellProps {
   editor: DeckScriptEditorController;
   deckId: string;
   visual: VisualSettings;
-  onToggleSettings: () => void;
   onDeckChange: (deckId: string) => void;
 }
 
@@ -32,7 +31,6 @@ export function ScriptEditorShell({
   editor,
   deckId,
   visual,
-  onToggleSettings,
   onDeckChange,
 }: ScriptEditorShellProps) {
   const utteranceRef = useRef<HTMLTextAreaElement>(null);
@@ -65,11 +63,7 @@ export function ScriptEditorShell({
 
   return (
     <div className="script-editor-shell">
-      <AppToolbar
-        onToggleSettings={onToggleSettings}
-        settingsAriaLabel={UI_SETTINGS.ariaLabel}
-        title={slideDeck.deck?.title ?? UI_SESSION_MODES.edit}
-      >
+      <AppToolbar title={slideDeck.deck?.title ?? UI_SESSION_MODES.edit}>
         <PresentDeckSelect
           activeDeckId={deckId}
           onDeckChange={onDeckChange}

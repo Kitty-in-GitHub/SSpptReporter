@@ -61,7 +61,17 @@ export const UI_CHAT = {
 export const UI_SETTINGS = {
   title: '设置',
   ariaLabel: '设置',
-};
+  /** 设置页顶部分类导航 */
+  tabs: {
+    model: '对话模型',
+    voice: '语音合成',
+    present: '汇报与问答',
+    visual: '外观与感知',
+    mocap: '面捕',
+    stream: '直播互动',
+  },
+  navAriaLabel: '设置分类',
+} as const;
 
 export const UI_SESSION_MODES = {
   chat: '聊天',
@@ -69,6 +79,7 @@ export const UI_SESSION_MODES = {
   edit: '讲稿导演台',
   decks: '场次库',
   mocap: '面捕',
+  settings: '设置',
 } as const;
 
 export const UI_SESSION_DRAWER = {
@@ -132,9 +143,13 @@ export const UI_DECKS = {
   countPrefix: '共 ',
   countSuffix: ' 场',
   empty: '还没有场次，点右上角「导入 PDF」开始。',
+  detailTitle: '场次属性',
+  detailEmpty: '从左侧选择一个场次，查看它的属性。',
+  propId: '场次 ID',
+  propType: '类型',
+  propDir: '讲稿目录',
   activeBadge: '当前场次',
   busy: '处理中…',
-  uncompiled: '未编译',
   renameAction: '重命名',
   renameSave: '保存',
   renameCancel: '取消',
@@ -144,13 +159,9 @@ export const UI_DECKS = {
   deletePublicHint: '示例场次不可删除',
   deleteConfirm:
     '确定删除该场次？会同时删除 content-private 里的讲稿与 public 下的 PDF。',
-  hasPdf: 'PDF 已就位',
-  noPdf: '缺 PDF',
   privateLabel: '私有',
   publicLabel: '示例',
-  importDone: '已导入并生成讲稿',
+  importDone: '已导入',
   deleted: '已删除场次',
-  pagesSuffix: '页讲稿',
-  actionsSuffix: '条指令',
   fileTypeError: '请选择 .pdf 文件',
 } as const;
