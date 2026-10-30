@@ -22,6 +22,22 @@
 
 ---
 
+### 2026-10-29 · 讲稿导演台：显式「删除节拍」按钮
+
+- **问题**：删除逻辑本来存在，但按钮藏在表单最底部、且只有多节拍时才渲染，页面上基本看不到
+- **改动**：
+  - 页头「N 个节拍」右侧新增 **删除节拍**（红色描边），与「+ 添加节拍」并排，始终可见
+  - 多节拍：删除当前选中节拍；只剩一拍：改为**清空本页最后一拍**（正文/引用/停顿清空，保留 `voice`、`emotion`、`camera` 等呈现设置），并提示「每页至少保留一拍」
+  - 删除后草稿自动变 dirty（「保存本页 / 保存并编译」可用），并同步调整选中节拍下标
+  - 抽出纯函数 `removeBeatAt(draft, index)`，hook 与测试共用
+  - 样式：删除按钮红色系 hover；底部旧按钮与其临时样式移除
+- **测试**：新增 `useDeckScriptEditor.test.ts` 2 项（删中间节拍、只剩一拍时清空并保留 voice）；全量 **120 通过**（director 46 + brain 13 + onair 61）
+- **验证**：`typecheck` / `lint`（0 error）/ `build` 通过；dev 下 `ScriptEditorShell.tsx`、`useDeckScriptEditor.ts`、`scriptEditor.css` 均 200，产物含新按钮类名
+- **相关文件**：`apps/presenter-onair/src/components/present/{ScriptEditorShell.tsx,scriptEditor.css}` · `src/hooks/{useDeckScriptEditor.ts,useDeckScriptEditor.test.ts}`
+- **验证方式**：`npm run dev` → 讲稿导演台 → 页头「删除节拍」
+
+---
+
 ### 2026-10-25 · 设置改为独立「设置」标签页 + 顶部分类导航（移除 ⚙ 弹窗）
 
 - **需求**：把设置内容从设置按钮里移出，做成设置选项卡，并用顶部导航栏分类

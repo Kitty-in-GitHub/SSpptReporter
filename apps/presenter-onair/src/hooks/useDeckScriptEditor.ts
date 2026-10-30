@@ -16,6 +16,41 @@ function draftsEqual(a: SlidePageDraft, b: SlidePageDraft): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+/**
+ * 删除一节拍；若只剩一拍则改为清空内容（每页至少保留一拍，
+ * 保留 voice / emotion / camera 等呈现设定）。
+ */
+export function removeBeatAt(
+  draft: SlidePageDraft,
+  beatIndex: number,
+): { draft: SlidePageDraft; clearedLastBeat: boolean } {
+  if (draft.beats.length <= 1) {
+    const [only] = draft.beats;
+    return {
+      draft: {
+        ...draft,
+        beats: [
+          {
+            ...only,
+            utterance: '',
+            profile: undefined,
+            emphasis: undefined,
+            timing: undefined,
+          },
+        ],
+      },
+      clearedLastBeat: true,
+    };
+  }
+  return {
+    draft: {
+      ...draft,
+      beats: draft.beats.filter((_, index) => index !== beatIndex),
+    },
+    clearedLastBeat: false,
+  };
+}
+
 export function useDeckScriptEditor(deckId: string, pageCount: number) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageDraft, setPageDraft] = useState<SlidePageDraft | null>(null);
@@ -136,17 +171,19 @@ export function useDeckScriptEditor(deckId: string, pageCount: number) {
     setStatus('');
   }, []);
 
-  const removeBeat = useCallback((beatIndex: number) => {
-    setPageDraft((prev) => {
-      if (!prev || prev.beats.length <= 1) {
-        return prev;
-      }
-      const beats = prev.beats.filter((_, index) => index !== beatIndex);
-      return { ...prev, beats };
-    });
-    setActiveBeatIndex((prev) => Math.max(0, prev - (beatIndex <= prev ? 1 : 0)));
-    setStatus('');
-  }, []);
+  const removeBeat = useCallback(
+    (beatIndex: number) => {
+      const clearingLastBeat = (pageDraft?.beats.length ?? 0) <= 1;
+      setPageDraft((prev) =>
+        prev ? removeBeatAt(prev, beatIndex).draft : prev,
+      );
+      setActiveBeatIndex((prev) =>
+        Math.max(0, prev - (beatIndex <= prev ? 1 : 0)),
+      );
+      setStatus(clearingLastBeat ? '已清空本页最后一拍（每页至少保留一拍）' : '');
+    },
+    [pageDraft],
+  );
 
   const goToPage = useCallback(
     (page: number) => {

@@ -142,9 +142,27 @@ export function ScriptEditorShell({
                     可视化编排汇报情绪、语速与停顿；保存并编译后写入讲稿。
                   </p>
                 </div>
-                <button type="button" className="script-editor-beat-add" onClick={editor.addBeat}>
-                  + 添加节拍
-                </button>
+                <div className="script-editor-form-header-actions">
+                  <button
+                    type="button"
+                    className="script-editor-beat-remove"
+                    title={
+                      pageDraft.beats.length > 1
+                        ? '删除当前节拍'
+                        : '只剩一拍：将清空本页内容（每页至少保留一拍）'
+                    }
+                    onClick={() => editor.removeBeat(editor.activeBeatIndex)}
+                  >
+                    删除节拍
+                  </button>
+                  <button
+                    type="button"
+                    className="script-editor-beat-add"
+                    onClick={editor.addBeat}
+                  >
+                    + 添加节拍
+                  </button>
+                </div>
               </div>
 
               <BeatTimelineStrip
@@ -190,16 +208,6 @@ export function ScriptEditorShell({
                   每页讲稿全部念完后自动翻到下一页，由编译器生成，无需手写翻页动作。
                 </p>
               </div>
-
-              {pageDraft.beats.length > 1 && (
-                <button
-                  type="button"
-                  className="script-editor-beat-remove"
-                  onClick={() => editor.removeBeat(editor.activeBeatIndex)}
-                >
-                  删除当前节拍
-                </button>
-              )}
             </>
           )}
         </div>

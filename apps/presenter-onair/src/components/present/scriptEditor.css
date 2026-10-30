@@ -166,6 +166,13 @@
   border-color: #3b82f6;
 }
 
+.script-editor-form-header-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .script-editor-beat-add,
 .script-editor-beat-remove {
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -175,6 +182,16 @@
   padding: 6px 10px;
   font-size: 13px;
   cursor: pointer;
+}
+
+.script-editor-beat-remove {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.script-editor-beat-remove:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.6);
 }
 
 .script-editor-form-subtitle {
@@ -855,10 +872,5 @@
 .emphasis-editor-mark {
   background: transparent;
   color: inherit;
-}
-
-.script-editor-beat-remove {
-  margin-top: 8px;
-  color: #f87171;
 }
 
